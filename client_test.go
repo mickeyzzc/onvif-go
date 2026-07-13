@@ -698,10 +698,10 @@ func TestFixLocalhostURL(t *testing.T) {
 			expectedURL: "http://192.168.1.100/onvif/media_service",
 		},
 		{
-			name:        "different valid IP unchanged",
+			name:        "stale IP after DHCP reassignment is rewritten",
 			clientURL:   "http://192.168.1.100/onvif/device_service",
 			serviceURL:  "http://192.168.1.50/onvif/media_service",
-			expectedURL: "http://192.168.1.50/onvif/media_service",
+			expectedURL: "http://192.168.1.100/onvif/media_service",
 		},
 		{
 			name:        "HTTPS localhost",
@@ -732,6 +732,46 @@ func TestFixLocalhostURL(t *testing.T) {
 			result := client.fixLocalhostURL(tt.serviceURL)
 			if result != tt.expectedURL {
 				t.Errorf("fixLocalhostURL() = %v, want %v", result, tt.expectedURL)
+			}
+		})
+	}
+}
+
+// TestFixStaleXAddr covers the DHCP-reassignment scenario: the client reached
+// the camera at a NEW address, but GetCapabilities still advertises the OLD
+// address. All service XAddrs must be rewritten to the known-good endpoint host.
+func TestFixStaleXAddr(t *testing.T) {
+	tests := []struct {
+		name        string
+		clientURL   string
+		serviceURL  string
+		expectedURL string
+	}{
+		{
+			name:        "stale IP rewritten to endpoint host (same port)",
+			clientURL:   "http://192.168.63.199:8080/onvif/device_service",
+			serviceURL:  "http://192.168.63.200:8080/onvif/media_service",
+			expectedURL: "http://192.168.63.199:8080/onvif/media_service",
+		},
+		{
+			name:        "stale IP rewritten, port preserved",
+			clientURL:   "http://192.168.1.10/onvif/device_service",
+			serviceURL:  "http://192.168.1.99:8888/onvif/ptz_service",
+			expectedURL: "http://192.168.1.10:8888/onvif/ptz_service",
+		},
+		{
+			name:        "stale IP, service no port inherits client port",
+			clientURL:   "http://192.168.1.10:8080/onvif/device_service",
+			serviceURL:  "http://192.168.1.99/onvif/imaging_service",
+			expectedURL: "http://192.168.1.10:8080/onvif/imaging_service",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client := &Client{endpoint: tt.clientURL}
+			result := client.fixLocalhostURL(tt.serviceURL)
+			if result != tt.expectedURL {
+				t.Errorf("fixLocalhostURL() = %q, want %q", result, tt.expectedURL)
 			}
 		})
 	}

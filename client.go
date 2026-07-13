@@ -156,7 +156,19 @@ func normalizeEndpoint(endpoint string) (string, error) {
 	return fullURL, nil
 }
 
-// Some cameras incorrectly report localhost (127.0.0.1, 0.0.0.0, localhost) in their capability URLs.
+// fixLocalhostURL rewrites a service XAddr advertised in GetCapabilities when it
+// points at the wrong host. Two cases are handled:
+//
+//  1. Loopback (localhost / 127.0.0.1 / 0.0.0.0 / ::1) — some cameras misreport
+//     these instead of their real address.
+//  2. Stale IP — after a DHCP reassignment the camera still advertises its OLD
+//     IP in GetCapabilities even though the client successfully reached it at a
+//     NEW address. The advertised XAddr is then unreachable. Since GetCapabilities
+//     itself succeeded against c.endpoint, that endpoint's host is known-good, so
+//     any mismatched advertised host is rewritten to it.
+//
+// The advertised port is always preserved (services commonly live on distinct
+// ports, e.g. ONVIF on 8080 vs RTSP on 554).
 func (c *Client) fixLocalhostURL(serviceURL string) string {
 	if serviceURL == "" {
 		return serviceURL
@@ -168,24 +180,29 @@ func (c *Client) fixLocalhostURL(serviceURL string) string {
 		return serviceURL // Return original if parsing fails
 	}
 
-	// Check if the service URL has a localhost/loopback address
-	host := parsedService.Hostname()
-	if host == "localhost" || host == "127.0.0.1" || host == "0.0.0.0" || host == "::1" {
-		// Parse the client's endpoint to get the actual camera address
-		parsedClient, err := url.Parse(c.endpoint)
-		if err != nil {
-			return serviceURL // Return original if parsing fails
-		}
+	// Parse the client's endpoint to get the known-good camera address.
+	parsedClient, err := url.Parse(c.endpoint)
+	if err != nil {
+		return serviceURL // Return original if parsing fails
+	}
 
-		// Replace the host but keep the port from service URL if specified
+	serviceHost := parsedService.Hostname()
+	clientHost := parsedClient.Hostname()
+
+	// Rewrite when the advertised host is loopback OR differs from the endpoint
+	// we actually connected to (stale IP after DHCP reassignment).
+	isLoopback := serviceHost == "localhost" || serviceHost == "127.0.0.1" ||
+		serviceHost == "0.0.0.0" || serviceHost == "::1"
+	if isLoopback || serviceHost != clientHost {
+		// Replace the host but keep the port from the service URL if specified.
 		servicePort := parsedService.Port()
 		if servicePort != "" {
-			parsedService.Host = parsedClient.Hostname() + ":" + servicePort
+			parsedService.Host = clientHost + ":" + servicePort
 		} else {
-			parsedService.Host = parsedClient.Hostname()
-			// Use client's port if service doesn't specify one
+			parsedService.Host = clientHost
+			// Use the client's port if the service doesn't specify one.
 			if clientPort := parsedClient.Port(); clientPort != "" {
-				parsedService.Host = parsedClient.Hostname() + ":" + clientPort
+				parsedService.Host = clientHost + ":" + clientPort
 			}
 		}
 
