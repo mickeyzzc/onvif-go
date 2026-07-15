@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // GetCertificates retrieves certificates. ONVIF Specification: GetCertificates operation.
@@ -26,7 +25,7 @@ func (c *Client) GetCertificates(ctx context.Context) ([]*Certificate, error) {
 	var response GetCertificatesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificates failed: %w", err)
@@ -53,7 +52,7 @@ func (c *Client) GetCACertificates(ctx context.Context) ([]*Certificate, error) 
 	var response GetCACertificatesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCACertificates failed: %w", err)
@@ -81,7 +80,7 @@ func (c *Client) LoadCertificates(ctx context.Context, certificates []*Certifica
 	var response LoadCertificatesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificates failed: %w", err)
@@ -109,7 +108,7 @@ func (c *Client) LoadCACertificates(ctx context.Context, certificates []*Certifi
 	var response LoadCACertificatesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCACertificates failed: %w", err)
@@ -147,7 +146,7 @@ func (c *Client) CreateCertificate(
 	var response CreateCertificateResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("CreateCertificate failed: %w", err)
@@ -175,7 +174,7 @@ func (c *Client) DeleteCertificates(ctx context.Context, certificateIDs []string
 	var response DeleteCertificatesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteCertificates failed: %w", err)
@@ -205,7 +204,7 @@ func (c *Client) GetCertificateInformation(ctx context.Context, certificateID st
 	var response GetCertificateInformationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificateInformation failed: %w", err)
@@ -232,7 +231,7 @@ func (c *Client) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatu
 	var response GetCertificatesStatusResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificatesStatus failed: %w", err)
@@ -260,7 +259,7 @@ func (c *Client) SetCertificatesStatus(ctx context.Context, statuses []*Certific
 	var response SetCertificatesStatusResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetCertificatesStatus failed: %w", err)
@@ -297,7 +296,7 @@ func (c *Client) GetPkcs10Request(
 	var response GetPkcs10RequestResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetPkcs10Request failed: %w", err)
@@ -351,7 +350,7 @@ func (c *Client) LoadCertificateWithPrivateKey(
 	var response LoadCertificateWithPrivateKeyResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificateWithPrivateKey failed: %w", err)
@@ -379,7 +378,7 @@ func (c *Client) GetClientCertificateMode(ctx context.Context) (bool, error) {
 	var response GetClientCertificateModeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return false, fmt.Errorf("GetClientCertificateMode failed: %w", err)
@@ -407,7 +406,7 @@ func (c *Client) SetClientCertificateMode(ctx context.Context, enabled bool) err
 	var response SetClientCertificateModeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetClientCertificateMode failed: %w", err)

@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // Event service namespace.
@@ -159,7 +158,7 @@ func (c *Client) GetEventServiceCapabilities(ctx context.Context) (*EventService
 	var resp GetServiceCapabilitiesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventServiceCapabilities failed: %w", err)
@@ -239,7 +238,7 @@ func (c *Client) CreatePullPointSubscription(
 	var resp CreatePullPointSubscriptionResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreatePullPointSubscription failed: %w", err)
@@ -331,7 +330,7 @@ func (c *Client) PullMessages(
 	var resp PullMessagesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("PullMessages failed: %w", err)
@@ -403,7 +402,7 @@ func (c *Client) Seek(ctx context.Context, subscriptionReference string, utcTime
 	var resp SeekResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("Seek failed: %w", err)
@@ -434,7 +433,7 @@ func (c *Client) SetEventSynchronizationPoint(ctx context.Context, subscriptionR
 	var resp SetSynchronizationPointResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
@@ -465,7 +464,7 @@ func (c *Client) Unsubscribe(ctx context.Context, subscriptionReference string) 
 	var resp UnsubscribeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("Unsubscribe failed: %w", err)
@@ -508,7 +507,7 @@ func (c *Client) RenewSubscription(
 	var resp RenewResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return time.Time{}, time.Time{}, fmt.Errorf("RenewSubscription failed: %w", err)
@@ -557,7 +556,7 @@ func (c *Client) GetEventProperties(ctx context.Context) (*EventProperties, erro
 	var resp GetEventPropertiesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventProperties failed: %w", err)
@@ -627,7 +626,7 @@ func (c *Client) AddEventBroker(ctx context.Context, config *EventBrokerConfig) 
 	var resp AddEventBrokerResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("AddEventBroker failed: %w", err)
@@ -662,7 +661,7 @@ func (c *Client) DeleteEventBroker(ctx context.Context, address string) error {
 	var resp DeleteEventBrokerResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("DeleteEventBroker failed: %w", err)
@@ -703,7 +702,7 @@ func (c *Client) GetEventBrokers(ctx context.Context) ([]*EventBrokerConfig, err
 	var resp GetEventBrokersResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventBrokers failed: %w", err)

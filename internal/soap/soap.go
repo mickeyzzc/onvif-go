@@ -75,6 +75,15 @@ type Client struct {
 	password   string
 	debug      bool
 	logger     func(format string, args ...interface{})
+	// clockSkew is the offset (deviceTime - localTime) applied to the Created
+	// timestamp in WS-Security UsernameToken digest auth. ONVIF cameras (notably
+	// Hikvision) reject digests whose Created timestamp falls outside their
+	// replay window (commonly ±5 min). When the NVR's clock and the camera's
+	// clock diverge, every digest is rejected as "sender not authorized" — a
+	// generic-looking auth failure. Setting the skew (measured via the
+	// unauthenticated GetSystemDateAndTime) makes the digest use the device's
+	// view of "now". Default 0 = use local clock (legacy behavior).
+	clockSkew time.Duration
 }
 
 // NewClient creates a new SOAP client.
@@ -92,6 +101,14 @@ func NewClient(httpClient *http.Client, username, password string) *Client {
 func (c *Client) SetDebug(enabled bool, logger func(format string, args ...interface{})) {
 	c.debug = enabled
 	c.logger = logger
+}
+
+// SetClockSkew sets the clock offset (deviceTime - localTime) used when building
+// WS-Security UsernameToken digest timestamps. Call this after measuring the
+// device's clock via GetSystemDateAndTime to fix auth failures caused by clock
+// divergence (Hikvision time-skew issue). Pass 0 to use the local clock.
+func (c *Client) SetClockSkew(skew time.Duration) {
+	c.clockSkew = skew
 }
 
 // logDebugf logs debug information if debug mode is enabled.
@@ -200,8 +217,10 @@ func (c *Client) createSecurityHeader() *Security {
 	_, _ = rand.Read(nonceBytes)
 	nonce := base64.StdEncoding.EncodeToString(nonceBytes)
 
-	// Get current timestamp
-	created := time.Now().UTC().Format(time.RFC3339)
+	// Get current timestamp, adjusted by the device's clock skew so the digest's
+	// Created field matches the camera's view of "now" (fixes Hikvision time-skew
+	// auth rejections). clockSkew is 0 when unset (legacy local-time behavior).
+	created := time.Now().UTC().Add(c.clockSkew).Format(time.RFC3339)
 
 	// Calculate password digest: Base64(SHA1(nonce + created + password))
 	hash := sha1.New() //nolint:gosec // SHA1 required for ONVIF digest auth

@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // SetDNS sets the DNS settings on a device.
@@ -41,7 +40,7 @@ func (c *Client) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []strin
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDNS failed: %w", err)
@@ -84,7 +83,7 @@ func (c *Client) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkH
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNTP failed: %w", err)
@@ -114,7 +113,7 @@ func (c *Client) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, 
 	var resp SetHostnameFromDHCPResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return false, fmt.Errorf("SetHostnameFromDHCP failed: %w", err)
@@ -172,7 +171,7 @@ func (c *Client) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime
 	var resp GetSystemDateAndTimeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
@@ -271,7 +270,7 @@ func (c *Client) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateT
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSystemDateAndTime failed: %w", err)
@@ -294,7 +293,7 @@ func (c *Client) AddScopes(ctx context.Context, scopeItems []string) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddScopes failed: %w", err)
@@ -324,7 +323,7 @@ func (c *Client) RemoveScopes(ctx context.Context, scopeItems []string) ([]strin
 	var resp RemoveScopesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("RemoveScopes failed: %w", err)
@@ -347,7 +346,7 @@ func (c *Client) SetScopes(ctx context.Context, scopes []string) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetScopes failed: %w", err)
@@ -382,7 +381,7 @@ func (c *Client) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
 	var resp GetRelayOutputsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRelayOutputs failed: %w", err)
@@ -425,7 +424,7 @@ func (c *Client) SetRelayOutputSettings(ctx context.Context, token string, setti
 	// DelayTime would need duration formatting
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRelayOutputSettings failed: %w", err)
@@ -450,7 +449,7 @@ func (c *Client) SetRelayOutputState(ctx context.Context, token string, state Re
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRelayOutputState failed: %w", err)
@@ -480,7 +479,7 @@ func (c *Client) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData
 	var resp SendAuxiliaryCommandResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SendAuxiliaryCommand failed: %w", err)
@@ -515,7 +514,7 @@ func (c *Client) GetSystemLog(ctx context.Context, logType SystemLogType) (*Syst
 	var resp GetSystemLogResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemLog failed: %w", err)
@@ -558,7 +557,7 @@ func (c *Client) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
 	var resp GetSystemBackupResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemBackup failed: %w", err)
@@ -611,7 +610,7 @@ func (c *Client) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) e
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RestoreSystem failed: %w", err)
@@ -648,7 +647,7 @@ func (c *Client) GetSystemUris(
 	var resp GetSystemUrisResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, "", "", fmt.Errorf("GetSystemUris failed: %w", err)
@@ -692,7 +691,7 @@ func (c *Client) GetSystemSupportInformation(ctx context.Context) (*SupportInfor
 	var resp GetSystemSupportInformationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemSupportInformation failed: %w", err)
@@ -725,7 +724,7 @@ func (c *Client) SetSystemFactoryDefault(ctx context.Context, factoryDefault Fac
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSystemFactoryDefault failed: %w", err)
@@ -757,7 +756,7 @@ func (c *Client) StartFirmwareUpgrade(
 	var resp StartFirmwareUpgradeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", "", "", fmt.Errorf("StartFirmwareUpgrade failed: %w", err)
@@ -786,7 +785,7 @@ func (c *Client) StartSystemRestore(ctx context.Context) (uploadURI, expectedDow
 	var resp StartSystemRestoreResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", "", fmt.Errorf("StartSystemRestore failed: %w", err)

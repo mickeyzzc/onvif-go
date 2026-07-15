@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // Device service namespace.
@@ -34,7 +33,7 @@ func (c *Client) GetDeviceInformation(ctx context.Context) (*DeviceInformation, 
 	var resp GetDeviceInformationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceInformation failed: %w", err)
@@ -130,7 +129,7 @@ func (c *Client) GetCapabilities(ctx context.Context) (*Capabilities, error) {
 	var resp GetCapabilitiesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCapabilities failed: %w", err)
@@ -251,7 +250,7 @@ func (c *Client) SystemReboot(ctx context.Context) (string, error) {
 	var resp SystemRebootResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SystemReboot failed: %w", err)
@@ -274,7 +273,7 @@ func (c *Client) GetSystemDateAndTime(ctx context.Context) (interface{}, error) 
 	var resp interface{}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
@@ -305,7 +304,7 @@ func (c *Client) GetHostname(ctx context.Context) (*HostnameInformation, error) 
 	var resp GetHostnameResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetHostname failed: %w", err)
@@ -331,7 +330,7 @@ func (c *Client) SetHostname(ctx context.Context, name string) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHostname failed: %w", err)
@@ -370,7 +369,7 @@ func (c *Client) GetDNS(ctx context.Context) (*DNSInformation, error) {
 	var resp GetDNSResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDNS failed: %w", err)
@@ -429,7 +428,7 @@ func (c *Client) GetNTP(ctx context.Context) (*NTPInformation, error) {
 	var resp GetNTPResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNTP failed: %w", err)
@@ -495,7 +494,7 @@ func (c *Client) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface,
 	var resp GetNetworkInterfacesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkInterfaces failed: %w", err)
@@ -557,7 +556,7 @@ func (c *Client) GetScopes(ctx context.Context) ([]*Scope, error) {
 	var resp GetScopesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetScopes failed: %w", err)
@@ -596,7 +595,7 @@ func (c *Client) GetUsers(ctx context.Context) ([]*User, error) {
 	var resp GetUsersResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetUsers failed: %w", err)
@@ -642,7 +641,7 @@ func (c *Client) CreateUsers(ctx context.Context, users []*User) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("CreateUsers failed: %w", err)
@@ -665,7 +664,7 @@ func (c *Client) DeleteUsers(ctx context.Context, usernames []string) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteUsers failed: %w", err)
@@ -696,7 +695,7 @@ func (c *Client) SetUser(ctx context.Context, user *User) error {
 	req.User.UserLevel = user.UserLevel
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetUser failed: %w", err)
@@ -734,7 +733,7 @@ func (c *Client) GetServices(ctx context.Context, includeCapability bool) ([]*Se
 	var resp GetServicesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServices failed: %w", err)
@@ -797,7 +796,7 @@ func (c *Client) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapa
 	var resp GetServiceCapabilitiesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServiceCapabilities failed: %w", err)
@@ -846,7 +845,7 @@ func (c *Client) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 	var resp GetDiscoveryModeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetDiscoveryMode failed: %w", err)
@@ -869,7 +868,7 @@ func (c *Client) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDiscoveryMode failed: %w", err)
@@ -897,7 +896,7 @@ func (c *Client) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, err
 	var resp GetRemoteDiscoveryModeResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetRemoteDiscoveryMode failed: %w", err)
@@ -920,7 +919,7 @@ func (c *Client) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode)
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteDiscoveryMode failed: %w", err)
@@ -948,7 +947,7 @@ func (c *Client) GetEndpointReference(ctx context.Context) (string, error) {
 	var resp GetEndpointReferenceResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetEndpointReference failed: %w", err)
@@ -980,7 +979,7 @@ func (c *Client) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, e
 	var resp GetNetworkProtocolsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkProtocols failed: %w", err)
@@ -1027,7 +1026,7 @@ func (c *Client) SetNetworkProtocols(ctx context.Context, protocols []*NetworkPr
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkProtocols failed: %w", err)
@@ -1058,7 +1057,7 @@ func (c *Client) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway,
 	var resp GetNetworkDefaultGatewayResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkDefaultGateway failed: %w", err)
@@ -1086,7 +1085,7 @@ func (c *Client) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkG
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkDefaultGateway failed: %w", err)
