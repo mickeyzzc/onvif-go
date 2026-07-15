@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // PTZ service namespace.
@@ -91,7 +90,7 @@ func (c *Client) ContinuousMove(ctx context.Context, profileToken string, veloci
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("ContinuousMove failed: %w", err)
@@ -123,7 +122,7 @@ func (c *Client) AbsoluteMove(ctx context.Context, profileToken string, position
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AbsoluteMove failed: %w", err)
@@ -155,7 +154,7 @@ func (c *Client) RelativeMove(ctx context.Context, profileToken string, translat
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RelativeMove failed: %w", err)
@@ -192,7 +191,7 @@ func (c *Client) Stop(ctx context.Context, profileToken string, panTilt, zoom bo
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
@@ -245,7 +244,7 @@ func (c *Client) GetStatus(ctx context.Context, profileToken string) (*PTZStatus
 	var resp GetStatusResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)
@@ -322,7 +321,7 @@ func (c *Client) GetPresets(ctx context.Context, profileToken string) ([]*PTZPre
 	var resp GetPresetsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPresets failed: %w", err)
@@ -381,7 +380,7 @@ func (c *Client) GotoPreset(ctx context.Context, profileToken, presetToken strin
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoPreset failed: %w", err)
@@ -425,7 +424,7 @@ func (c *Client) SetPreset(ctx context.Context, profileToken, presetName, preset
 	var resp SetPresetResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SetPreset failed: %w", err)
@@ -455,7 +454,7 @@ func (c *Client) RemovePreset(ctx context.Context, profileToken, presetToken str
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePreset failed: %w", err)
@@ -485,7 +484,7 @@ func (c *Client) GotoHomePosition(ctx context.Context, profileToken string, spee
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoHomePosition failed: %w", err)
@@ -513,7 +512,7 @@ func (c *Client) SetHomePosition(ctx context.Context, profileToken string) error
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHomePosition failed: %w", err)
@@ -553,7 +552,7 @@ func (c *Client) GetConfiguration(ctx context.Context, configurationToken string
 	var resp GetConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfiguration failed: %w", err)
@@ -596,7 +595,7 @@ func (c *Client) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, er
 	var resp GetConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfigurations failed: %w", err)

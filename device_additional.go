@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // GetGeoLocation retrieves geographic location information. ONVIF Specification: GetGeoLocation operation.
@@ -26,7 +25,7 @@ func (c *Client) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
 	var response GetGeoLocationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetGeoLocation failed: %w", err)
@@ -54,7 +53,7 @@ func (c *Client) SetGeoLocation(ctx context.Context, location []LocationEntity) 
 	var response SetGeoLocationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetGeoLocation failed: %w", err)
@@ -82,7 +81,7 @@ func (c *Client) DeleteGeoLocation(ctx context.Context, location []LocationEntit
 	var response DeleteGeoLocationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteGeoLocation failed: %w", err)
@@ -109,7 +108,7 @@ func (c *Client) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
 	var response GetDPAddressesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDPAddresses failed: %w", err)
@@ -137,7 +136,7 @@ func (c *Client) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) er
 	var response SetDPAddressesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetDPAddresses failed: %w", err)
@@ -164,7 +163,7 @@ func (c *Client) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
 	var response GetAccessPolicyResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetAccessPolicy failed: %w", err)
@@ -192,7 +191,7 @@ func (c *Client) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) erro
 	var response SetAccessPolicyResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetAccessPolicy failed: %w", err)
@@ -219,7 +218,7 @@ func (c *Client) GetWsdlURL(ctx context.Context) (string, error) {
 	var response GetWsdlURLResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return "", fmt.Errorf("GetWsdlURL failed: %w", err)

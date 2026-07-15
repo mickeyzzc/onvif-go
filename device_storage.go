@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // GetStorageConfigurations retrieves storage configurations. ONVIF Specification: GetStorageConfigurations operation.
@@ -26,7 +25,7 @@ func (c *Client) GetStorageConfigurations(ctx context.Context) ([]*StorageConfig
 	var response GetStorageConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfigurations failed: %w", err)
@@ -55,7 +54,7 @@ func (c *Client) GetStorageConfiguration(ctx context.Context, token string) (*St
 	var response GetStorageConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfiguration failed: %w", err)
@@ -85,7 +84,7 @@ func (c *Client) CreateStorageConfiguration(ctx context.Context, config *Storage
 	var response CreateStorageConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return "", fmt.Errorf("CreateStorageConfiguration failed: %w", err)
@@ -113,7 +112,7 @@ func (c *Client) SetStorageConfiguration(ctx context.Context, config *StorageCon
 	var response SetStorageConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetStorageConfiguration failed: %w", err)
@@ -142,7 +141,7 @@ func (c *Client) DeleteStorageConfiguration(ctx context.Context, token string) e
 	var response DeleteStorageConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteStorageConfiguration failed: %w", err)
@@ -170,7 +169,7 @@ func (c *Client) SetHashingAlgorithm(ctx context.Context, algorithm string) erro
 	var response SetHashingAlgorithmResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetHashingAlgorithm failed: %w", err)

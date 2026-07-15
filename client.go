@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // Default client configuration constants.
@@ -43,6 +45,11 @@ type Client struct {
 	ptzEndpoint     string
 	imagingEndpoint string
 	eventEndpoint   string
+
+	// clockSkew is the offset (deviceTime - localTime) applied to WS-Security
+	// digest timestamps. Set via SetClockSkew after measuring the device's clock
+	// via GetSystemDateAndTime. Fixes Hikvision time-skew auth rejections.
+	clockSkew time.Duration
 }
 
 // ClientOption is a functional option for configuring the Client.
@@ -240,6 +247,26 @@ func (c *Client) GetCredentials() (username, password string) {
 	defer c.mu.RUnlock()
 
 	return c.username, c.password
+}
+
+// SetClockSkew sets the clock offset (deviceTime - localTime) used for WS-Security
+// digest auth timestamps. Call this after measuring the device's clock via
+// GetSystemDateAndTime to fix auth failures from clock divergence (Hikvision).
+func (c *Client) SetClockSkew(skew time.Duration) {
+	c.mu.Lock()
+	c.clockSkew = skew
+	c.mu.Unlock()
+}
+
+// newSoapClient creates a soap.Client with the current credentials and clock
+// skew applied. All device/media/ptz/imaging methods should use this instead of
+// soap.NewClient directly so the skew propagates to every authenticated call.
+func (c *Client) newSoapClient(username, password string) *soap.Client {
+	sc := soap.NewClient(c.httpClient, username, password)
+	c.mu.RLock()
+	sc.SetClockSkew(c.clockSkew)
+	c.mu.RUnlock()
+	return sc
 }
 
 // DownloadFile downloads a file from the given URL with authentication.

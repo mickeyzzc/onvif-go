@@ -59,7 +59,7 @@ func buildIPAddressFilterRequest(filter *IPAddressFilter) ipAddressFilterRequest
 func (c *Client) newSOAPClient() *soap.Client {
 	username, password := c.GetCredentials()
 
-	return soap.NewClient(c.httpClient, username, password)
+	return c.newSoapClient(username, password)
 }
 
 // GetRemoteUser returns the configured remote user.

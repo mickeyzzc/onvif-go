@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"fmt"
 
-	"github.com/0x524a/onvif-go/internal/soap"
 )
 
 // Media service namespace.
@@ -80,7 +79,7 @@ func (c *Client) GetProfiles(ctx context.Context) ([]*Profile, error) {
 	var resp GetProfilesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfiles failed: %w", err)
@@ -186,7 +185,7 @@ func (c *Client) GetStreamURI(ctx context.Context, profileToken string) (*MediaU
 	var resp GetStreamURIResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStreamURI failed: %w", err)
@@ -227,7 +226,7 @@ func (c *Client) GetSnapshotURI(ctx context.Context, profileToken string) (*Medi
 	var resp GetSnapshotURIResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSnapshotURI failed: %w", err)
@@ -281,7 +280,7 @@ func (c *Client) GetVideoEncoderConfiguration(
 	var resp GetVideoEncoderConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfiguration failed: %w", err)
@@ -341,7 +340,7 @@ func (c *Client) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
 	var resp GetVideoSourcesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSources failed: %w", err)
@@ -386,7 +385,7 @@ func (c *Client) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
 	var resp GetAudioSourcesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSources failed: %w", err)
@@ -426,7 +425,7 @@ func (c *Client) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
 	var resp GetAudioOutputsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputs failed: %w", err)
@@ -472,7 +471,7 @@ func (c *Client) CreateProfile(ctx context.Context, name, token string) (*Profil
 	var resp CreateProfileResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateProfile failed: %w", err)
@@ -500,7 +499,7 @@ func (c *Client) DeleteProfile(ctx context.Context, profileToken string) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteProfile failed: %w", err)
@@ -578,7 +577,7 @@ func (c *Client) SetVideoEncoderConfiguration(
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoEncoderConfiguration failed: %w", err)
@@ -623,7 +622,7 @@ func (c *Client) GetMediaServiceCapabilities(ctx context.Context) (*MediaService
 	var resp GetServiceCapabilitiesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMediaServiceCapabilities failed: %w", err)
@@ -720,7 +719,7 @@ func (c *Client) GetVideoEncoderConfigurationOptions(
 	var resp GetVideoEncoderConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurationOptions failed: %w", err)
@@ -835,7 +834,7 @@ func (c *Client) GetAudioEncoderConfiguration(
 	var resp GetAudioEncoderConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfiguration failed: %w", err)
@@ -948,7 +947,7 @@ func (c *Client) SetAudioEncoderConfiguration(
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioEncoderConfiguration failed: %w", err)
@@ -1004,7 +1003,7 @@ func (c *Client) GetMetadataConfiguration(
 	var resp GetMetadataConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfiguration failed: %w", err)
@@ -1137,7 +1136,7 @@ func (c *Client) SetMetadataConfiguration(
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetMetadataConfiguration failed: %w", err)
@@ -1176,7 +1175,7 @@ func (c *Client) GetVideoSourceModes(ctx context.Context, videoSourceToken strin
 	var resp GetVideoSourceModesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceModes failed: %w", err)
@@ -1215,7 +1214,7 @@ func (c *Client) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeT
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceMode failed: %w", err)
@@ -1240,7 +1239,7 @@ func (c *Client) SetSynchronizationPoint(ctx context.Context, profileToken strin
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
@@ -1276,7 +1275,7 @@ func (c *Client) GetOSDs(ctx context.Context, configurationToken string) ([]*OSD
 	var resp GetOSDsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDs failed: %w", err)
@@ -1317,7 +1316,7 @@ func (c *Client) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration
 	var resp GetOSDResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSD failed: %w", err)
@@ -1348,7 +1347,7 @@ func (c *Client) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
 	req.OSD.Token = osd.Token
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetOSD failed: %w", err)
@@ -1394,7 +1393,7 @@ func (c *Client) CreateOSD(
 	var resp CreateOSDResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateOSD failed: %w", err)
@@ -1421,7 +1420,7 @@ func (c *Client) DeleteOSD(ctx context.Context, osdToken string) error {
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteOSD failed: %w", err)
@@ -1446,7 +1445,7 @@ func (c *Client) StartMulticastStreaming(ctx context.Context, profileToken strin
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StartMulticastStreaming failed: %w", err)
@@ -1471,7 +1470,7 @@ func (c *Client) StopMulticastStreaming(ctx context.Context, profileToken string
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StopMulticastStreaming failed: %w", err)
@@ -1506,7 +1505,7 @@ func (c *Client) GetProfile(ctx context.Context, profileToken string) (*Profile,
 	var resp GetProfileResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfile failed: %w", err)
@@ -1540,7 +1539,7 @@ func (c *Client) SetProfile(ctx context.Context, profile *Profile) error {
 	req.Profile.Name = profile.Name
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetProfile failed: %w", err)
@@ -1567,7 +1566,7 @@ func (c *Client) AddVideoEncoderConfiguration(ctx context.Context, profileToken,
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoEncoderConfiguration failed: %w", err)
@@ -1592,7 +1591,7 @@ func (c *Client) RemoveVideoEncoderConfiguration(ctx context.Context, profileTok
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoEncoderConfiguration failed: %w", err)
@@ -1619,7 +1618,7 @@ func (c *Client) AddAudioEncoderConfiguration(ctx context.Context, profileToken,
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioEncoderConfiguration failed: %w", err)
@@ -1644,7 +1643,7 @@ func (c *Client) RemoveAudioEncoderConfiguration(ctx context.Context, profileTok
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioEncoderConfiguration failed: %w", err)
@@ -1671,7 +1670,7 @@ func (c *Client) AddAudioSourceConfiguration(ctx context.Context, profileToken, 
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioSourceConfiguration failed: %w", err)
@@ -1696,7 +1695,7 @@ func (c *Client) RemoveAudioSourceConfiguration(ctx context.Context, profileToke
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioSourceConfiguration failed: %w", err)
@@ -1723,7 +1722,7 @@ func (c *Client) AddVideoSourceConfiguration(ctx context.Context, profileToken, 
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoSourceConfiguration failed: %w", err)
@@ -1748,7 +1747,7 @@ func (c *Client) RemoveVideoSourceConfiguration(ctx context.Context, profileToke
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoSourceConfiguration failed: %w", err)
@@ -1775,7 +1774,7 @@ func (c *Client) AddPTZConfiguration(ctx context.Context, profileToken, configur
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddPTZConfiguration failed: %w", err)
@@ -1800,7 +1799,7 @@ func (c *Client) RemovePTZConfiguration(ctx context.Context, profileToken string
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePTZConfiguration failed: %w", err)
@@ -1827,7 +1826,7 @@ func (c *Client) AddMetadataConfiguration(ctx context.Context, profileToken, con
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddMetadataConfiguration failed: %w", err)
@@ -1852,7 +1851,7 @@ func (c *Client) RemoveMetadataConfiguration(ctx context.Context, profileToken s
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveMetadataConfiguration failed: %w", err)
@@ -1897,7 +1896,7 @@ func (c *Client) GetAudioEncoderConfigurationOptions(
 	var resp GetAudioEncoderConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurationOptions failed: %w", err)
@@ -1948,7 +1947,7 @@ func (c *Client) GetMetadataConfigurationOptions(
 	var resp GetMetadataConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurationOptions failed: %w", err)
@@ -1993,7 +1992,7 @@ func (c *Client) GetAudioOutputConfiguration(ctx context.Context, configurationT
 	var resp GetAudioOutputConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfiguration failed: %w", err)
@@ -2036,7 +2035,7 @@ func (c *Client) SetAudioOutputConfiguration(ctx context.Context, config *AudioO
 	req.Configuration.OutputToken = config.OutputToken
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioOutputConfiguration failed: %w", err)
@@ -2075,7 +2074,7 @@ func (c *Client) GetAudioOutputConfigurationOptions(
 	var resp GetAudioOutputConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurationOptions failed: %w", err)
@@ -2125,7 +2124,7 @@ func (c *Client) GetAudioDecoderConfigurationOptions(
 	var resp GetAudioDecoderConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurationOptions failed: %w", err)
@@ -2181,7 +2180,7 @@ func (c *Client) GetGuaranteedNumberOfVideoEncoderInstances(
 	var resp GetGuaranteedNumberOfVideoEncoderInstancesResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetGuaranteedNumberOfVideoEncoderInstances failed: %w", err)
@@ -2222,7 +2221,7 @@ func (c *Client) GetOSDOptions(ctx context.Context, configurationToken string) (
 	var resp GetOSDOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDOptions failed: %w", err)
@@ -2265,7 +2264,7 @@ func (c *Client) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSour
 	var resp GetVideoSourceConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurations failed: %w", err)
@@ -2319,7 +2318,7 @@ func (c *Client) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSour
 	var resp GetAudioSourceConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurations failed: %w", err)
@@ -2393,7 +2392,7 @@ func (c *Client) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEnc
 	var resp GetVideoEncoderConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurations failed: %w", err)
@@ -2498,7 +2497,7 @@ func (c *Client) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEnc
 	var resp GetAudioEncoderConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurations failed: %w", err)
@@ -2573,7 +2572,7 @@ func (c *Client) GetVideoSourceConfiguration(
 	var resp GetVideoSourceConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfiguration failed: %w", err)
@@ -2626,7 +2625,7 @@ func (c *Client) GetAudioSourceConfiguration(ctx context.Context, configurationT
 	var resp GetAudioSourceConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfiguration failed: %w", err)
@@ -2680,7 +2679,7 @@ func (c *Client) GetVideoSourceConfigurationOptions(
 	var resp GetVideoSourceConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurationOptions failed: %w", err)
@@ -2734,7 +2733,7 @@ func (c *Client) GetAudioSourceConfigurationOptions(
 	var resp GetAudioSourceConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurationOptions failed: %w", err)
@@ -2798,7 +2797,7 @@ func (c *Client) SetVideoSourceConfiguration(
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceConfiguration failed: %w", err)
@@ -2836,7 +2835,7 @@ func (c *Client) SetAudioSourceConfiguration(ctx context.Context, config *AudioS
 	req.Configuration.SourceToken = config.SourceToken
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioSourceConfiguration failed: %w", err)
@@ -2886,7 +2885,7 @@ func (c *Client) GetCompatibleVideoEncoderConfigurations(
 	var resp GetCompatibleVideoEncoderConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoEncoderConfigurations failed: %w", err)
@@ -2960,7 +2959,7 @@ func (c *Client) GetCompatibleVideoSourceConfigurations(
 	var resp GetCompatibleVideoSourceConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoSourceConfigurations failed: %w", err)
@@ -3021,7 +3020,7 @@ func (c *Client) GetCompatibleAudioEncoderConfigurations(
 	var resp GetCompatibleAudioEncoderConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioEncoderConfigurations failed: %w", err)
@@ -3070,7 +3069,7 @@ func (c *Client) GetCompatibleAudioSourceConfigurations(ctx context.Context, pro
 	var resp GetCompatibleAudioSourceConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioSourceConfigurations failed: %w", err)
@@ -3117,7 +3116,7 @@ func (c *Client) GetCompatiblePTZConfigurations(ctx context.Context, profileToke
 	var resp GetCompatiblePTZConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatiblePTZConfigurations failed: %w", err)
@@ -3164,7 +3163,7 @@ func (c *Client) GetCompatibleMetadataConfigurations(ctx context.Context, profil
 	var resp GetCompatibleMetadataConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleMetadataConfigurations failed: %w", err)
@@ -3211,7 +3210,7 @@ func (c *Client) GetCompatibleAudioOutputConfigurations(ctx context.Context, pro
 	var resp GetCompatibleAudioOutputConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioOutputConfigurations failed: %w", err)
@@ -3257,7 +3256,7 @@ func (c *Client) GetCompatibleAudioDecoderConfigurations(ctx context.Context, pr
 	var resp GetCompatibleAudioDecoderConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioDecoderConfigurations failed: %w", err)
@@ -3301,7 +3300,7 @@ func (c *Client) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConf
 	var resp GetMetadataConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurations failed: %w", err)
@@ -3346,7 +3345,7 @@ func (c *Client) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutp
 	var resp GetAudioOutputConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurations failed: %w", err)
@@ -3390,7 +3389,7 @@ func (c *Client) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDec
 	var resp GetAudioDecoderConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurations failed: %w", err)
@@ -3438,7 +3437,7 @@ func (c *Client) GetAudioDecoderConfiguration(
 	var resp GetAudioDecoderConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfiguration failed: %w", err)
@@ -3478,7 +3477,7 @@ func (c *Client) SetAudioDecoderConfiguration(ctx context.Context, config *Audio
 	req.Configuration.UseCount = config.UseCount
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioDecoderConfiguration failed: %w", err)
@@ -3512,7 +3511,7 @@ func (c *Client) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoA
 	var resp GetVideoAnalyticsConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurations failed: %w", err)
@@ -3560,7 +3559,7 @@ func (c *Client) GetVideoAnalyticsConfiguration(
 	var resp GetVideoAnalyticsConfigurationResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfiguration failed: %w", err)
@@ -3600,7 +3599,7 @@ func (c *Client) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, 
 	var resp GetCompatibleVideoAnalyticsConfigurationsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoAnalyticsConfigurations failed: %w", err)
@@ -3645,7 +3644,7 @@ func (c *Client) SetVideoAnalyticsConfiguration(ctx context.Context, config *Vid
 	req.Configuration.UseCount = config.UseCount
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoAnalyticsConfiguration failed: %w", err)
@@ -3686,7 +3685,7 @@ func (c *Client) GetVideoAnalyticsConfigurationOptions(
 	var resp GetVideoAnalyticsConfigurationOptionsResponse
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurationOptions failed: %w", err)
@@ -3713,7 +3712,7 @@ func (c *Client) AddVideoAnalyticsConfiguration(ctx context.Context, profileToke
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoAnalyticsConfiguration failed: %w", err)
@@ -3738,7 +3737,7 @@ func (c *Client) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileT
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoAnalyticsConfiguration failed: %w", err)
@@ -3765,7 +3764,7 @@ func (c *Client) AddAudioOutputConfiguration(ctx context.Context, profileToken, 
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioOutputConfiguration failed: %w", err)
@@ -3790,7 +3789,7 @@ func (c *Client) RemoveAudioOutputConfiguration(ctx context.Context, profileToke
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioOutputConfiguration failed: %w", err)
@@ -3817,7 +3816,7 @@ func (c *Client) AddAudioDecoderConfiguration(ctx context.Context, profileToken,
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioDecoderConfiguration failed: %w", err)
@@ -3842,7 +3841,7 @@ func (c *Client) RemoveAudioDecoderConfiguration(ctx context.Context, profileTok
 	}
 
 	username, password := c.GetCredentials()
-	soapClient := soap.NewClient(c.httpClient, username, password)
+	soapClient := c.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioDecoderConfiguration failed: %w", err)
