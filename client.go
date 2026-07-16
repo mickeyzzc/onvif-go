@@ -163,43 +163,76 @@ func normalizeEndpoint(endpoint string) (string, error) {
 	return fullURL, nil
 }
 
-// Some cameras incorrectly report localhost (127.0.0.1, 0.0.0.0, localhost) in their capability URLs.
-func (c *Client) fixLocalhostURL(serviceURL string) string {
+// fixServiceURL corrects capability XAddr URLs that a camera reports
+// incorrectly. Two cases are handled:
+//
+//  1. Localhost/loopback (127.0.0.1, 0.0.0.0, localhost, ::1): some cameras
+//     report these instead of their real IP.
+//
+//  2. Stale routable IP: after a camera's IP changes (DHCP reassignment, AP
+//     roaming), the camera's internal network config may lag and it continues
+//     to advertise its OLD IP in GetCapabilities XAddrs (e.g. it is reachable
+//     at .199 but reports media_service at .200). Since we reached the camera
+//     via c.endpoint (the device_service URL), c.endpoint's host is guaranteed
+//     to be the current correct address — so when a capability XAddr host
+//     disagrees with it, we rewrite the XAddr host to match c.endpoint's host.
+//
+// In both cases the port from the service URL is preserved (the camera's
+// service-specific port is authoritative); if the service URL omits a port,
+// the client endpoint's port is used as a fallback.
+func (c *Client) fixServiceURL(serviceURL string) string {
 	if serviceURL == "" {
 		return serviceURL
 	}
 
-	// Parse the service URL
+	// Parse the service URL.
 	parsedService, err := url.Parse(serviceURL)
 	if err != nil {
-		return serviceURL // Return original if parsing fails
+		return serviceURL // Return original if parsing fails.
 	}
 
-	// Check if the service URL has a localhost/loopback address
-	host := parsedService.Hostname()
-	if host == "localhost" || host == "127.0.0.1" || host == "0.0.0.0" || host == "::1" {
-		// Parse the client's endpoint to get the actual camera address
-		parsedClient, err := url.Parse(c.endpoint)
-		if err != nil {
-			return serviceURL // Return original if parsing fails
-		}
-
-		// Replace the host but keep the port from service URL if specified
-		servicePort := parsedService.Port()
-		if servicePort != "" {
-			parsedService.Host = parsedClient.Hostname() + ":" + servicePort
-		} else {
-			parsedService.Host = parsedClient.Hostname()
-			// Use client's port if service doesn't specify one
-			if clientPort := parsedClient.Port(); clientPort != "" {
-				parsedService.Host = parsedClient.Hostname() + ":" + clientPort
-			}
-		}
-
-		return parsedService.String()
+	// Parse the client's endpoint to get the authoritative camera address.
+	parsedClient, err := url.Parse(c.endpoint)
+	if err != nil {
+		return serviceURL // Cannot determine the correct host.
 	}
 
-	return serviceURL
+	serviceHost := parsedService.Hostname()
+	clientHost := parsedClient.Hostname()
+
+	// Determine whether the service URL host needs correction. It needs
+	// correction if it is a loopback address OR if it differs from the
+	// device_service host we used to reach the camera (stale advertised IP).
+	needsFix := isLoopbackHost(serviceHost) || serviceHost != clientHost
+	if !needsFix {
+		return serviceURL
+	}
+
+	// Replace the host with the client endpoint's (authoritative) host,
+	// preserving the service URL's port if specified.
+	servicePort := parsedService.Port()
+	if servicePort != "" {
+		parsedService.Host = clientHost + ":" + servicePort
+	} else {
+		parsedService.Host = clientHost
+		// Use client's port if the service doesn't specify one.
+		if clientPort := parsedClient.Port(); clientPort != "" {
+			parsedService.Host = clientHost + ":" + clientPort
+		}
+	}
+
+	return parsedService.String()
+}
+
+// isLoopbackHost reports whether the given host is a loopback/localhost address.
+func isLoopbackHost(host string) bool {
+	return host == "localhost" || host == "127.0.0.1" || host == "0.0.0.0" || host == "::1"
+}
+
+// fixLocalhostURL is retained for backward compatibility; delegates to
+// fixServiceURL which is a strict superset of the original behavior.
+func (c *Client) fixLocalhostURL(serviceURL string) string {
+	return c.fixServiceURL(serviceURL)
 }
 
 // Initialize discovers and initializes service endpoints.
@@ -210,19 +243,19 @@ func (c *Client) Initialize(ctx context.Context) error {
 		return fmt.Errorf("failed to get capabilities: %w", err)
 	}
 
-	// Extract service endpoints and fix any localhost addresses
-	// Some cameras incorrectly report localhost instead of their actual IP
+	// Extract service endpoints and fix incorrect addresses (localhost or stale
+	// advertised IPs after the camera roamed to a new address).
 	if capabilities.Media != nil && capabilities.Media.XAddr != "" {
-		c.mediaEndpoint = c.fixLocalhostURL(capabilities.Media.XAddr)
+		c.mediaEndpoint = c.fixServiceURL(capabilities.Media.XAddr)
 	}
 	if capabilities.PTZ != nil && capabilities.PTZ.XAddr != "" {
-		c.ptzEndpoint = c.fixLocalhostURL(capabilities.PTZ.XAddr)
+		c.ptzEndpoint = c.fixServiceURL(capabilities.PTZ.XAddr)
 	}
 	if capabilities.Imaging != nil && capabilities.Imaging.XAddr != "" {
-		c.imagingEndpoint = c.fixLocalhostURL(capabilities.Imaging.XAddr)
+		c.imagingEndpoint = c.fixServiceURL(capabilities.Imaging.XAddr)
 	}
 	if capabilities.Events != nil && capabilities.Events.XAddr != "" {
-		c.eventEndpoint = c.fixLocalhostURL(capabilities.Events.XAddr)
+		c.eventEndpoint = c.fixServiceURL(capabilities.Events.XAddr)
 	}
 
 	return nil
