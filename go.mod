@@ -1,8 +1,6 @@
-module github.com/0x524a/onvif-go
+module github.com/mickeyzzc/onvif-go
 
-go 1.24
-
-toolchain go1.24.5
+go 1.26
 
 require github.com/0x524A/rtspeek v0.0.1
 

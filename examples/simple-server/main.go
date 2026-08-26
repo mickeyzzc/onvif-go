@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/0x524a/onvif-go/server"
+	"github.com/mickeyzzc/onvif-go/server"
 )
 
 func main() {

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/0x524a/onvif-go"
-	"github.com/0x524a/onvif-go/discovery"
+	"github.com/mickeyzzc/onvif-go"
+	"github.com/mickeyzzc/onvif-go/discovery"
 )
 
 const (

@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/0x524a/onvif-go"
+	"github.com/mickeyzzc/onvif-go"
 )
 
 var (

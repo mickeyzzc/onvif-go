@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/0x524a/onvif-go"
+	"github.com/mickeyzzc/onvif-go"
 )
 
 func main() {

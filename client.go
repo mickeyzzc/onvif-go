@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0x524a/onvif-go/internal/soap"
+	"github.com/mickeyzzc/onvif-go/internal/soap"
 )
 
 // Default client configuration constants.

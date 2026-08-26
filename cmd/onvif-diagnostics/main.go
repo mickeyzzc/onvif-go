@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/0x524a/onvif-go"
-	onviftesting "github.com/0x524a/onvif-go/testing"
+	"github.com/mickeyzzc/onvif-go"
+	onviftesting "github.com/mickeyzzc/onvif-go/testing"
 )
 
 const (

@@ -2,130 +2,96 @@ version: "2"
 
 run:
   timeout: 5m
-  tests: true
+  go: "1.26"
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
 
 linters:
-  default: none
   enable:
-    - errcheck
-    - govet
     - staticcheck
-    - unused
+    - errcheck
     - ineffassign
-    - misspell
-    - unconvert
-    - unparam
+    - unused
+    - govet
     - gocritic
-    - gosec
-    - copyloopvar
-    - goconst
-    - gocyclo
-    - dupl
-    - funlen
-    - gocognit
-    - nakedret
-    - prealloc
-    - whitespace
-    - wrapcheck
-    - errname
-    - errorlint
-    - exhaustive
-    - godot
-    - err113
-    - mnd
-    - goprintffuncname
-    - nlreturn
+    - bodyclose
+    - nilnil
+    - contextcheck
     - noctx
+    - gocheckcompilerdirectives
     - nolintlint
-    - thelper
-    - tparallel
+    - errorlint
+    - misspell
+    - intrange
+    - usestdlibvars
+    - predeclared
+    - nilerr
+    - nilnesserr
     - wastedassign
+    - fatcontext
+    - perfsprint
 
-  settings:
-    errcheck:
-      check-type-assertions: true
-      check-blank: true
-    
-    gocyclo:
-      min-complexity: 15
-    
-    funlen:
-      lines: 120
-      statements: 60
-    
-    gocritic:
-      enabled-tags:
-        - diagnostic
-        - experimental
-        - opinionated
-        - performance
-        - style
-      disabled-checks:
-        - dupImport
-        - ifElseChain
-        - octalLiteral
-        - whyNoLint
-        - wrapperFunc
-    
-    godot:
-      scope: declarations
-      exclude:
-        - "^TODO:"
-        - "^FIXME:"
-    
-    misspell:
-      locale: US
+formatters:
+  enable:
+    - gofumpt
+    - goimports
 
-  exclusions:
-    generated: lax
-    presets:
-      - comments
-      - std-error-handling
-    rules:
-      - path: _test\.go
-        linters:
-          - errcheck
-          - gosec
-          - funlen
-          - gocyclo
-          - gocognit
-          - dupl
-      
-      - path: (media|device|ptz|imaging|device_security|device_additional)\.go
-        linters:
-          - dupl
-      
-      - path: cmd/
-        linters:
-          - dupl
-      
-      - path: deviceio\.go
-        linters:
-          - dupl
-      
-      - path: event\.go
-        linters:
-          - dupl
-          - gocritic
-          - staticcheck
-      
-      - path: examples/
-        linters:
-          - errcheck
-          - err113
-          - funlen
-          - gocognit
-          - gocritic
-          - gocyclo
-          - godot
-          - gosec
-          - mnd
-          - nlreturn
-          - noctx
-          - unused
-          - wrapcheck
+settings:
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+  staticcheck:
+    checks:
+      - all
+      - -QF*
+      - -ST*
+      - -SA1019  # Deprecated API usage (tracked for future migration)
+  gocritic:
+    disabled-checks:
+      - ifElseChain
+  perfsprint:
+    errorf: false      # suppress fmt.Errorf -> errors.New (behavior change)
+    err-error: false   # suppress fmt.Sprintf(err) -> err.Error() (panic risk)
+    integer-format: true
+    hex-format: true
+    string-format: true
+    bool-format: true
+    int-conversion: true
 
-output:
-  formats:
-    text:
-      path: stdout
+exclusions:
+  presets:
+    - common-false-positives
+  warn-unused: true
+  paths:
+    - testdata/
+  rules:
+    # Test files: loose checking (matches MiBeeNvr policy)
+    - path: _test\.go
+      linters: [errcheck, noctx, gocritic, contextcheck, nilnil, bodyclose]
+    # CLI entry points: context not needed at startup
+    - path: cmd/
+      linters: [noctx, contextcheck]
+    # Test-support package: non-blocking I/O by design
+    - path: testing/
+      linters: [noctx, contextcheck]
+    # errcheck: legitimate cleanup/write patterns
+    - source: 'defer .+\.Close\(\)'
+      linters: [errcheck]
+    - source: '\.Write\('
+      linters: [errcheck]
+    - source: '\.WriteString\('
+      linters: [errcheck]
+    - source: '\.Flush\('
+      linters: [errcheck]
+    - source: '\.Encode\('
+      linters: [errcheck]
+    - source: 'MkdirAll\('
+      linters: [errcheck]
+    - source: 'os\.(Remove|RemoveAll)\('
+      linters: [errcheck]
+    - source: 'filepath\.Walk(Dir)?\('
+      linters: [errcheck]
+    - source: 'fmt\.Fprintf\('
+      linters: [errcheck]

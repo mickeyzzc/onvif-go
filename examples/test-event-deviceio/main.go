@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	onvif "github.com/0x524a/onvif-go"
+	onvif "github.com/mickeyzzc/onvif-go"
 )
 
 const notAvailable = "N/A"
