@@ -10,7 +10,7 @@ import (
 const deviceNamespace = "http://www.onvif.org/ver10/device/wsdl"
 
 // GetDeviceInformation retrieves device information.
-func (c *Client) GetDeviceInformation(ctx context.Context) (*DeviceInformation, error) {
+func (s *DeviceService) GetDeviceInformation(ctx context.Context) (*DeviceInformation, error) {
 	type GetDeviceInformation struct {
 		XMLName xml.Name `xml:"tds:GetDeviceInformation"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -31,10 +31,10 @@ func (c *Client) GetDeviceInformation(ctx context.Context) (*DeviceInformation, 
 
 	var resp GetDeviceInformationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceInformation failed: %w", err)
 	}
 
@@ -50,7 +50,7 @@ func (c *Client) GetDeviceInformation(ctx context.Context) (*DeviceInformation, 
 // GetCapabilities retrieves device capabilities.
 //
 //nolint:funlen // GetCapabilities has many statements due to parsing multiple service capabilities
-func (c *Client) GetCapabilities(ctx context.Context) (*Capabilities, error) {
+func (s *DeviceService) GetCapabilities(ctx context.Context) (*Capabilities, error) {
 	type GetCapabilities struct {
 		XMLName  xml.Name `xml:"tds:GetCapabilities"`
 		Xmlns    string   `xml:"xmlns:tds,attr"`
@@ -127,10 +127,10 @@ func (c *Client) GetCapabilities(ctx context.Context) (*Capabilities, error) {
 
 	var resp GetCapabilitiesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCapabilities failed: %w", err)
 	}
 
@@ -231,7 +231,7 @@ func (c *Client) GetCapabilities(ctx context.Context) (*Capabilities, error) {
 }
 
 // SystemReboot reboots the device.
-func (c *Client) SystemReboot(ctx context.Context) (string, error) {
+func (s *DeviceService) SystemReboot(ctx context.Context) (string, error) {
 	type SystemReboot struct {
 		XMLName xml.Name `xml:"tds:SystemReboot"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -248,10 +248,10 @@ func (c *Client) SystemReboot(ctx context.Context) (string, error) {
 
 	var resp SystemRebootResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SystemReboot failed: %w", err)
 	}
 
@@ -259,7 +259,7 @@ func (c *Client) SystemReboot(ctx context.Context) (string, error) {
 }
 
 // GetSystemDateAndTime retrieves the device's system date and time.
-func (c *Client) GetSystemDateAndTime(ctx context.Context) (interface{}, error) {
+func (s *DeviceService) GetSystemDateAndTime(ctx context.Context) (interface{}, error) {
 	type GetSystemDateAndTime struct {
 		XMLName xml.Name `xml:"tds:GetSystemDateAndTime"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -271,10 +271,10 @@ func (c *Client) GetSystemDateAndTime(ctx context.Context) (interface{}, error) 
 
 	var resp interface{}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
 	}
 
@@ -282,7 +282,7 @@ func (c *Client) GetSystemDateAndTime(ctx context.Context) (interface{}, error) 
 }
 
 // GetHostname retrieves the device's hostname.
-func (c *Client) GetHostname(ctx context.Context) (*HostnameInformation, error) {
+func (s *DeviceService) GetHostname(ctx context.Context) (*HostnameInformation, error) {
 	type GetHostname struct {
 		XMLName xml.Name `xml:"tds:GetHostname"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -302,10 +302,10 @@ func (c *Client) GetHostname(ctx context.Context) (*HostnameInformation, error) 
 
 	var resp GetHostnameResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetHostname failed: %w", err)
 	}
 
@@ -316,7 +316,7 @@ func (c *Client) GetHostname(ctx context.Context) (*HostnameInformation, error) 
 }
 
 // SetHostname sets the device's hostname.
-func (c *Client) SetHostname(ctx context.Context, name string) error {
+func (s *DeviceService) SetHostname(ctx context.Context, name string) error {
 	type SetHostname struct {
 		XMLName xml.Name `xml:"tds:SetHostname"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -328,10 +328,10 @@ func (c *Client) SetHostname(ctx context.Context, name string) error {
 		Name:  name,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHostname failed: %w", err)
 	}
 
@@ -339,7 +339,7 @@ func (c *Client) SetHostname(ctx context.Context, name string) error {
 }
 
 // GetDNS retrieves DNS configuration.
-func (c *Client) GetDNS(ctx context.Context) (*DNSInformation, error) {
+func (s *DeviceService) GetDNS(ctx context.Context) (*DNSInformation, error) {
 	type GetDNS struct {
 		XMLName xml.Name `xml:"tds:GetDNS"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -367,10 +367,10 @@ func (c *Client) GetDNS(ctx context.Context) (*DNSInformation, error) {
 
 	var resp GetDNSResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDNS failed: %w", err)
 	}
 
@@ -397,7 +397,7 @@ func (c *Client) GetDNS(ctx context.Context) (*DNSInformation, error) {
 }
 
 // GetNTP retrieves NTP configuration.
-func (c *Client) GetNTP(ctx context.Context) (*NTPInformation, error) {
+func (s *DeviceService) GetNTP(ctx context.Context) (*NTPInformation, error) {
 	type GetNTP struct {
 		XMLName xml.Name `xml:"tds:GetNTP"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -426,10 +426,10 @@ func (c *Client) GetNTP(ctx context.Context) (*NTPInformation, error) {
 
 	var resp GetNTPResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNTP failed: %w", err)
 	}
 
@@ -457,7 +457,7 @@ func (c *Client) GetNTP(ctx context.Context) (*NTPInformation, error) {
 }
 
 // GetNetworkInterfaces retrieves network interface configuration.
-func (c *Client) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface, error) {
+func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface, error) {
 	type GetNetworkInterfaces struct {
 		XMLName xml.Name `xml:"tds:GetNetworkInterfaces"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -492,10 +492,10 @@ func (c *Client) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface,
 
 	var resp GetNetworkInterfacesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkInterfaces failed: %w", err)
 	}
 
@@ -534,7 +534,7 @@ func (c *Client) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface,
 }
 
 // GetScopes retrieves configured scopes.
-func (c *Client) GetScopes(ctx context.Context) ([]*Scope, error) {
+func (s *DeviceService) GetScopes(ctx context.Context) ([]*Scope, error) {
 	type GetScopes struct {
 		XMLName xml.Name `xml:"tds:GetScopes"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -554,10 +554,10 @@ func (c *Client) GetScopes(ctx context.Context) ([]*Scope, error) {
 
 	var resp GetScopesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetScopes failed: %w", err)
 	}
 
@@ -573,7 +573,7 @@ func (c *Client) GetScopes(ctx context.Context) ([]*Scope, error) {
 }
 
 // GetUsers retrieves user accounts.
-func (c *Client) GetUsers(ctx context.Context) ([]*User, error) {
+func (s *DeviceService) GetUsers(ctx context.Context) ([]*User, error) {
 	type GetUsers struct {
 		XMLName xml.Name `xml:"tds:GetUsers"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -593,10 +593,10 @@ func (c *Client) GetUsers(ctx context.Context) ([]*User, error) {
 
 	var resp GetUsersResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetUsers failed: %w", err)
 	}
 
@@ -612,7 +612,7 @@ func (c *Client) GetUsers(ctx context.Context) ([]*User, error) {
 }
 
 // CreateUsers creates new user accounts.
-func (c *Client) CreateUsers(ctx context.Context, users []*User) error {
+func (s *DeviceService) CreateUsers(ctx context.Context, users []*User) error {
 	type CreateUsers struct {
 		XMLName xml.Name `xml:"tds:CreateUsers"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -639,10 +639,10 @@ func (c *Client) CreateUsers(ctx context.Context, users []*User) error {
 		})
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("CreateUsers failed: %w", err)
 	}
 
@@ -650,7 +650,7 @@ func (c *Client) CreateUsers(ctx context.Context, users []*User) error {
 }
 
 // DeleteUsers deletes user accounts.
-func (c *Client) DeleteUsers(ctx context.Context, usernames []string) error {
+func (s *DeviceService) DeleteUsers(ctx context.Context, usernames []string) error {
 	type DeleteUsers struct {
 		XMLName  xml.Name `xml:"tds:DeleteUsers"`
 		Xmlns    string   `xml:"xmlns:tds,attr"`
@@ -662,10 +662,10 @@ func (c *Client) DeleteUsers(ctx context.Context, usernames []string) error {
 		Username: usernames,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteUsers failed: %w", err)
 	}
 
@@ -673,7 +673,7 @@ func (c *Client) DeleteUsers(ctx context.Context, usernames []string) error {
 }
 
 // SetUser modifies an existing user account.
-func (c *Client) SetUser(ctx context.Context, user *User) error {
+func (s *DeviceService) SetUser(ctx context.Context, user *User) error {
 	type SetUser struct {
 		XMLName xml.Name `xml:"tds:SetUser"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -693,10 +693,10 @@ func (c *Client) SetUser(ctx context.Context, user *User) error {
 	}
 	req.User.UserLevel = user.UserLevel
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetUser failed: %w", err)
 	}
 
@@ -704,7 +704,7 @@ func (c *Client) SetUser(ctx context.Context, user *User) error {
 }
 
 // GetServices returns information about services on the device.
-func (c *Client) GetServices(ctx context.Context, includeCapability bool) ([]*Service, error) {
+func (s *DeviceService) GetServices(ctx context.Context, includeCapability bool) ([]*Service, error) {
 	type GetServices struct {
 		XMLName           xml.Name `xml:"tds:GetServices"`
 		Xmlns             string   `xml:"xmlns:tds,attr"`
@@ -731,10 +731,10 @@ func (c *Client) GetServices(ctx context.Context, includeCapability bool) ([]*Se
 
 	var resp GetServicesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServices failed: %w", err)
 	}
 
@@ -755,7 +755,7 @@ func (c *Client) GetServices(ctx context.Context, includeCapability bool) ([]*Se
 }
 
 // GetServiceCapabilities returns the capabilities of the device service.
-func (c *Client) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapabilities, error) {
+func (s *DeviceService) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapabilities, error) {
 	type GetServiceCapabilities struct {
 		XMLName xml.Name `xml:"tds:GetServiceCapabilities"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -794,10 +794,10 @@ func (c *Client) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapa
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServiceCapabilities failed: %w", err)
 	}
 
@@ -826,7 +826,7 @@ func (c *Client) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapa
 }
 
 // GetDiscoveryMode gets the discovery mode of a device.
-func (c *Client) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
+func (s *DeviceService) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 	type GetDiscoveryMode struct {
 		XMLName xml.Name `xml:"tds:GetDiscoveryMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -843,10 +843,10 @@ func (c *Client) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 
 	var resp GetDiscoveryModeResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetDiscoveryMode failed: %w", err)
 	}
 
@@ -854,7 +854,7 @@ func (c *Client) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 }
 
 // SetDiscoveryMode sets the discovery mode of a device.
-func (c *Client) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
+func (s *DeviceService) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
 	type SetDiscoveryMode struct {
 		XMLName       xml.Name      `xml:"tds:SetDiscoveryMode"`
 		Xmlns         string        `xml:"xmlns:tds,attr"`
@@ -866,10 +866,10 @@ func (c *Client) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error
 		DiscoveryMode: mode,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDiscoveryMode failed: %w", err)
 	}
 
@@ -877,7 +877,7 @@ func (c *Client) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error
 }
 
 // GetRemoteDiscoveryMode gets the remote discovery mode.
-func (c *Client) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
+func (s *DeviceService) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 	type GetRemoteDiscoveryMode struct {
 		XMLName xml.Name `xml:"tds:GetRemoteDiscoveryMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -894,10 +894,10 @@ func (c *Client) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, err
 
 	var resp GetRemoteDiscoveryModeResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetRemoteDiscoveryMode failed: %w", err)
 	}
 
@@ -905,7 +905,7 @@ func (c *Client) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, err
 }
 
 // SetRemoteDiscoveryMode sets the remote discovery mode.
-func (c *Client) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
+func (s *DeviceService) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
 	type SetRemoteDiscoveryMode struct {
 		XMLName             xml.Name      `xml:"tds:SetRemoteDiscoveryMode"`
 		Xmlns               string        `xml:"xmlns:tds,attr"`
@@ -917,10 +917,10 @@ func (c *Client) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode)
 		RemoteDiscoveryMode: mode,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteDiscoveryMode failed: %w", err)
 	}
 
@@ -928,7 +928,7 @@ func (c *Client) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode)
 }
 
 // GetEndpointReference gets the endpoint reference GUID.
-func (c *Client) GetEndpointReference(ctx context.Context) (string, error) {
+func (s *DeviceService) GetEndpointReference(ctx context.Context) (string, error) {
 	type GetEndpointReference struct {
 		XMLName xml.Name `xml:"tds:GetEndpointReference"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -945,10 +945,10 @@ func (c *Client) GetEndpointReference(ctx context.Context) (string, error) {
 
 	var resp GetEndpointReferenceResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetEndpointReference failed: %w", err)
 	}
 
@@ -956,7 +956,7 @@ func (c *Client) GetEndpointReference(ctx context.Context) (string, error) {
 }
 
 // GetNetworkProtocols gets defined network protocols from a device.
-func (c *Client) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, error) {
+func (s *DeviceService) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, error) {
 	type GetNetworkProtocols struct {
 		XMLName xml.Name `xml:"tds:GetNetworkProtocols"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -977,10 +977,10 @@ func (c *Client) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, e
 
 	var resp GetNetworkProtocolsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkProtocols failed: %w", err)
 	}
 
@@ -997,7 +997,7 @@ func (c *Client) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, e
 }
 
 // SetNetworkProtocols configures defined network protocols on a device.
-func (c *Client) SetNetworkProtocols(ctx context.Context, protocols []*NetworkProtocol) error {
+func (s *DeviceService) SetNetworkProtocols(ctx context.Context, protocols []*NetworkProtocol) error {
 	type SetNetworkProtocols struct {
 		XMLName          xml.Name `xml:"tds:SetNetworkProtocols"`
 		Xmlns            string   `xml:"xmlns:tds,attr"`
@@ -1024,10 +1024,10 @@ func (c *Client) SetNetworkProtocols(ctx context.Context, protocols []*NetworkPr
 		})
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkProtocols failed: %w", err)
 	}
 
@@ -1035,7 +1035,7 @@ func (c *Client) SetNetworkProtocols(ctx context.Context, protocols []*NetworkPr
 }
 
 // GetNetworkDefaultGateway gets the default gateway settings from a device.
-func (c *Client) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway, error) {
+func (s *DeviceService) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway, error) {
 	type GetNetworkDefaultGateway struct {
 		XMLName xml.Name `xml:"tds:GetNetworkDefaultGateway"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -1055,10 +1055,10 @@ func (c *Client) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway,
 
 	var resp GetNetworkDefaultGatewayResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkDefaultGateway failed: %w", err)
 	}
 
@@ -1069,7 +1069,7 @@ func (c *Client) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway,
 }
 
 // SetNetworkDefaultGateway sets the default gateway settings on a device.
-func (c *Client) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkGateway) error {
+func (s *DeviceService) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkGateway) error {
 	type SetNetworkDefaultGateway struct {
 		XMLName     xml.Name `xml:"tds:SetNetworkDefaultGateway"`
 		Xmlns       string   `xml:"xmlns:tds,attr"`
@@ -1083,10 +1083,10 @@ func (c *Client) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkG
 		IPv6Address: gateway.IPv6Address,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkDefaultGateway failed: %w", err)
 	}
 

@@ -7,7 +7,7 @@ import (
 )
 
 // SetDNS sets the DNS settings on a device.
-func (c *Client) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []string, dnsManual []IPAddress) error {
+func (s *DeviceService) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []string, dnsManual []IPAddress) error {
 	type SetDNS struct {
 		XMLName      xml.Name `xml:"tds:SetDNS"`
 		Xmlns        string   `xml:"xmlns:tds,attr"`
@@ -38,10 +38,10 @@ func (c *Client) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []strin
 		})
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDNS failed: %w", err)
 	}
 
@@ -49,7 +49,7 @@ func (c *Client) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []strin
 }
 
 // SetNTP sets the NTP settings on a device.
-func (c *Client) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkHost) error {
+func (s *DeviceService) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkHost) error {
 	type SetNTP struct {
 		XMLName   xml.Name `xml:"tds:SetNTP"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -81,10 +81,10 @@ func (c *Client) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkH
 		})
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNTP failed: %w", err)
 	}
 
@@ -92,7 +92,7 @@ func (c *Client) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkH
 }
 
 // SetHostnameFromDHCP controls whether the hostname is set manually or retrieved via DHCP.
-func (c *Client) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, error) {
+func (s *DeviceService) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, error) {
 	type SetHostnameFromDHCP struct {
 		XMLName  xml.Name `xml:"tds:SetHostnameFromDHCP"`
 		Xmlns    string   `xml:"xmlns:tds,attr"`
@@ -111,10 +111,10 @@ func (c *Client) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, 
 
 	var resp SetHostnameFromDHCPResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return false, fmt.Errorf("SetHostnameFromDHCP failed: %w", err)
 	}
 
@@ -122,7 +122,7 @@ func (c *Client) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, 
 }
 
 // FixedGetSystemDateAndTime retrieves the device's system date and time with proper typing.
-func (c *Client) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime, error) {
+func (s *DeviceService) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime, error) {
 	type GetSystemDateAndTime struct {
 		XMLName xml.Name `xml:"tds:GetSystemDateAndTime"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -169,10 +169,10 @@ func (c *Client) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime
 
 	var resp GetSystemDateAndTimeResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
 	}
 
@@ -210,7 +210,7 @@ func (c *Client) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime
 }
 
 // SetSystemDateAndTime sets the device system date and time.
-func (c *Client) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateTime) error {
+func (s *DeviceService) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateTime) error {
 	type SetSystemDateAndTime struct {
 		XMLName         xml.Name `xml:"tds:SetSystemDateAndTime"`
 		Xmlns           string   `xml:"xmlns:tds,attr"`
@@ -268,10 +268,10 @@ func (c *Client) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateT
 		req.UTCDateTime.Date.Day = dateTime.UTCDateTime.Date.Day
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSystemDateAndTime failed: %w", err)
 	}
 
@@ -279,7 +279,7 @@ func (c *Client) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateT
 }
 
 // AddScopes adds new configurable scope parameters to a device.
-func (c *Client) AddScopes(ctx context.Context, scopeItems []string) error {
+func (s *DeviceService) AddScopes(ctx context.Context, scopeItems []string) error {
 	type AddScopes struct {
 		XMLName   xml.Name `xml:"tds:AddScopes"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -291,10 +291,10 @@ func (c *Client) AddScopes(ctx context.Context, scopeItems []string) error {
 		ScopeItem: scopeItems,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddScopes failed: %w", err)
 	}
 
@@ -302,7 +302,7 @@ func (c *Client) AddScopes(ctx context.Context, scopeItems []string) error {
 }
 
 // RemoveScopes deletes scope-configurable scope parameters from a device.
-func (c *Client) RemoveScopes(ctx context.Context, scopeItems []string) ([]string, error) {
+func (s *DeviceService) RemoveScopes(ctx context.Context, scopeItems []string) ([]string, error) {
 	type RemoveScopes struct {
 		XMLName   xml.Name `xml:"tds:RemoveScopes"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -321,10 +321,10 @@ func (c *Client) RemoveScopes(ctx context.Context, scopeItems []string) ([]strin
 
 	var resp RemoveScopesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("RemoveScopes failed: %w", err)
 	}
 
@@ -332,7 +332,7 @@ func (c *Client) RemoveScopes(ctx context.Context, scopeItems []string) ([]strin
 }
 
 // SetScopes sets the scope parameters of a device.
-func (c *Client) SetScopes(ctx context.Context, scopes []string) error {
+func (s *DeviceService) SetScopes(ctx context.Context, scopes []string) error {
 	type SetScopes struct {
 		XMLName xml.Name `xml:"tds:SetScopes"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -344,10 +344,10 @@ func (c *Client) SetScopes(ctx context.Context, scopes []string) error {
 		Scopes: scopes,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetScopes failed: %w", err)
 	}
 
@@ -355,7 +355,7 @@ func (c *Client) SetScopes(ctx context.Context, scopes []string) error {
 }
 
 // GetRelayOutputs gets a list of all available relay outputs and their settings.
-func (c *Client) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
+func (s *DeviceService) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
 	type GetRelayOutputs struct {
 		XMLName xml.Name `xml:"tds:GetRelayOutputs"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -379,10 +379,10 @@ func (c *Client) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
 
 	var resp GetRelayOutputsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRelayOutputs failed: %w", err)
 	}
 
@@ -402,7 +402,7 @@ func (c *Client) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
 }
 
 // SetRelayOutputSettings sets the settings of a relay output.
-func (c *Client) SetRelayOutputSettings(ctx context.Context, token string, settings *RelayOutputSettings) error {
+func (s *DeviceService) SetRelayOutputSettings(ctx context.Context, token string, settings *RelayOutputSettings) error {
 	type SetRelayOutputSettings struct {
 		XMLName          xml.Name `xml:"tds:SetRelayOutputSettings"`
 		Xmlns            string   `xml:"xmlns:tds,attr"`
@@ -422,10 +422,10 @@ func (c *Client) SetRelayOutputSettings(ctx context.Context, token string, setti
 	req.Properties.IdleState = string(settings.IdleState)
 	// DelayTime would need duration formatting
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRelayOutputSettings failed: %w", err)
 	}
 
@@ -433,7 +433,7 @@ func (c *Client) SetRelayOutputSettings(ctx context.Context, token string, setti
 }
 
 // SetRelayOutputState sets the state of a relay output.
-func (c *Client) SetRelayOutputState(ctx context.Context, token string, state RelayLogicalState) error {
+func (s *DeviceService) SetRelayOutputState(ctx context.Context, token string, state RelayLogicalState) error {
 	type SetRelayOutputState struct {
 		XMLName          xml.Name          `xml:"tds:SetRelayOutputState"`
 		Xmlns            string            `xml:"xmlns:tds,attr"`
@@ -447,10 +447,10 @@ func (c *Client) SetRelayOutputState(ctx context.Context, token string, state Re
 		LogicalState:     state,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRelayOutputState failed: %w", err)
 	}
 
@@ -458,7 +458,7 @@ func (c *Client) SetRelayOutputState(ctx context.Context, token string, state Re
 }
 
 // SendAuxiliaryCommand sends an auxiliary command to the device.
-func (c *Client) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData) (AuxiliaryData, error) {
+func (s *DeviceService) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData) (AuxiliaryData, error) {
 	type SendAuxiliaryCommand struct {
 		XMLName          xml.Name      `xml:"tds:SendAuxiliaryCommand"`
 		Xmlns            string        `xml:"xmlns:tds,attr"`
@@ -477,10 +477,10 @@ func (c *Client) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData
 
 	var resp SendAuxiliaryCommandResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SendAuxiliaryCommand failed: %w", err)
 	}
 
@@ -488,7 +488,7 @@ func (c *Client) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData
 }
 
 // GetSystemLog gets a system log from the device.
-func (c *Client) GetSystemLog(ctx context.Context, logType SystemLogType) (*SystemLog, error) {
+func (s *DeviceService) GetSystemLog(ctx context.Context, logType SystemLogType) (*SystemLog, error) {
 	type GetSystemLog struct {
 		XMLName xml.Name      `xml:"tds:GetSystemLog"`
 		Xmlns   string        `xml:"xmlns:tds,attr"`
@@ -512,10 +512,10 @@ func (c *Client) GetSystemLog(ctx context.Context, logType SystemLogType) (*Syst
 
 	var resp GetSystemLogResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemLog failed: %w", err)
 	}
 
@@ -533,7 +533,7 @@ func (c *Client) GetSystemLog(ctx context.Context, logType SystemLogType) (*Syst
 }
 
 // GetSystemBackup retrieves system backup configuration files from a device.
-func (c *Client) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
+func (s *DeviceService) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
 	type GetSystemBackup struct {
 		XMLName xml.Name `xml:"tds:GetSystemBackup"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -555,10 +555,10 @@ func (c *Client) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
 
 	var resp GetSystemBackupResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemBackup failed: %w", err)
 	}
 
@@ -576,7 +576,7 @@ func (c *Client) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
 }
 
 // RestoreSystem restores the system backup configuration files.
-func (c *Client) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) error {
+func (s *DeviceService) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) error {
 	type RestoreSystem struct {
 		XMLName     xml.Name `xml:"tds:RestoreSystem"`
 		Xmlns       string   `xml:"xmlns:tds,attr"`
@@ -608,10 +608,10 @@ func (c *Client) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) e
 		})
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RestoreSystem failed: %w", err)
 	}
 
@@ -619,7 +619,7 @@ func (c *Client) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) e
 }
 
 // GetSystemUris retrieves URIs from which system information may be downloaded.
-func (c *Client) GetSystemUris(
+func (s *DeviceService) GetSystemUris(
 	ctx context.Context,
 ) (uriList *SystemLogURIList, systemBackupURI, systemLogURI string, err error) {
 	type GetSystemUris struct {
@@ -645,10 +645,10 @@ func (c *Client) GetSystemUris(
 
 	var resp GetSystemUrisResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, "", "", fmt.Errorf("GetSystemUris failed: %w", err)
 	}
 
@@ -667,7 +667,7 @@ func (c *Client) GetSystemUris(
 }
 
 // GetSystemSupportInformation gets arbitrary device diagnostics information.
-func (c *Client) GetSystemSupportInformation(ctx context.Context) (*SupportInformation, error) {
+func (s *DeviceService) GetSystemSupportInformation(ctx context.Context) (*SupportInformation, error) {
 	type GetSystemSupportInformation struct {
 		XMLName xml.Name `xml:"tds:GetSystemSupportInformation"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -689,10 +689,10 @@ func (c *Client) GetSystemSupportInformation(ctx context.Context) (*SupportInfor
 
 	var resp GetSystemSupportInformationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemSupportInformation failed: %w", err)
 	}
 
@@ -710,7 +710,7 @@ func (c *Client) GetSystemSupportInformation(ctx context.Context) (*SupportInfor
 }
 
 // SetSystemFactoryDefault reloads the parameters on the device to their factory default values.
-func (c *Client) SetSystemFactoryDefault(ctx context.Context, factoryDefault FactoryDefaultType) error {
+func (s *DeviceService) SetSystemFactoryDefault(ctx context.Context, factoryDefault FactoryDefaultType) error {
 	type SetSystemFactoryDefault struct {
 		XMLName        xml.Name           `xml:"tds:SetSystemFactoryDefault"`
 		Xmlns          string             `xml:"xmlns:tds,attr"`
@@ -722,10 +722,10 @@ func (c *Client) SetSystemFactoryDefault(ctx context.Context, factoryDefault Fac
 		FactoryDefault: factoryDefault,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSystemFactoryDefault failed: %w", err)
 	}
 
@@ -733,7 +733,7 @@ func (c *Client) SetSystemFactoryDefault(ctx context.Context, factoryDefault Fac
 }
 
 // StartFirmwareUpgrade initiates a firmware upgrade using the HTTP POST mechanism.
-func (c *Client) StartFirmwareUpgrade(
+func (s *DeviceService) StartFirmwareUpgrade(
 	ctx context.Context,
 ) (uploadURI, uploadDelay, expectedDownTime string, err error) {
 	type StartFirmwareUpgrade struct {
@@ -754,10 +754,10 @@ func (c *Client) StartFirmwareUpgrade(
 
 	var resp StartFirmwareUpgradeResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", "", "", fmt.Errorf("StartFirmwareUpgrade failed: %w", err)
 	}
 
@@ -765,7 +765,7 @@ func (c *Client) StartFirmwareUpgrade(
 }
 
 // StartSystemRestore initiates a system restore from backed up configuration data.
-func (c *Client) StartSystemRestore(ctx context.Context) (uploadURI, expectedDownTime string, err error) {
+func (s *DeviceService) StartSystemRestore(ctx context.Context) (uploadURI, expectedDownTime string, err error) {
 	type StartSystemRestore struct {
 		XMLName xml.Name `xml:"tds:StartSystemRestore"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -783,10 +783,10 @@ func (c *Client) StartSystemRestore(ctx context.Context) (uploadURI, expectedDow
 
 	var resp StartSystemRestoreResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", "", fmt.Errorf("StartSystemRestore failed: %w", err)
 	}
 

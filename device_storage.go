@@ -7,7 +7,7 @@ import (
 )
 
 // GetStorageConfigurations retrieves storage configurations. ONVIF Specification: GetStorageConfigurations operation.
-func (c *Client) GetStorageConfigurations(ctx context.Context) ([]*StorageConfiguration, error) {
+func (s *DeviceService) GetStorageConfigurations(ctx context.Context) ([]*StorageConfiguration, error) {
 	type GetStorageConfigurationsBody struct {
 		XMLName xml.Name `xml:"tds:GetStorageConfigurations"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -23,10 +23,10 @@ func (c *Client) GetStorageConfigurations(ctx context.Context) ([]*StorageConfig
 	}
 	var response GetStorageConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfigurations failed: %w", err)
 	}
 
@@ -34,7 +34,7 @@ func (c *Client) GetStorageConfigurations(ctx context.Context) ([]*StorageConfig
 }
 
 // GetStorageConfiguration retrieves a storage configuration. ONVIF Specification: GetStorageConfiguration operation.
-func (c *Client) GetStorageConfiguration(ctx context.Context, token string) (*StorageConfiguration, error) {
+func (s *DeviceService) GetStorageConfiguration(ctx context.Context, token string) (*StorageConfiguration, error) {
 	type GetStorageConfigurationBody struct {
 		XMLName xml.Name `xml:"tds:GetStorageConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -52,10 +52,10 @@ func (c *Client) GetStorageConfiguration(ctx context.Context, token string) (*St
 	}
 	var response GetStorageConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfiguration failed: %w", err)
 	}
 
@@ -64,7 +64,7 @@ func (c *Client) GetStorageConfiguration(ctx context.Context, token string) (*St
 
 // CreateStorageConfiguration creates a storage configuration.
 // ONVIF Specification: CreateStorageConfiguration operation.
-func (c *Client) CreateStorageConfiguration(ctx context.Context, config *StorageConfiguration) (string, error) {
+func (s *DeviceService) CreateStorageConfiguration(ctx context.Context, config *StorageConfiguration) (string, error) {
 	type CreateStorageConfigurationBody struct {
 		XMLName              xml.Name              `xml:"tds:CreateStorageConfiguration"`
 		Xmlns                string                `xml:"xmlns:tds,attr"`
@@ -82,10 +82,10 @@ func (c *Client) CreateStorageConfiguration(ctx context.Context, config *Storage
 	}
 	var response CreateStorageConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return "", fmt.Errorf("CreateStorageConfiguration failed: %w", err)
 	}
 
@@ -93,7 +93,7 @@ func (c *Client) CreateStorageConfiguration(ctx context.Context, config *Storage
 }
 
 // SetStorageConfiguration sets a storage configuration. ONVIF Specification: SetStorageConfiguration operation.
-func (c *Client) SetStorageConfiguration(ctx context.Context, config *StorageConfiguration) error {
+func (s *DeviceService) SetStorageConfiguration(ctx context.Context, config *StorageConfiguration) error {
 	type SetStorageConfigurationBody struct {
 		XMLName              xml.Name              `xml:"tds:SetStorageConfiguration"`
 		Xmlns                string                `xml:"xmlns:tds,attr"`
@@ -110,10 +110,10 @@ func (c *Client) SetStorageConfiguration(ctx context.Context, config *StorageCon
 	}
 	var response SetStorageConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetStorageConfiguration failed: %w", err)
 	}
 
@@ -122,7 +122,7 @@ func (c *Client) SetStorageConfiguration(ctx context.Context, config *StorageCon
 
 // DeleteStorageConfiguration deletes a storage configuration.
 // ONVIF Specification: DeleteStorageConfiguration operation.
-func (c *Client) DeleteStorageConfiguration(ctx context.Context, token string) error {
+func (s *DeviceService) DeleteStorageConfiguration(ctx context.Context, token string) error {
 	type DeleteStorageConfigurationBody struct {
 		XMLName xml.Name `xml:"tds:DeleteStorageConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -139,10 +139,10 @@ func (c *Client) DeleteStorageConfiguration(ctx context.Context, token string) e
 	}
 	var response DeleteStorageConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteStorageConfiguration failed: %w", err)
 	}
 
@@ -150,7 +150,7 @@ func (c *Client) DeleteStorageConfiguration(ctx context.Context, token string) e
 }
 
 // SetHashingAlgorithm sets the hashing algorithm. ONVIF Specification: SetHashingAlgorithm operation.
-func (c *Client) SetHashingAlgorithm(ctx context.Context, algorithm string) error {
+func (s *DeviceService) SetHashingAlgorithm(ctx context.Context, algorithm string) error {
 	type SetHashingAlgorithmBody struct {
 		XMLName   xml.Name `xml:"tds:SetHashingAlgorithm"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -167,10 +167,10 @@ func (c *Client) SetHashingAlgorithm(ctx context.Context, algorithm string) erro
 	}
 	var response SetHashingAlgorithmResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetHashingAlgorithm failed: %w", err)
 	}
 

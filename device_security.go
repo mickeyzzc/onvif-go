@@ -56,14 +56,14 @@ func buildIPAddressFilterRequest(filter *IPAddressFilter) ipAddressFilterRequest
 }
 
 // newSOAPClient creates a SOAP client with the current client credentials.
-func (c *Client) newSOAPClient() *soap.Client {
-	username, password := c.GetCredentials()
+func (s *SecurityService) newSOAPClient() *soap.Client {
+	username, password := s.client.GetCredentials()
 
-	return c.newSoapClient(username, password)
+	return s.client.newSoapClient(username, password)
 }
 
 // GetRemoteUser returns the configured remote user.
-func (c *Client) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
+func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
 	type getRemoteUserRequest struct {
 		XMLName xml.Name `xml:"tds:GetRemoteUser"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -83,7 +83,7 @@ func (c *Client) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
 	}
 
 	var resp getRemoteUserResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRemoteUser failed: %w", err)
 	}
 
@@ -99,7 +99,7 @@ func (c *Client) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
 }
 
 // SetRemoteUser sets the remote user.
-func (c *Client) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) error {
+func (s *SecurityService) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) error {
 	type remoteUserXML struct {
 		Username           string `xml:"tds:Username"`
 		Password           string `xml:"tds:Password,omitempty"`
@@ -124,7 +124,7 @@ func (c *Client) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) erro
 		}
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteUser failed: %w", err)
 	}
 
@@ -132,7 +132,7 @@ func (c *Client) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) erro
 }
 
 // GetIPAddressFilter gets the IP address filter settings from a device.
-func (c *Client) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, error) {
+func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, error) {
 	type getIPAddressFilterRequest struct {
 		XMLName xml.Name `xml:"tds:GetIPAddressFilter"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -157,7 +157,7 @@ func (c *Client) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, erro
 	}
 
 	var resp getIPAddressFilterResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetIPAddressFilter failed: %w", err)
 	}
 
@@ -184,7 +184,7 @@ func (c *Client) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, erro
 }
 
 // SetIPAddressFilter sets the IP address filter settings on a device.
-func (c *Client) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+func (s *SecurityService) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
 	type setIPAddressFilterRequest struct {
 		XMLName         xml.Name               `xml:"tds:SetIPAddressFilter"`
 		Xmlns           string                 `xml:"xmlns:tds,attr"`
@@ -196,7 +196,7 @@ func (c *Client) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetIPAddressFilter failed: %w", err)
 	}
 
@@ -204,7 +204,7 @@ func (c *Client) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter
 }
 
 // AddIPAddressFilter adds an IP filter address to a device.
-func (c *Client) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+func (s *SecurityService) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
 	type addIPAddressFilterRequest struct {
 		XMLName         xml.Name               `xml:"tds:AddIPAddressFilter"`
 		Xmlns           string                 `xml:"xmlns:tds,attr"`
@@ -216,7 +216,7 @@ func (c *Client) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddIPAddressFilter failed: %w", err)
 	}
 
@@ -224,7 +224,7 @@ func (c *Client) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter
 }
 
 // RemoveIPAddressFilter deletes an IP filter address from a device.
-func (c *Client) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+func (s *SecurityService) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
 	type removeIPAddressFilterRequest struct {
 		XMLName         xml.Name               `xml:"tds:RemoveIPAddressFilter"`
 		Xmlns           string                 `xml:"xmlns:tds,attr"`
@@ -236,7 +236,7 @@ func (c *Client) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFil
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveIPAddressFilter failed: %w", err)
 	}
 
@@ -244,7 +244,7 @@ func (c *Client) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFil
 }
 
 // GetZeroConfiguration gets the zero-configuration from a device.
-func (c *Client) GetZeroConfiguration(ctx context.Context) (*NetworkZeroConfiguration, error) {
+func (s *SecurityService) GetZeroConfiguration(ctx context.Context) (*NetworkZeroConfiguration, error) {
 	type getZeroConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetZeroConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -264,7 +264,7 @@ func (c *Client) GetZeroConfiguration(ctx context.Context) (*NetworkZeroConfigur
 	}
 
 	var resp getZeroConfigurationResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetZeroConfiguration failed: %w", err)
 	}
 
@@ -276,7 +276,7 @@ func (c *Client) GetZeroConfiguration(ctx context.Context) (*NetworkZeroConfigur
 }
 
 // SetZeroConfiguration sets the zero-configuration.
-func (c *Client) SetZeroConfiguration(ctx context.Context, interfaceToken string, enabled bool) error {
+func (s *SecurityService) SetZeroConfiguration(ctx context.Context, interfaceToken string, enabled bool) error {
 	type setZeroConfigurationRequest struct {
 		XMLName        xml.Name `xml:"tds:SetZeroConfiguration"`
 		Xmlns          string   `xml:"xmlns:tds,attr"`
@@ -290,7 +290,7 @@ func (c *Client) SetZeroConfiguration(ctx context.Context, interfaceToken string
 		Enabled:        enabled,
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetZeroConfiguration failed: %w", err)
 	}
 
@@ -298,7 +298,7 @@ func (c *Client) SetZeroConfiguration(ctx context.Context, interfaceToken string
 }
 
 // GetDynamicDNS gets the dynamic DNS settings from a device.
-func (c *Client) GetDynamicDNS(ctx context.Context) (*DynamicDNSInformation, error) {
+func (s *SecurityService) GetDynamicDNS(ctx context.Context) (*DynamicDNSInformation, error) {
 	type getDynamicDNSRequest struct {
 		XMLName xml.Name `xml:"tds:GetDynamicDNS"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -318,7 +318,7 @@ func (c *Client) GetDynamicDNS(ctx context.Context) (*DynamicDNSInformation, err
 	}
 
 	var resp getDynamicDNSResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDynamicDNS failed: %w", err)
 	}
 
@@ -330,7 +330,7 @@ func (c *Client) GetDynamicDNS(ctx context.Context) (*DynamicDNSInformation, err
 }
 
 // SetDynamicDNS sets the dynamic DNS settings on a device.
-func (c *Client) SetDynamicDNS(ctx context.Context, dnsType DynamicDNSType, name string) error {
+func (s *SecurityService) SetDynamicDNS(ctx context.Context, dnsType DynamicDNSType, name string) error {
 	type setDynamicDNSRequest struct {
 		XMLName xml.Name       `xml:"tds:SetDynamicDNS"`
 		Xmlns   string         `xml:"xmlns:tds,attr"`
@@ -344,7 +344,7 @@ func (c *Client) SetDynamicDNS(ctx context.Context, dnsType DynamicDNSType, name
 		Name:  name,
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDynamicDNS failed: %w", err)
 	}
 
@@ -352,7 +352,7 @@ func (c *Client) SetDynamicDNS(ctx context.Context, dnsType DynamicDNSType, name
 }
 
 // GetPasswordComplexityConfiguration retrieves the current password complexity configuration settings.
-func (c *Client) GetPasswordComplexityConfiguration(ctx context.Context) (*PasswordComplexityConfiguration, error) {
+func (s *SecurityService) GetPasswordComplexityConfiguration(ctx context.Context) (*PasswordComplexityConfiguration, error) {
 	type getPasswordComplexityConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetPasswordComplexityConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -373,7 +373,7 @@ func (c *Client) GetPasswordComplexityConfiguration(ctx context.Context) (*Passw
 	}
 
 	var resp getPasswordComplexityConfigurationResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPasswordComplexityConfiguration failed: %w", err)
 	}
 
@@ -388,7 +388,7 @@ func (c *Client) GetPasswordComplexityConfiguration(ctx context.Context) (*Passw
 }
 
 // SetPasswordComplexityConfiguration allows setting of the password complexity configuration.
-func (c *Client) SetPasswordComplexityConfiguration(
+func (s *SecurityService) SetPasswordComplexityConfiguration(
 	ctx context.Context,
 	config *PasswordComplexityConfiguration,
 ) error {
@@ -413,7 +413,7 @@ func (c *Client) SetPasswordComplexityConfiguration(
 		PolicyConfigurationLocked: config.PolicyConfigurationLocked,
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetPasswordComplexityConfiguration failed: %w", err)
 	}
 
@@ -421,7 +421,7 @@ func (c *Client) SetPasswordComplexityConfiguration(
 }
 
 // GetPasswordHistoryConfiguration retrieves the current password history configuration settings.
-func (c *Client) GetPasswordHistoryConfiguration(ctx context.Context) (*PasswordHistoryConfiguration, error) {
+func (s *SecurityService) GetPasswordHistoryConfiguration(ctx context.Context) (*PasswordHistoryConfiguration, error) {
 	type getPasswordHistoryConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetPasswordHistoryConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -438,7 +438,7 @@ func (c *Client) GetPasswordHistoryConfiguration(ctx context.Context) (*Password
 	}
 
 	var resp getPasswordHistoryConfigurationResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPasswordHistoryConfiguration failed: %w", err)
 	}
 
@@ -449,7 +449,7 @@ func (c *Client) GetPasswordHistoryConfiguration(ctx context.Context) (*Password
 }
 
 // SetPasswordHistoryConfiguration allows setting of the password history configuration.
-func (c *Client) SetPasswordHistoryConfiguration(ctx context.Context, config *PasswordHistoryConfiguration) error {
+func (s *SecurityService) SetPasswordHistoryConfiguration(ctx context.Context, config *PasswordHistoryConfiguration) error {
 	type setPasswordHistoryConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:SetPasswordHistoryConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -463,7 +463,7 @@ func (c *Client) SetPasswordHistoryConfiguration(ctx context.Context, config *Pa
 		Length:  config.Length,
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetPasswordHistoryConfiguration failed: %w", err)
 	}
 
@@ -471,7 +471,7 @@ func (c *Client) SetPasswordHistoryConfiguration(ctx context.Context, config *Pa
 }
 
 // GetAuthFailureWarningConfiguration retrieves the current authentication failure warning configuration.
-func (c *Client) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthFailureWarningConfiguration, error) {
+func (s *SecurityService) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthFailureWarningConfiguration, error) {
 	type getAuthFailureWarningConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetAuthFailureWarningConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -489,7 +489,7 @@ func (c *Client) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthF
 	}
 
 	var resp getAuthFailureWarningConfigurationResponse
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, &resp); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAuthFailureWarningConfiguration failed: %w", err)
 	}
 
@@ -501,7 +501,7 @@ func (c *Client) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthF
 }
 
 // SetAuthFailureWarningConfiguration allows setting of the authentication failure warning configuration.
-func (c *Client) SetAuthFailureWarningConfiguration(
+func (s *SecurityService) SetAuthFailureWarningConfiguration(
 	ctx context.Context,
 	config *AuthFailureWarningConfiguration,
 ) error {
@@ -520,7 +520,7 @@ func (c *Client) SetAuthFailureWarningConfiguration(
 		MaxAuthFailures: config.MaxAuthFailures,
 	}
 
-	if err := c.newSOAPClient().Call(ctx, c.endpoint, "", req, nil); err != nil {
+	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAuthFailureWarningConfiguration failed: %w", err)
 	}
 

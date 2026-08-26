@@ -334,3 +334,377 @@ func (c *Client) AddAudioDecoderConfiguration(ctx context.Context, profileToken,
 func (c *Client) RemoveAudioDecoderConfiguration(ctx context.Context, profileToken string) error {
 	return c.Media().RemoveAudioDecoderConfiguration(ctx, profileToken)
 }
+
+// --- transitional delegators: DeviceService ---
+func (c *Client) GetDeviceInformation(ctx context.Context) (*DeviceInformation, error) {
+	return c.Device().GetDeviceInformation(ctx)
+}
+
+func (c *Client) GetCapabilities(ctx context.Context) (*Capabilities, error) {
+	return c.Device().GetCapabilities(ctx)
+}
+
+func (c *Client) SystemReboot(ctx context.Context) (string, error) {
+	return c.Device().SystemReboot(ctx)
+}
+
+func (c *Client) GetSystemDateAndTime(ctx context.Context) (interface{}, error) {
+	return c.Device().GetSystemDateAndTime(ctx)
+}
+
+func (c *Client) GetHostname(ctx context.Context) (*HostnameInformation, error) {
+	return c.Device().GetHostname(ctx)
+}
+
+func (c *Client) SetHostname(ctx context.Context, name string) error {
+	return c.Device().SetHostname(ctx, name)
+}
+
+func (c *Client) GetDNS(ctx context.Context) (*DNSInformation, error) { return c.Device().GetDNS(ctx) }
+
+func (c *Client) GetNTP(ctx context.Context) (*NTPInformation, error) { return c.Device().GetNTP(ctx) }
+
+func (c *Client) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface, error) {
+	return c.Device().GetNetworkInterfaces(ctx)
+}
+
+func (c *Client) GetScopes(ctx context.Context) ([]*Scope, error) { return c.Device().GetScopes(ctx) }
+
+func (c *Client) GetUsers(ctx context.Context) ([]*User, error) { return c.Device().GetUsers(ctx) }
+
+func (c *Client) CreateUsers(ctx context.Context, users []*User) error {
+	return c.Device().CreateUsers(ctx, users)
+}
+
+func (c *Client) DeleteUsers(ctx context.Context, usernames []string) error {
+	return c.Device().DeleteUsers(ctx, usernames)
+}
+
+func (c *Client) SetUser(ctx context.Context, user *User) error { return c.Device().SetUser(ctx, user) }
+
+func (c *Client) GetServices(ctx context.Context, includeCapability bool) ([]*Service, error) {
+	return c.Device().GetServices(ctx, includeCapability)
+}
+
+func (c *Client) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapabilities, error) {
+	return c.Device().GetServiceCapabilities(ctx)
+}
+
+func (c *Client) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
+	return c.Device().GetDiscoveryMode(ctx)
+}
+
+func (c *Client) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
+	return c.Device().SetDiscoveryMode(ctx, mode)
+}
+
+func (c *Client) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
+	return c.Device().GetRemoteDiscoveryMode(ctx)
+}
+
+func (c *Client) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
+	return c.Device().SetRemoteDiscoveryMode(ctx, mode)
+}
+
+func (c *Client) GetEndpointReference(ctx context.Context) (string, error) {
+	return c.Device().GetEndpointReference(ctx)
+}
+
+func (c *Client) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, error) {
+	return c.Device().GetNetworkProtocols(ctx)
+}
+
+func (c *Client) SetNetworkProtocols(ctx context.Context, protocols []*NetworkProtocol) error {
+	return c.Device().SetNetworkProtocols(ctx, protocols)
+}
+
+func (c *Client) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway, error) {
+	return c.Device().GetNetworkDefaultGateway(ctx)
+}
+
+func (c *Client) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkGateway) error {
+	return c.Device().SetNetworkDefaultGateway(ctx, gateway)
+}
+
+func (c *Client) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
+	return c.Device().GetGeoLocation(ctx)
+}
+
+func (c *Client) SetGeoLocation(ctx context.Context, location []LocationEntity) error {
+	return c.Device().SetGeoLocation(ctx, location)
+}
+
+func (c *Client) DeleteGeoLocation(ctx context.Context, location []LocationEntity) error {
+	return c.Device().DeleteGeoLocation(ctx, location)
+}
+
+func (c *Client) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
+	return c.Device().GetDPAddresses(ctx)
+}
+
+func (c *Client) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) error {
+	return c.Device().SetDPAddresses(ctx, dpAddress)
+}
+
+func (c *Client) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
+	return c.Device().GetAccessPolicy(ctx)
+}
+
+func (c *Client) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) error {
+	return c.Device().SetAccessPolicy(ctx, policy)
+}
+
+func (c *Client) GetWsdlURL(ctx context.Context) (string, error) { return c.Device().GetWsdlURL(ctx) }
+
+func (c *Client) GetCertificates(ctx context.Context) ([]*Certificate, error) {
+	return c.Device().GetCertificates(ctx)
+}
+
+func (c *Client) GetCACertificates(ctx context.Context) ([]*Certificate, error) {
+	return c.Device().GetCACertificates(ctx)
+}
+
+func (c *Client) LoadCertificates(ctx context.Context, certificates []*Certificate) error {
+	return c.Device().LoadCertificates(ctx, certificates)
+}
+
+func (c *Client) LoadCACertificates(ctx context.Context, certificates []*Certificate) error {
+	return c.Device().LoadCACertificates(ctx, certificates)
+}
+
+func (c *Client) CreateCertificate(ctx context.Context, certificateID, subject, validNotBefore, validNotAfter string) (*Certificate, error) {
+	return c.Device().CreateCertificate(ctx, certificateID, subject, validNotBefore, validNotAfter)
+}
+
+func (c *Client) DeleteCertificates(ctx context.Context, certificateIDs []string) error {
+	return c.Device().DeleteCertificates(ctx, certificateIDs)
+}
+
+func (c *Client) GetCertificateInformation(ctx context.Context, certificateID string) (*CertificateInformation, error) {
+	return c.Device().GetCertificateInformation(ctx, certificateID)
+}
+
+func (c *Client) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatus, error) {
+	return c.Device().GetCertificatesStatus(ctx)
+}
+
+func (c *Client) SetCertificatesStatus(ctx context.Context, statuses []*CertificateStatus) error {
+	return c.Device().SetCertificatesStatus(ctx, statuses)
+}
+
+func (c *Client) GetPkcs10Request(ctx context.Context, certificateID, subject string, attributes *BinaryData) (*BinaryData, error) {
+	return c.Device().GetPkcs10Request(ctx, certificateID, subject, attributes)
+}
+
+func (c *Client) LoadCertificateWithPrivateKey(ctx context.Context, certificates []*Certificate, privateKey []*BinaryData, certificateIDs []string) error {
+	return c.Device().LoadCertificateWithPrivateKey(ctx, certificates, privateKey, certificateIDs)
+}
+
+func (c *Client) GetClientCertificateMode(ctx context.Context) (bool, error) {
+	return c.Device().GetClientCertificateMode(ctx)
+}
+
+func (c *Client) SetClientCertificateMode(ctx context.Context, enabled bool) error {
+	return c.Device().SetClientCertificateMode(ctx, enabled)
+}
+
+func (c *Client) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []string, dnsManual []IPAddress) error {
+	return c.Device().SetDNS(ctx, fromDHCP, searchDomain, dnsManual)
+}
+
+func (c *Client) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkHost) error {
+	return c.Device().SetNTP(ctx, fromDHCP, ntpManual)
+}
+
+func (c *Client) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, error) {
+	return c.Device().SetHostnameFromDHCP(ctx, fromDHCP)
+}
+
+func (c *Client) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime, error) {
+	return c.Device().FixedGetSystemDateAndTime(ctx)
+}
+
+func (c *Client) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateTime) error {
+	return c.Device().SetSystemDateAndTime(ctx, dateTime)
+}
+
+func (c *Client) AddScopes(ctx context.Context, scopeItems []string) error {
+	return c.Device().AddScopes(ctx, scopeItems)
+}
+
+func (c *Client) RemoveScopes(ctx context.Context, scopeItems []string) ([]string, error) {
+	return c.Device().RemoveScopes(ctx, scopeItems)
+}
+
+func (c *Client) SetScopes(ctx context.Context, scopes []string) error {
+	return c.Device().SetScopes(ctx, scopes)
+}
+
+func (c *Client) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
+	return c.Device().GetRelayOutputs(ctx)
+}
+
+func (c *Client) SetRelayOutputSettings(ctx context.Context, token string, settings *RelayOutputSettings) error {
+	return c.Device().SetRelayOutputSettings(ctx, token, settings)
+}
+
+func (c *Client) SetRelayOutputState(ctx context.Context, token string, state RelayLogicalState) error {
+	return c.Device().SetRelayOutputState(ctx, token, state)
+}
+
+func (c *Client) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData) (AuxiliaryData, error) {
+	return c.Device().SendAuxiliaryCommand(ctx, command)
+}
+
+func (c *Client) GetSystemLog(ctx context.Context, logType SystemLogType) (*SystemLog, error) {
+	return c.Device().GetSystemLog(ctx, logType)
+}
+
+func (c *Client) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
+	return c.Device().GetSystemBackup(ctx)
+}
+
+func (c *Client) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) error {
+	return c.Device().RestoreSystem(ctx, backupFiles)
+}
+
+func (c *Client) GetSystemUris(ctx context.Context) (uriList *SystemLogURIList, systemBackupURI, systemLogURI string, err error) {
+	return c.Device().GetSystemUris(ctx)
+}
+
+func (c *Client) GetSystemSupportInformation(ctx context.Context) (*SupportInformation, error) {
+	return c.Device().GetSystemSupportInformation(ctx)
+}
+
+func (c *Client) SetSystemFactoryDefault(ctx context.Context, factoryDefault FactoryDefaultType) error {
+	return c.Device().SetSystemFactoryDefault(ctx, factoryDefault)
+}
+
+func (c *Client) StartFirmwareUpgrade(ctx context.Context) (uploadURI, uploadDelay, expectedDownTime string, err error) {
+	return c.Device().StartFirmwareUpgrade(ctx)
+}
+
+func (c *Client) StartSystemRestore(ctx context.Context) (uploadURI, expectedDownTime string, err error) {
+	return c.Device().StartSystemRestore(ctx)
+}
+
+func (c *Client) GetStorageConfigurations(ctx context.Context) ([]*StorageConfiguration, error) {
+	return c.Device().GetStorageConfigurations(ctx)
+}
+
+func (c *Client) GetStorageConfiguration(ctx context.Context, token string) (*StorageConfiguration, error) {
+	return c.Device().GetStorageConfiguration(ctx, token)
+}
+
+func (c *Client) CreateStorageConfiguration(ctx context.Context, config *StorageConfiguration) (string, error) {
+	return c.Device().CreateStorageConfiguration(ctx, config)
+}
+
+func (c *Client) SetStorageConfiguration(ctx context.Context, config *StorageConfiguration) error {
+	return c.Device().SetStorageConfiguration(ctx, config)
+}
+
+func (c *Client) DeleteStorageConfiguration(ctx context.Context, token string) error {
+	return c.Device().DeleteStorageConfiguration(ctx, token)
+}
+
+func (c *Client) SetHashingAlgorithm(ctx context.Context, algorithm string) error {
+	return c.Device().SetHashingAlgorithm(ctx, algorithm)
+}
+
+func (c *Client) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, error) {
+	return c.Device().GetDot11Capabilities(ctx)
+}
+
+func (c *Client) GetDot11Status(ctx context.Context, interfaceToken string) (*Dot11Status, error) {
+	return c.Device().GetDot11Status(ctx, interfaceToken)
+}
+
+func (c *Client) GetDot1XConfiguration(ctx context.Context, configToken string) (*Dot1XConfiguration, error) {
+	return c.Device().GetDot1XConfiguration(ctx, configToken)
+}
+
+func (c *Client) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfiguration, error) {
+	return c.Device().GetDot1XConfigurations(ctx)
+}
+
+func (c *Client) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
+	return c.Device().SetDot1XConfiguration(ctx, config)
+}
+
+func (c *Client) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
+	return c.Device().CreateDot1XConfiguration(ctx, config)
+}
+
+func (c *Client) DeleteDot1XConfiguration(ctx context.Context, configToken string) error {
+	return c.Device().DeleteDot1XConfiguration(ctx, configToken)
+}
+
+func (c *Client) ScanAvailableDot11Networks(ctx context.Context, interfaceToken string) ([]*Dot11AvailableNetworks, error) {
+	return c.Device().ScanAvailableDot11Networks(ctx, interfaceToken)
+}
+
+// --- transitional delegators: SecurityService ---
+func (c *Client) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
+	return c.Security().GetRemoteUser(ctx)
+}
+
+func (c *Client) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) error {
+	return c.Security().SetRemoteUser(ctx, remoteUser)
+}
+
+func (c *Client) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, error) {
+	return c.Security().GetIPAddressFilter(ctx)
+}
+
+func (c *Client) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+	return c.Security().SetIPAddressFilter(ctx, filter)
+}
+
+func (c *Client) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+	return c.Security().AddIPAddressFilter(ctx, filter)
+}
+
+func (c *Client) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+	return c.Security().RemoveIPAddressFilter(ctx, filter)
+}
+
+func (c *Client) GetZeroConfiguration(ctx context.Context) (*NetworkZeroConfiguration, error) {
+	return c.Security().GetZeroConfiguration(ctx)
+}
+
+func (c *Client) SetZeroConfiguration(ctx context.Context, interfaceToken string, enabled bool) error {
+	return c.Security().SetZeroConfiguration(ctx, interfaceToken, enabled)
+}
+
+func (c *Client) GetDynamicDNS(ctx context.Context) (*DynamicDNSInformation, error) {
+	return c.Security().GetDynamicDNS(ctx)
+}
+
+func (c *Client) SetDynamicDNS(ctx context.Context, dnsType DynamicDNSType, name string) error {
+	return c.Security().SetDynamicDNS(ctx, dnsType, name)
+}
+
+func (c *Client) GetPasswordComplexityConfiguration(ctx context.Context) (*PasswordComplexityConfiguration, error) {
+	return c.Security().GetPasswordComplexityConfiguration(ctx)
+}
+
+func (c *Client) SetPasswordComplexityConfiguration(ctx context.Context, config *PasswordComplexityConfiguration) error {
+	return c.Security().SetPasswordComplexityConfiguration(ctx, config)
+}
+
+func (c *Client) GetPasswordHistoryConfiguration(ctx context.Context) (*PasswordHistoryConfiguration, error) {
+	return c.Security().GetPasswordHistoryConfiguration(ctx)
+}
+
+func (c *Client) SetPasswordHistoryConfiguration(ctx context.Context, config *PasswordHistoryConfiguration) error {
+	return c.Security().SetPasswordHistoryConfiguration(ctx, config)
+}
+
+func (c *Client) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthFailureWarningConfiguration, error) {
+	return c.Security().GetAuthFailureWarningConfiguration(ctx)
+}
+
+func (c *Client) SetAuthFailureWarningConfiguration(ctx context.Context, config *AuthFailureWarningConfiguration) error {
+	return c.Security().SetAuthFailureWarningConfiguration(ctx, config)
+}

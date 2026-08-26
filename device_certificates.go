@@ -7,7 +7,7 @@ import (
 )
 
 // GetCertificates retrieves certificates. ONVIF Specification: GetCertificates operation.
-func (c *Client) GetCertificates(ctx context.Context) ([]*Certificate, error) {
+func (s *DeviceService) GetCertificates(ctx context.Context) ([]*Certificate, error) {
 	type GetCertificatesBody struct {
 		XMLName xml.Name `xml:"tds:GetCertificates"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -23,10 +23,10 @@ func (c *Client) GetCertificates(ctx context.Context) ([]*Certificate, error) {
 	}
 	var response GetCertificatesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificates failed: %w", err)
 	}
 
@@ -34,7 +34,7 @@ func (c *Client) GetCertificates(ctx context.Context) ([]*Certificate, error) {
 }
 
 // GetCACertificates retrieves CA certificates. ONVIF Specification: GetCACertificates operation.
-func (c *Client) GetCACertificates(ctx context.Context) ([]*Certificate, error) {
+func (s *DeviceService) GetCACertificates(ctx context.Context) ([]*Certificate, error) {
 	type GetCACertificatesBody struct {
 		XMLName xml.Name `xml:"tds:GetCACertificates"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -50,10 +50,10 @@ func (c *Client) GetCACertificates(ctx context.Context) ([]*Certificate, error) 
 	}
 	var response GetCACertificatesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCACertificates failed: %w", err)
 	}
 
@@ -61,7 +61,7 @@ func (c *Client) GetCACertificates(ctx context.Context) ([]*Certificate, error) 
 }
 
 // LoadCertificates loads certificates. ONVIF Specification: LoadCertificates operation.
-func (c *Client) LoadCertificates(ctx context.Context, certificates []*Certificate) error {
+func (s *DeviceService) LoadCertificates(ctx context.Context, certificates []*Certificate) error {
 	type LoadCertificatesBody struct {
 		XMLName     xml.Name       `xml:"tds:LoadCertificates"`
 		Xmlns       string         `xml:"xmlns:tds,attr"`
@@ -78,10 +78,10 @@ func (c *Client) LoadCertificates(ctx context.Context, certificates []*Certifica
 	}
 	var response LoadCertificatesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificates failed: %w", err)
 	}
 
@@ -89,7 +89,7 @@ func (c *Client) LoadCertificates(ctx context.Context, certificates []*Certifica
 }
 
 // LoadCACertificates loads CA certificates. ONVIF Specification: LoadCACertificates operation.
-func (c *Client) LoadCACertificates(ctx context.Context, certificates []*Certificate) error {
+func (s *DeviceService) LoadCACertificates(ctx context.Context, certificates []*Certificate) error {
 	type LoadCACertificatesBody struct {
 		XMLName     xml.Name       `xml:"tds:LoadCACertificates"`
 		Xmlns       string         `xml:"xmlns:tds,attr"`
@@ -106,10 +106,10 @@ func (c *Client) LoadCACertificates(ctx context.Context, certificates []*Certifi
 	}
 	var response LoadCACertificatesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCACertificates failed: %w", err)
 	}
 
@@ -117,7 +117,7 @@ func (c *Client) LoadCACertificates(ctx context.Context, certificates []*Certifi
 }
 
 // CreateCertificate creates a certificate. ONVIF Specification: CreateCertificate operation.
-func (c *Client) CreateCertificate(
+func (s *DeviceService) CreateCertificate(
 	ctx context.Context,
 	certificateID, subject, validNotBefore, validNotAfter string,
 ) (*Certificate, error) {
@@ -144,10 +144,10 @@ func (c *Client) CreateCertificate(
 	}
 	var response CreateCertificateResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("CreateCertificate failed: %w", err)
 	}
 
@@ -155,7 +155,7 @@ func (c *Client) CreateCertificate(
 }
 
 // DeleteCertificates deletes certificates. ONVIF Specification: DeleteCertificates operation.
-func (c *Client) DeleteCertificates(ctx context.Context, certificateIDs []string) error {
+func (s *DeviceService) DeleteCertificates(ctx context.Context, certificateIDs []string) error {
 	type DeleteCertificatesBody struct {
 		XMLName       xml.Name `xml:"tds:DeleteCertificates"`
 		Xmlns         string   `xml:"xmlns:tds,attr"`
@@ -172,10 +172,10 @@ func (c *Client) DeleteCertificates(ctx context.Context, certificateIDs []string
 	}
 	var response DeleteCertificatesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteCertificates failed: %w", err)
 	}
 
@@ -184,7 +184,7 @@ func (c *Client) DeleteCertificates(ctx context.Context, certificateIDs []string
 
 // GetCertificateInformation retrieves certificate information.
 // ONVIF Specification: GetCertificateInformation operation.
-func (c *Client) GetCertificateInformation(ctx context.Context, certificateID string) (*CertificateInformation, error) {
+func (s *DeviceService) GetCertificateInformation(ctx context.Context, certificateID string) (*CertificateInformation, error) {
 	type GetCertificateInformationBody struct {
 		XMLName       xml.Name `xml:"tds:GetCertificateInformation"`
 		Xmlns         string   `xml:"xmlns:tds,attr"`
@@ -202,10 +202,10 @@ func (c *Client) GetCertificateInformation(ctx context.Context, certificateID st
 	}
 	var response GetCertificateInformationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificateInformation failed: %w", err)
 	}
 
@@ -213,7 +213,7 @@ func (c *Client) GetCertificateInformation(ctx context.Context, certificateID st
 }
 
 // GetCertificatesStatus retrieves certificate status. ONVIF Specification: GetCertificatesStatus operation.
-func (c *Client) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatus, error) {
+func (s *DeviceService) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatus, error) {
 	type GetCertificatesStatusBody struct {
 		XMLName xml.Name `xml:"tds:GetCertificatesStatus"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -229,10 +229,10 @@ func (c *Client) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatu
 	}
 	var response GetCertificatesStatusResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificatesStatus failed: %w", err)
 	}
 
@@ -240,7 +240,7 @@ func (c *Client) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatu
 }
 
 // SetCertificatesStatus sets certificate status. ONVIF Specification: SetCertificatesStatus operation.
-func (c *Client) SetCertificatesStatus(ctx context.Context, statuses []*CertificateStatus) error {
+func (s *DeviceService) SetCertificatesStatus(ctx context.Context, statuses []*CertificateStatus) error {
 	type SetCertificatesStatusBody struct {
 		XMLName           xml.Name             `xml:"tds:SetCertificatesStatus"`
 		Xmlns             string               `xml:"xmlns:tds,attr"`
@@ -257,10 +257,10 @@ func (c *Client) SetCertificatesStatus(ctx context.Context, statuses []*Certific
 	}
 	var response SetCertificatesStatusResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetCertificatesStatus failed: %w", err)
 	}
 
@@ -268,7 +268,7 @@ func (c *Client) SetCertificatesStatus(ctx context.Context, statuses []*Certific
 }
 
 // GetPkcs10Request retrieves a PKCS10 certificate request. ONVIF Specification: GetPkcs10Request operation.
-func (c *Client) GetPkcs10Request(
+func (s *DeviceService) GetPkcs10Request(
 	ctx context.Context,
 	certificateID, subject string,
 	attributes *BinaryData,
@@ -294,10 +294,10 @@ func (c *Client) GetPkcs10Request(
 	}
 	var response GetPkcs10RequestResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetPkcs10Request failed: %w", err)
 	}
 
@@ -306,7 +306,7 @@ func (c *Client) GetPkcs10Request(
 
 // LoadCertificateWithPrivateKey loads a certificate with its private key.
 // ONVIF Specification: LoadCertificateWithPrivateKey operation.
-func (c *Client) LoadCertificateWithPrivateKey(
+func (s *DeviceService) LoadCertificateWithPrivateKey(
 	ctx context.Context,
 	certificates []*Certificate,
 	privateKey []*BinaryData,
@@ -348,10 +348,10 @@ func (c *Client) LoadCertificateWithPrivateKey(
 
 	var response LoadCertificateWithPrivateKeyResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificateWithPrivateKey failed: %w", err)
 	}
 
@@ -360,7 +360,7 @@ func (c *Client) LoadCertificateWithPrivateKey(
 
 // GetClientCertificateMode retrieves the client certificate mode.
 // ONVIF Specification: GetClientCertificateMode operation.
-func (c *Client) GetClientCertificateMode(ctx context.Context) (bool, error) {
+func (s *DeviceService) GetClientCertificateMode(ctx context.Context) (bool, error) {
 	type GetClientCertificateModeBody struct {
 		XMLName xml.Name `xml:"tds:GetClientCertificateMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -376,10 +376,10 @@ func (c *Client) GetClientCertificateMode(ctx context.Context) (bool, error) {
 	}
 	var response GetClientCertificateModeResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return false, fmt.Errorf("GetClientCertificateMode failed: %w", err)
 	}
 
@@ -387,7 +387,7 @@ func (c *Client) GetClientCertificateMode(ctx context.Context) (bool, error) {
 }
 
 // SetClientCertificateMode sets the client certificate mode. ONVIF Specification: SetClientCertificateMode operation.
-func (c *Client) SetClientCertificateMode(ctx context.Context, enabled bool) error {
+func (s *DeviceService) SetClientCertificateMode(ctx context.Context, enabled bool) error {
 	type SetClientCertificateModeBody struct {
 		XMLName xml.Name `xml:"tds:SetClientCertificateMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -404,10 +404,10 @@ func (c *Client) SetClientCertificateMode(ctx context.Context, enabled bool) err
 	}
 	var response SetClientCertificateModeResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetClientCertificateMode failed: %w", err)
 	}
 

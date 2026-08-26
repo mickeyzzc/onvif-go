@@ -7,7 +7,7 @@ import (
 )
 
 // GetDot11Capabilities retrieves 802.11 capabilities. ONVIF Specification: GetDot11Capabilities operation.
-func (c *Client) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, error) {
+func (s *DeviceService) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, error) {
 	type GetDot11CapabilitiesBody struct {
 		XMLName xml.Name `xml:"tds:GetDot11Capabilities"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -23,10 +23,10 @@ func (c *Client) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, 
 	}
 	var response GetDot11CapabilitiesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot11Capabilities failed: %w", err)
 	}
 
@@ -34,7 +34,7 @@ func (c *Client) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, 
 }
 
 // GetDot11Status retrieves 802.11 status. ONVIF Specification: GetDot11Status operation.
-func (c *Client) GetDot11Status(ctx context.Context, interfaceToken string) (*Dot11Status, error) {
+func (s *DeviceService) GetDot11Status(ctx context.Context, interfaceToken string) (*Dot11Status, error) {
 	type GetDot11StatusBody struct {
 		XMLName        xml.Name `xml:"tds:GetDot11Status"`
 		Xmlns          string   `xml:"xmlns:tds,attr"`
@@ -52,10 +52,10 @@ func (c *Client) GetDot11Status(ctx context.Context, interfaceToken string) (*Do
 	}
 	var response GetDot11StatusResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot11Status failed: %w", err)
 	}
 
@@ -63,7 +63,7 @@ func (c *Client) GetDot11Status(ctx context.Context, interfaceToken string) (*Do
 }
 
 // GetDot1XConfiguration retrieves an 802.1X configuration. ONVIF Specification: GetDot1XConfiguration operation.
-func (c *Client) GetDot1XConfiguration(ctx context.Context, configToken string) (*Dot1XConfiguration, error) {
+func (s *DeviceService) GetDot1XConfiguration(ctx context.Context, configToken string) (*Dot1XConfiguration, error) {
 	type GetDot1XConfigurationBody struct {
 		XMLName                 xml.Name `xml:"tds:GetDot1XConfiguration"`
 		Xmlns                   string   `xml:"xmlns:tds,attr"`
@@ -81,10 +81,10 @@ func (c *Client) GetDot1XConfiguration(ctx context.Context, configToken string) 
 	}
 	var response GetDot1XConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot1XConfiguration failed: %w", err)
 	}
 
@@ -92,7 +92,7 @@ func (c *Client) GetDot1XConfiguration(ctx context.Context, configToken string) 
 }
 
 // GetDot1XConfigurations retrieves all 802.1X configurations. ONVIF Specification: GetDot1XConfigurations operation.
-func (c *Client) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfiguration, error) {
+func (s *DeviceService) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfiguration, error) {
 	type GetDot1XConfigurationsBody struct {
 		XMLName xml.Name `xml:"tds:GetDot1XConfigurations"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -108,10 +108,10 @@ func (c *Client) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfigurat
 	}
 	var response GetDot1XConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot1XConfigurations failed: %w", err)
 	}
 
@@ -119,7 +119,7 @@ func (c *Client) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfigurat
 }
 
 // SetDot1XConfiguration sets an 802.1X configuration. ONVIF Specification: SetDot1XConfiguration operation.
-func (c *Client) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
+func (s *DeviceService) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
 	type SetDot1XConfigurationBody struct {
 		XMLName            xml.Name            `xml:"tds:SetDot1XConfiguration"`
 		Xmlns              string              `xml:"xmlns:tds,attr"`
@@ -136,10 +136,10 @@ func (c *Client) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfigu
 	}
 	var response SetDot1XConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetDot1XConfiguration failed: %w", err)
 	}
 
@@ -147,7 +147,7 @@ func (c *Client) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfigu
 }
 
 // CreateDot1XConfiguration creates an 802.1X configuration. ONVIF Specification: CreateDot1XConfiguration operation.
-func (c *Client) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
+func (s *DeviceService) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
 	type CreateDot1XConfigurationBody struct {
 		XMLName            xml.Name            `xml:"tds:CreateDot1XConfiguration"`
 		Xmlns              string              `xml:"xmlns:tds,attr"`
@@ -164,10 +164,10 @@ func (c *Client) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConf
 	}
 	var response CreateDot1XConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("CreateDot1XConfiguration failed: %w", err)
 	}
 
@@ -175,7 +175,7 @@ func (c *Client) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConf
 }
 
 // DeleteDot1XConfiguration deletes an 802.1X configuration. ONVIF Specification: DeleteDot1XConfiguration operation.
-func (c *Client) DeleteDot1XConfiguration(ctx context.Context, configToken string) error {
+func (s *DeviceService) DeleteDot1XConfiguration(ctx context.Context, configToken string) error {
 	type DeleteDot1XConfigurationBody struct {
 		XMLName                 xml.Name `xml:"tds:DeleteDot1XConfiguration"`
 		Xmlns                   string   `xml:"xmlns:tds,attr"`
@@ -192,10 +192,10 @@ func (c *Client) DeleteDot1XConfiguration(ctx context.Context, configToken strin
 	}
 	var response DeleteDot1XConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteDot1XConfiguration failed: %w", err)
 	}
 
@@ -204,7 +204,7 @@ func (c *Client) DeleteDot1XConfiguration(ctx context.Context, configToken strin
 
 // ScanAvailableDot11Networks scans for available 802.11 networks.
 // ONVIF Specification: ScanAvailableDot11Networks operation.
-func (c *Client) ScanAvailableDot11Networks(
+func (s *DeviceService) ScanAvailableDot11Networks(
 	ctx context.Context,
 	interfaceToken string,
 ) ([]*Dot11AvailableNetworks, error) {
@@ -225,10 +225,10 @@ func (c *Client) ScanAvailableDot11Networks(
 	}
 	var response ScanAvailableDot11NetworksResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("ScanAvailableDot11Networks failed: %w", err)
 	}
 

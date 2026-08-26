@@ -7,7 +7,7 @@ import (
 )
 
 // GetGeoLocation retrieves geographic location information. ONVIF Specification: GetGeoLocation operation.
-func (c *Client) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
+func (s *DeviceService) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
 	type GetGeoLocationBody struct {
 		XMLName xml.Name `xml:"tds:GetGeoLocation"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -23,10 +23,10 @@ func (c *Client) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
 	}
 	var response GetGeoLocationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetGeoLocation failed: %w", err)
 	}
 
@@ -34,7 +34,7 @@ func (c *Client) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
 }
 
 // SetGeoLocation sets geographic location information. ONVIF Specification: SetGeoLocation operation.
-func (c *Client) SetGeoLocation(ctx context.Context, location []LocationEntity) error {
+func (s *DeviceService) SetGeoLocation(ctx context.Context, location []LocationEntity) error {
 	type SetGeoLocationBody struct {
 		XMLName  xml.Name         `xml:"tds:SetGeoLocation"`
 		Xmlns    string           `xml:"xmlns:tds,attr"`
@@ -51,10 +51,10 @@ func (c *Client) SetGeoLocation(ctx context.Context, location []LocationEntity) 
 	}
 	var response SetGeoLocationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetGeoLocation failed: %w", err)
 	}
 
@@ -62,7 +62,7 @@ func (c *Client) SetGeoLocation(ctx context.Context, location []LocationEntity) 
 }
 
 // DeleteGeoLocation deletes geographic location information. ONVIF Specification: DeleteGeoLocation operation.
-func (c *Client) DeleteGeoLocation(ctx context.Context, location []LocationEntity) error {
+func (s *DeviceService) DeleteGeoLocation(ctx context.Context, location []LocationEntity) error {
 	type DeleteGeoLocationBody struct {
 		XMLName  xml.Name         `xml:"tds:DeleteGeoLocation"`
 		Xmlns    string           `xml:"xmlns:tds,attr"`
@@ -79,10 +79,10 @@ func (c *Client) DeleteGeoLocation(ctx context.Context, location []LocationEntit
 	}
 	var response DeleteGeoLocationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteGeoLocation failed: %w", err)
 	}
 
@@ -90,7 +90,7 @@ func (c *Client) DeleteGeoLocation(ctx context.Context, location []LocationEntit
 }
 
 // GetDPAddresses retrieves DP (Device Provisioning) addresses. ONVIF Specification: GetDPAddresses operation.
-func (c *Client) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
+func (s *DeviceService) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
 	type GetDPAddressesBody struct {
 		XMLName xml.Name `xml:"tds:GetDPAddresses"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -106,10 +106,10 @@ func (c *Client) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
 	}
 	var response GetDPAddressesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDPAddresses failed: %w", err)
 	}
 
@@ -117,7 +117,7 @@ func (c *Client) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
 }
 
 // SetDPAddresses sets DP (Device Provisioning) addresses. ONVIF Specification: SetDPAddresses operation.
-func (c *Client) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) error {
+func (s *DeviceService) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) error {
 	type SetDPAddressesBody struct {
 		XMLName   xml.Name      `xml:"tds:SetDPAddresses"`
 		Xmlns     string        `xml:"xmlns:tds,attr"`
@@ -134,10 +134,10 @@ func (c *Client) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) er
 	}
 	var response SetDPAddressesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetDPAddresses failed: %w", err)
 	}
 
@@ -145,7 +145,7 @@ func (c *Client) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) er
 }
 
 // GetAccessPolicy retrieves access policy information. ONVIF Specification: GetAccessPolicy operation.
-func (c *Client) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
+func (s *DeviceService) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
 	type GetAccessPolicyBody struct {
 		XMLName xml.Name `xml:"tds:GetAccessPolicy"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -161,10 +161,10 @@ func (c *Client) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
 	}
 	var response GetAccessPolicyResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetAccessPolicy failed: %w", err)
 	}
 
@@ -172,7 +172,7 @@ func (c *Client) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
 }
 
 // SetAccessPolicy sets access policy information. ONVIF Specification: SetAccessPolicy operation.
-func (c *Client) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) error {
+func (s *DeviceService) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) error {
 	type SetAccessPolicyBody struct {
 		XMLName    xml.Name    `xml:"tds:SetAccessPolicy"`
 		Xmlns      string      `xml:"xmlns:tds,attr"`
@@ -189,10 +189,10 @@ func (c *Client) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) erro
 	}
 	var response SetAccessPolicyResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetAccessPolicy failed: %w", err)
 	}
 
@@ -200,7 +200,7 @@ func (c *Client) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) erro
 }
 
 // GetWsdlURL retrieves the WSDL URL (deprecated). ONVIF Specification: GetWsdlUrl operation.
-func (c *Client) GetWsdlURL(ctx context.Context) (string, error) {
+func (s *DeviceService) GetWsdlURL(ctx context.Context) (string, error) {
 	type GetWsdlURLBody struct {
 		XMLName xml.Name `xml:"tds:GetWsdlUrl"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -216,10 +216,10 @@ func (c *Client) GetWsdlURL(ctx context.Context) (string, error) {
 	}
 	var response GetWsdlURLResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
-	if err := soapClient.Call(ctx, c.endpoint, "", request, &response); err != nil {
+	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return "", fmt.Errorf("GetWsdlURL failed: %w", err)
 	}
 
