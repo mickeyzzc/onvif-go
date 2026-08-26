@@ -654,7 +654,7 @@ func ExampleClient_GetDeviceInformation() {
 	fmt.Printf("Firmware: %s\n", info.FirmwareVersion)
 }
 
-func TestFixLocalhostURL(t *testing.T) {
+func TestFixServiceURL(t *testing.T) {
 	tests := []struct {
 		name        string
 		clientURL   string
@@ -731,9 +731,9 @@ func TestFixLocalhostURL(t *testing.T) {
 				endpoint: tt.clientURL,
 			}
 
-			result := client.fixLocalhostURL(tt.serviceURL)
+			result := client.fixServiceURL(tt.serviceURL)
 			if result != tt.expectedURL {
-				t.Errorf("fixLocalhostURL() = %v, want %v", result, tt.expectedURL)
+				t.Errorf("fixServiceURL() = %v, want %v", result, tt.expectedURL)
 			}
 		})
 	}
@@ -1225,8 +1225,8 @@ func TestNormalizeEndpointErrorCases(t *testing.T) {
 	}
 }
 
-// TestFixLocalhostURLEdgeCases tests edge cases for fixLocalhostURL.
-func TestFixLocalhostURLEdgeCases(t *testing.T) {
+// TestFixServiceURLEdgeCases tests edge cases for fixServiceURL.
+func TestFixServiceURLEdgeCases(t *testing.T) {
 	tests := []struct {
 		name        string
 		clientURL   string
@@ -1259,9 +1259,9 @@ func TestFixLocalhostURLEdgeCases(t *testing.T) {
 				endpoint: tt.clientURL,
 			}
 
-			result := client.fixLocalhostURL(tt.serviceURL)
+			result := client.fixServiceURL(tt.serviceURL)
 			if result != tt.expectedURL {
-				t.Errorf("fixLocalhostURL() = %q, want %q", result, tt.expectedURL)
+				t.Errorf("fixServiceURL() = %q, want %q", result, tt.expectedURL)
 			}
 		})
 	}
@@ -1413,58 +1413,5 @@ func TestDigestAuthTransportConcurrency(t *testing.T) {
 
 	if finalNC < numRequests {
 		t.Errorf("Expected nc >= %d, got %d", numRequests, finalNC)
-	}
-}
-
-func TestFixServiceURL(t *testing.T) {
-	tests := []struct {
-		name       string
-		endpoint   string // device_service URL the client was created with
-		serviceURL string // XAddr the camera advertised in GetCapabilities
-		want       string // expected corrected URL
-	}{
-		{
-			name:       "localhost rewritten to endpoint host",
-			endpoint:   "http://192.168.1.100/onvif/device_service",
-			serviceURL: "http://127.0.0.1/onvif/media_service",
-			want:       "http://192.168.1.100/onvif/media_service",
-		},
-		{
-			name:       "stale advertised IP rewritten to endpoint host",
-			endpoint:   "http://192.168.63.199:8080/onvif/device_service",
-			serviceURL: "http://192.168.63.200:8080/onvif/media_service",
-			want:       "http://192.168.63.199:8080/onvif/media_service",
-		},
-		{
-			name:       "matching host preserved",
-			endpoint:   "http://192.168.1.100:8080/onvif/device_service",
-			serviceURL: "http://192.168.1.100:8080/onvif/media_service",
-			want:       "http://192.168.1.100:8080/onvif/media_service",
-		},
-		{
-			name:       "empty passthrough",
-			endpoint:   "http://192.168.1.100/onvif/device_service",
-			serviceURL: "",
-			want:       "",
-		},
-		{
-			name:       "localhost with no port uses endpoint port",
-			endpoint:   "http://192.168.1.100:8080/onvif/device_service",
-			serviceURL: "http://0.0.0.0/onvif/media_service",
-			want:       "http://192.168.1.100:8080/onvif/media_service",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c, err := NewClient(tt.endpoint, WithCredentials("user", "pass"))
-			if err != nil {
-				t.Fatalf("NewClient() failed: %v", err)
-			}
-			got := c.fixServiceURL(tt.serviceURL)
-			if got != tt.want {
-				t.Errorf("fixServiceURL(%q) = %q, want %q", tt.serviceURL, got, tt.want)
-			}
-		})
 	}
 }
