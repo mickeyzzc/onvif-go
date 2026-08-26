@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-
 )
 
 // GetGeoLocation retrieves geographic location information. ONVIF Specification: GetGeoLocation operation.

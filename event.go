@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
 )
 
 // Event service namespace.

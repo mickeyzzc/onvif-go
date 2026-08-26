@@ -868,7 +868,7 @@ func generateCoverageReport(regPath string) {
 
 	// Output to file or stdout
 	if *coverageOutput != "" {
-		if err := os.WriteFile(*coverageOutput, []byte(report), 0600); err != nil { //nolint:mnd
+		if err := os.WriteFile(*coverageOutput, []byte(report), 0o600); err != nil { //nolint:mnd
 			log.Fatalf("Failed to write coverage report: %v", err)
 		}
 		fmt.Printf("✓ Coverage report written to: %s\n", *coverageOutput)

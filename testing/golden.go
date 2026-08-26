@@ -99,7 +99,6 @@ func LoadGoldenFiles(goldenDir string) (*GoldenFileSet, error) {
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to load golden files: %w", err)
 	}
@@ -244,11 +243,11 @@ func SaveGoldenFile(golden *GoldenFile, outputPath string) error {
 
 	// Create directory if needed
 	dir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(dir, 0750); err != nil { //nolint:mnd
+	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	if err := os.WriteFile(outputPath, data, 0600); err != nil { //nolint:mnd
+	if err := os.WriteFile(outputPath, data, 0o600); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -262,7 +261,7 @@ func SaveGoldenManifest(manifest *GoldenManifest, outputPath string) error {
 		return fmt.Errorf("failed to marshal manifest: %w", err)
 	}
 
-	if err := os.WriteFile(outputPath, data, 0600); err != nil { //nolint:mnd
+	if err := os.WriteFile(outputPath, data, 0o600); err != nil { //nolint:mnd
 		return fmt.Errorf("failed to write manifest: %w", err)
 	}
 

@@ -478,7 +478,6 @@ func TestHandleGetOptionsDetails(t *testing.T) {
 	resp, err := server.HandleGetOptions(struct {
 		VideoSourceToken string `xml:"VideoSourceToken"`
 	}{VideoSourceToken: videoSourceToken})
-
 	if err != nil {
 		t.Fatalf("HandleGetOptions error: %v", err)
 	}

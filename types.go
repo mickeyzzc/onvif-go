@@ -112,12 +112,14 @@ type StreamingCapabilities struct {
 }
 
 // CapabilitiesExtension represents extension types for capabilities.
-type CapabilitiesExtension struct{}
-type NetworkCapabilitiesExtension struct{}
-type SystemCapabilitiesExtension struct{}
-type IOCapabilitiesExtension struct{}
-type SecurityCapabilitiesExtension struct{}
-type StreamingCapabilitiesExtension struct{}
+type (
+	CapabilitiesExtension          struct{}
+	NetworkCapabilitiesExtension   struct{}
+	SystemCapabilitiesExtension    struct{}
+	IOCapabilitiesExtension        struct{}
+	SecurityCapabilitiesExtension  struct{}
+	StreamingCapabilitiesExtension struct{}
+)
 
 // Profile represents a media profile.
 type Profile struct {

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-
 )
 
 // SetDNS sets the DNS settings on a device.

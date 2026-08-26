@@ -341,6 +341,7 @@ func TestPTZStatus(t *testing.T) {
 			status.Position.PanTilt.X, status.Position.PanTilt.Y)
 	}
 }
+
 func TestPTZSpeed(t *testing.T) {
 	pan := 0.5
 	tilt := 0.5

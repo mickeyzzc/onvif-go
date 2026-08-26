@@ -13,9 +13,7 @@ import (
 	"github.com/mickeyzzc/onvif-go/server"
 )
 
-var (
-	version = "1.0.0"
-)
+var version = "1.0.0"
 
 const (
 	defaultPort    = 8080
@@ -122,7 +120,8 @@ func main() {
 
 // buildConfig creates a server configuration from command-line arguments.
 func buildConfig(host string, port int, username, password, manufacturer, model,
-	firmware, serial string, numProfiles int, ptz, imaging, events bool) *server.Config {
+	firmware, serial string, numProfiles int, ptz, imaging, events bool,
+) *server.Config {
 	config := &server.Config{
 		Host:     host,
 		Port:     port,

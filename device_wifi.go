@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-
 )
 
 // GetDot11Capabilities retrieves 802.11 capabilities. ONVIF Specification: GetDot11Capabilities operation.

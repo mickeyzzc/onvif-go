@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-
 )
 
 // GetCertificates retrieves certificates. ONVIF Specification: GetCertificates operation.

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-
 )
 
 // GetStorageConfigurations retrieves storage configurations. ONVIF Specification: GetStorageConfigurations operation.
