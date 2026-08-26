@@ -12,7 +12,13 @@ Usage: migrate_domain.py ServiceName file1.go [file2.go ...]
 import re
 import sys
 
+FACADE = {
+    'EventService': 'Events',
+    'DeviceIOService': 'DeviceIO',
+}
+
 service = sys.argv[1]
+facade = FACADE.get(service, service.replace('Service', ''))
 files = sys.argv[2:]
 
 # Pass 0: collect method names defined on *Client in these files.
@@ -96,8 +102,9 @@ for f in files:
             # identifier is the name ("ctx context.Context", grouped
             # "username, password string" splits into name-only segments).
             argnames.append(a.split()[0].lstrip('*'))
-        facade = service.replace('Service', '')
-        call = f'c.{facade}().{name}({", ".join(argnames)})'
+        facade_call = f'c.{facade}().{name}'
+        argnames_str = ", ".join(argnames)
+        call = f'{facade_call}({argnames_str})' if argnames else f'{facade_call}()'
         body = f'return {call}' if rets_flat else call
         sig_rets = f' {rets_flat}' if rets_flat else ''
         delegators.append(

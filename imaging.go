@@ -12,10 +12,10 @@ const imagingNamespace = "http://www.onvif.org/ver20/imaging/wsdl"
 // GetImagingSettings retrieves imaging settings for a video source.
 //
 //nolint:funlen // GetImagingSettings has many statements due to parsing complex imaging settings
-func (c *Client) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
-	endpoint := c.imagingEndpoint
+func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
-		endpoint = c.endpoint
+		endpoint = s.client.endpoint
 	}
 
 	type GetImagingSettings struct {
@@ -74,8 +74,8 @@ func (c *Client) GetImagingSettings(ctx context.Context, videoSourceToken string
 
 	var resp GetImagingSettingsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetImagingSettings failed: %w", err)
@@ -142,12 +142,12 @@ func (c *Client) GetImagingSettings(ctx context.Context, videoSourceToken string
 // SetImagingSettings sets imaging settings for a video source.
 //
 //nolint:funlen // SetImagingSettings has many statements due to building complex imaging settings request
-func (c *Client) SetImagingSettings(
+func (s *ImagingService) SetImagingSettings(
 	ctx context.Context, videoSourceToken string, settings *ImagingSettings, forcePersistence bool,
 ) error {
-	endpoint := c.imagingEndpoint
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
-		endpoint = c.endpoint
+		endpoint = s.client.endpoint
 	}
 
 	type SetImagingSettings struct {
@@ -283,8 +283,8 @@ func (c *Client) SetImagingSettings(
 		}
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetImagingSettings failed: %w", err)
@@ -294,10 +294,10 @@ func (c *Client) SetImagingSettings(
 }
 
 // Move performs a focus move operation.
-func (c *Client) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
-	endpoint := c.imagingEndpoint
+func (s *ImagingService) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
-		endpoint = c.endpoint
+		endpoint = s.client.endpoint
 	}
 
 	type Move struct {
@@ -341,8 +341,8 @@ func (c *Client) Move(ctx context.Context, videoSourceToken string, focus *Focus
 		// Implementation would add specific focus move types here
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Move failed: %w", err)
@@ -357,8 +357,8 @@ type FocusMove struct {
 }
 
 // GetOptions retrieves imaging options for a video source.
-func (c *Client) GetOptions(ctx context.Context, videoSourceToken string) (*ImagingOptions, error) {
-	endpoint := c.imagingEndpoint
+func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string) (*ImagingOptions, error) {
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -420,8 +420,8 @@ func (c *Client) GetOptions(ctx context.Context, videoSourceToken string) (*Imag
 
 	var resp GetOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOptions failed: %w", err)
@@ -454,8 +454,8 @@ func (c *Client) GetOptions(ctx context.Context, videoSourceToken string) (*Imag
 }
 
 // GetMoveOptions retrieves imaging move options for focus.
-func (c *Client) GetMoveOptions(ctx context.Context, videoSourceToken string) (*MoveOptions, error) {
-	endpoint := c.imagingEndpoint
+func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken string) (*MoveOptions, error) {
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -505,8 +505,8 @@ func (c *Client) GetMoveOptions(ctx context.Context, videoSourceToken string) (*
 
 	var resp GetMoveOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMoveOptions failed: %w", err)
@@ -553,8 +553,8 @@ func (c *Client) GetMoveOptions(ctx context.Context, videoSourceToken string) (*
 }
 
 // StopFocus stops focus movement.
-func (c *Client) StopFocus(ctx context.Context, videoSourceToken string) error {
-	endpoint := c.imagingEndpoint
+func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string) error {
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -570,8 +570,8 @@ func (c *Client) StopFocus(ctx context.Context, videoSourceToken string) error {
 		VideoSourceToken: videoSourceToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
@@ -581,8 +581,8 @@ func (c *Client) StopFocus(ctx context.Context, videoSourceToken string) error {
 }
 
 // GetImagingStatus retrieves imaging status.
-func (c *Client) GetImagingStatus(ctx context.Context, videoSourceToken string) (*ImagingStatus, error) {
-	endpoint := c.imagingEndpoint
+func (s *ImagingService) GetImagingStatus(ctx context.Context, videoSourceToken string) (*ImagingStatus, error) {
+	endpoint := s.client.imagingEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -611,8 +611,8 @@ func (c *Client) GetImagingStatus(ctx context.Context, videoSourceToken string) 
 
 	var resp GetStatusResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)

@@ -731,7 +731,7 @@ func TestSetEventEndpoint(t *testing.T) {
 	client.SetEventEndpoint(newEndpoint)
 
 	// Verify endpoint was set.
-	endpoint := client.getEventEndpoint()
+	endpoint := client.Events().getEventEndpoint()
 	if endpoint != newEndpoint {
 		t.Errorf("Expected event endpoint %s, got %s", newEndpoint, endpoint)
 	}

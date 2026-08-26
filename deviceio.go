@@ -170,14 +170,14 @@ type RelayOutputOptions struct {
 }
 
 // getDeviceIOEndpoint returns the device IO endpoint.
-func (c *Client) getDeviceIOEndpoint() string {
+func (s *DeviceIOService) getDeviceIOEndpoint() string {
 	// Device IO typically uses the main device endpoint.
-	return c.endpoint
+	return s.client.endpoint
 }
 
 // GetDeviceIOServiceCapabilities retrieves the capabilities of the device IO service.
-func (c *Client) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOServiceCapabilities, error) {
-	endpoint := c.getDeviceIOEndpoint()
+func (s *DeviceIOService) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOServiceCapabilities, error) {
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetServiceCapabilities struct {
 		XMLName xml.Name `xml:"tmd:GetServiceCapabilities"`
@@ -205,8 +205,8 @@ func (c *Client) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOS
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceIOServiceCapabilities failed: %w", err)
@@ -226,8 +226,8 @@ func (c *Client) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOS
 }
 
 // GetDigitalInputs retrieves all digital inputs.
-func (c *Client) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) {
-	endpoint := c.getDeviceIOEndpoint()
+func (s *DeviceIOService) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) {
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetDigitalInputs struct {
 		XMLName xml.Name `xml:"tmd:GetDigitalInputs"`
@@ -248,8 +248,8 @@ func (c *Client) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) 
 
 	var resp GetDigitalInputsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDigitalInputs failed: %w", err)
@@ -267,12 +267,12 @@ func (c *Client) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) 
 }
 
 // GetDigitalInputConfigurationOptions retrieves digital input configuration options.
-func (c *Client) GetDigitalInputConfigurationOptions(ctx context.Context, token string) (*DigitalInputConfigurationOptions, error) {
+func (s *DeviceIOService) GetDigitalInputConfigurationOptions(ctx context.Context, token string) (*DigitalInputConfigurationOptions, error) {
 	if token == "" {
 		return nil, ErrInvalidDigitalInputToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetDigitalInputConfigurationOptions struct {
 		XMLName xml.Name `xml:"tmd:GetDigitalInputConfigurationOptions"`
@@ -294,8 +294,8 @@ func (c *Client) GetDigitalInputConfigurationOptions(ctx context.Context, token 
 
 	var resp GetDigitalInputConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDigitalInputConfigurationOptions failed: %w", err)
@@ -313,12 +313,12 @@ func (c *Client) GetDigitalInputConfigurationOptions(ctx context.Context, token 
 }
 
 // SetDigitalInputConfigurations sets digital input configurations.
-func (c *Client) SetDigitalInputConfigurations(ctx context.Context, inputs []*DigitalInput) error {
+func (s *DeviceIOService) SetDigitalInputConfigurations(ctx context.Context, inputs []*DigitalInput) error {
 	if len(inputs) == 0 {
 		return ErrDigitalInputConfigNil
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type DigitalInputXML struct {
 		Token     string `xml:"token,attr"`
@@ -354,8 +354,8 @@ func (c *Client) SetDigitalInputConfigurations(ctx context.Context, inputs []*Di
 
 	var resp SetDigitalInputConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetDigitalInputConfigurations failed: %w", err)
@@ -365,8 +365,8 @@ func (c *Client) SetDigitalInputConfigurations(ctx context.Context, inputs []*Di
 }
 
 // GetVideoOutputs retrieves all video outputs.
-func (c *Client) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
-	endpoint := c.getDeviceIOEndpoint()
+func (s *DeviceIOService) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetVideoOutputs struct {
 		XMLName xml.Name `xml:"tmd:GetVideoOutputs"`
@@ -403,8 +403,8 @@ func (c *Client) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
 
 	var resp GetVideoOutputsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputs failed: %w", err)
@@ -450,8 +450,8 @@ func (c *Client) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
 }
 
 // GetSerialPorts retrieves all serial ports.
-func (c *Client) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
-	endpoint := c.getDeviceIOEndpoint()
+func (s *DeviceIOService) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetSerialPorts struct {
 		XMLName xml.Name `xml:"tmd:GetSerialPorts"`
@@ -472,8 +472,8 @@ func (c *Client) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
 
 	var resp GetSerialPortsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPorts failed: %w", err)
@@ -491,12 +491,12 @@ func (c *Client) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
 }
 
 // GetSerialPortConfiguration retrieves a serial port configuration.
-func (c *Client) GetSerialPortConfiguration(ctx context.Context, serialPortToken string) (*SerialPortConfiguration, error) {
+func (s *DeviceIOService) GetSerialPortConfiguration(ctx context.Context, serialPortToken string) (*SerialPortConfiguration, error) {
 	if serialPortToken == "" {
 		return nil, ErrInvalidSerialPortToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetSerialPortConfiguration struct {
 		XMLName         xml.Name `xml:"tmd:GetSerialPortConfiguration"`
@@ -523,8 +523,8 @@ func (c *Client) GetSerialPortConfiguration(ctx context.Context, serialPortToken
 
 	var resp GetSerialPortConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPortConfiguration failed: %w", err)
@@ -541,12 +541,12 @@ func (c *Client) GetSerialPortConfiguration(ctx context.Context, serialPortToken
 }
 
 // GetSerialPortConfigurationOptions retrieves serial port configuration options.
-func (c *Client) GetSerialPortConfigurationOptions(ctx context.Context, serialPortToken string) (*SerialPortConfigurationOptions, error) {
+func (s *DeviceIOService) GetSerialPortConfigurationOptions(ctx context.Context, serialPortToken string) (*SerialPortConfigurationOptions, error) {
 	if serialPortToken == "" {
 		return nil, ErrInvalidSerialPortToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetSerialPortConfigurationOptions struct {
 		XMLName         xml.Name `xml:"tmd:GetSerialPortConfigurationOptions"`
@@ -572,8 +572,8 @@ func (c *Client) GetSerialPortConfigurationOptions(ctx context.Context, serialPo
 
 	var resp GetSerialPortConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPortConfigurationOptions failed: %w", err)
@@ -596,7 +596,7 @@ func (c *Client) GetSerialPortConfigurationOptions(ctx context.Context, serialPo
 }
 
 // SetSerialPortConfiguration sets a serial port configuration.
-func (c *Client) SetSerialPortConfiguration(ctx context.Context, config *SerialPortConfiguration) error {
+func (s *DeviceIOService) SetSerialPortConfiguration(ctx context.Context, config *SerialPortConfiguration) error {
 	if config == nil {
 		return ErrSerialPortConfigNil
 	}
@@ -605,7 +605,7 @@ func (c *Client) SetSerialPortConfiguration(ctx context.Context, config *SerialP
 		return ErrInvalidSerialPortToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type SerialPortConfigurationXML struct {
 		Token           string  `xml:"token,attr"`
@@ -640,8 +640,8 @@ func (c *Client) SetSerialPortConfiguration(ctx context.Context, config *SerialP
 
 	var resp SetSerialPortConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetSerialPortConfiguration failed: %w", err)
@@ -651,7 +651,7 @@ func (c *Client) SetSerialPortConfiguration(ctx context.Context, config *SerialP
 }
 
 // SendReceiveSerialCommand sends a serial command and receives a response.
-func (c *Client) SendReceiveSerialCommand(ctx context.Context, serialPortToken string, data []byte, timeoutSeconds, dataLength int) ([]byte, error) {
+func (s *DeviceIOService) SendReceiveSerialCommand(ctx context.Context, serialPortToken string, data []byte, timeoutSeconds, dataLength int) ([]byte, error) {
 	if serialPortToken == "" {
 		return nil, ErrInvalidSerialPortToken
 	}
@@ -660,7 +660,7 @@ func (c *Client) SendReceiveSerialCommand(ctx context.Context, serialPortToken s
 		return nil, ErrInvalidSerialData
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type SerialData struct {
 		Binary string `xml:"tt:Binary,omitempty"`
@@ -699,8 +699,8 @@ func (c *Client) SendReceiveSerialCommand(ctx context.Context, serialPortToken s
 
 	var resp SendReceiveSerialCommandResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("SendReceiveSerialCommand failed: %w", err)
@@ -710,12 +710,12 @@ func (c *Client) SendReceiveSerialCommand(ctx context.Context, serialPortToken s
 }
 
 // GetVideoOutputConfiguration retrieves a video output configuration.
-func (c *Client) GetVideoOutputConfiguration(ctx context.Context, videoOutputToken string) (*VideoOutputConfiguration, error) {
+func (s *DeviceIOService) GetVideoOutputConfiguration(ctx context.Context, videoOutputToken string) (*VideoOutputConfiguration, error) {
 	if videoOutputToken == "" {
 		return nil, ErrInvalidVideoOutputToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetVideoOutputConfiguration struct {
 		XMLName          xml.Name `xml:"tmd:GetVideoOutputConfiguration"`
@@ -740,8 +740,8 @@ func (c *Client) GetVideoOutputConfiguration(ctx context.Context, videoOutputTok
 
 	var resp GetVideoOutputConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputConfiguration failed: %w", err)
@@ -756,12 +756,12 @@ func (c *Client) GetVideoOutputConfiguration(ctx context.Context, videoOutputTok
 }
 
 // GetVideoOutputConfigurationOptions retrieves video output configuration options.
-func (c *Client) GetVideoOutputConfigurationOptions(ctx context.Context, videoOutputToken string) (*VideoOutputConfigurationOptions, error) {
+func (s *DeviceIOService) GetVideoOutputConfigurationOptions(ctx context.Context, videoOutputToken string) (*VideoOutputConfigurationOptions, error) {
 	if videoOutputToken == "" {
 		return nil, ErrInvalidVideoOutputToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetVideoOutputConfigurationOptions struct {
 		XMLName          xml.Name `xml:"tmd:GetVideoOutputConfigurationOptions"`
@@ -787,8 +787,8 @@ func (c *Client) GetVideoOutputConfigurationOptions(ctx context.Context, videoOu
 
 	var resp GetVideoOutputConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputConfigurationOptions failed: %w", err)
@@ -804,7 +804,7 @@ func (c *Client) GetVideoOutputConfigurationOptions(ctx context.Context, videoOu
 }
 
 // SetVideoOutputConfiguration sets a video output configuration.
-func (c *Client) SetVideoOutputConfiguration(ctx context.Context, config *VideoOutputConfiguration) error {
+func (s *DeviceIOService) SetVideoOutputConfiguration(ctx context.Context, config *VideoOutputConfiguration) error {
 	if config == nil {
 		return ErrVideoOutputConfigNil
 	}
@@ -813,7 +813,7 @@ func (c *Client) SetVideoOutputConfiguration(ctx context.Context, config *VideoO
 		return ErrInvalidVideoOutputToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type VideoOutputConfigurationXML struct {
 		Token       string `xml:"token,attr"`
@@ -848,8 +848,8 @@ func (c *Client) SetVideoOutputConfiguration(ctx context.Context, config *VideoO
 
 	var resp SetVideoOutputConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetVideoOutputConfiguration failed: %w", err)
@@ -859,12 +859,12 @@ func (c *Client) SetVideoOutputConfiguration(ctx context.Context, config *VideoO
 }
 
 // GetRelayOutputOptions retrieves relay output options.
-func (c *Client) GetRelayOutputOptions(ctx context.Context, relayOutputToken string) (*RelayOutputOptions, error) {
+func (s *DeviceIOService) GetRelayOutputOptions(ctx context.Context, relayOutputToken string) (*RelayOutputOptions, error) {
 	if relayOutputToken == "" {
 		return nil, ErrInvalidRelayOutputToken
 	}
 
-	endpoint := c.getDeviceIOEndpoint()
+	endpoint := s.getDeviceIOEndpoint()
 
 	type GetRelayOutputOptions struct {
 		XMLName          xml.Name `xml:"tmd:GetRelayOutputOptions"`
@@ -889,8 +889,8 @@ func (c *Client) GetRelayOutputOptions(ctx context.Context, relayOutputToken str
 
 	var resp GetRelayOutputOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRelayOutputOptions failed: %w", err)

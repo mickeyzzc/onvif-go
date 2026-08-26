@@ -1,6 +1,9 @@
 package onvif
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // Transitional *Client delegators over the service facades. These exist only
 // while call sites migrate to the facade API and are REMOVED before the
@@ -707,4 +710,190 @@ func (c *Client) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthF
 
 func (c *Client) SetAuthFailureWarningConfiguration(ctx context.Context, config *AuthFailureWarningConfiguration) error {
 	return c.Security().SetAuthFailureWarningConfiguration(ctx, config)
+}
+
+// --- transitional delegators: PTZService ---
+func (c *Client) ContinuousMove(ctx context.Context, profileToken string, velocity *PTZSpeed, timeout *string) error {
+	return c.PTZ().ContinuousMove(ctx, profileToken, velocity, timeout)
+}
+
+func (c *Client) AbsoluteMove(ctx context.Context, profileToken string, position *PTZVector, speed *PTZSpeed) error {
+	return c.PTZ().AbsoluteMove(ctx, profileToken, position, speed)
+}
+
+func (c *Client) RelativeMove(ctx context.Context, profileToken string, translation *PTZVector, speed *PTZSpeed) error {
+	return c.PTZ().RelativeMove(ctx, profileToken, translation, speed)
+}
+
+func (c *Client) Stop(ctx context.Context, profileToken string, panTilt, zoom bool) error {
+	return c.PTZ().Stop(ctx, profileToken, panTilt, zoom)
+}
+
+func (c *Client) GetStatus(ctx context.Context, profileToken string) (*PTZStatus, error) {
+	return c.PTZ().GetStatus(ctx, profileToken)
+}
+
+func (c *Client) GetPresets(ctx context.Context, profileToken string) ([]*PTZPreset, error) {
+	return c.PTZ().GetPresets(ctx, profileToken)
+}
+
+func (c *Client) GotoPreset(ctx context.Context, profileToken, presetToken string, speed *PTZSpeed) error {
+	return c.PTZ().GotoPreset(ctx, profileToken, presetToken, speed)
+}
+
+func (c *Client) SetPreset(ctx context.Context, profileToken, presetName, presetToken string) (string, error) {
+	return c.PTZ().SetPreset(ctx, profileToken, presetName, presetToken)
+}
+
+func (c *Client) RemovePreset(ctx context.Context, profileToken, presetToken string) error {
+	return c.PTZ().RemovePreset(ctx, profileToken, presetToken)
+}
+
+func (c *Client) GotoHomePosition(ctx context.Context, profileToken string, speed *PTZSpeed) error {
+	return c.PTZ().GotoHomePosition(ctx, profileToken, speed)
+}
+
+func (c *Client) SetHomePosition(ctx context.Context, profileToken string) error {
+	return c.PTZ().SetHomePosition(ctx, profileToken)
+}
+
+func (c *Client) GetConfiguration(ctx context.Context, configurationToken string) (*PTZConfiguration, error) {
+	return c.PTZ().GetConfiguration(ctx, configurationToken)
+}
+
+func (c *Client) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, error) {
+	return c.PTZ().GetConfigurations(ctx)
+}
+
+// --- transitional delegators: ImagingService ---
+func (c *Client) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
+	return c.Imaging().GetImagingSettings(ctx, videoSourceToken)
+}
+
+func (c *Client) SetImagingSettings(ctx context.Context, videoSourceToken string, settings *ImagingSettings, forcePersistence bool) error {
+	return c.Imaging().SetImagingSettings(ctx, videoSourceToken, settings, forcePersistence)
+}
+
+func (c *Client) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
+	return c.Imaging().Move(ctx, videoSourceToken, focus)
+}
+
+func (c *Client) GetOptions(ctx context.Context, videoSourceToken string) (*ImagingOptions, error) {
+	return c.Imaging().GetOptions(ctx, videoSourceToken)
+}
+
+func (c *Client) GetMoveOptions(ctx context.Context, videoSourceToken string) (*MoveOptions, error) {
+	return c.Imaging().GetMoveOptions(ctx, videoSourceToken)
+}
+
+func (c *Client) StopFocus(ctx context.Context, videoSourceToken string) error {
+	return c.Imaging().StopFocus(ctx, videoSourceToken)
+}
+
+func (c *Client) GetImagingStatus(ctx context.Context, videoSourceToken string) (*ImagingStatus, error) {
+	return c.Imaging().GetImagingStatus(ctx, videoSourceToken)
+}
+
+// --- transitional delegators: EventService ---
+func (c *Client) SetEventEndpoint(endpoint string) { c.Events().SetEventEndpoint(endpoint) }
+
+func (c *Client) GetEventServiceCapabilities(ctx context.Context) (*EventServiceCapabilities, error) {
+	return c.Events().GetEventServiceCapabilities(ctx)
+}
+
+func (c *Client) CreatePullPointSubscription(ctx context.Context, filter string, initialTerminationTime *time.Duration, subscriptionPolicy string) (*PullPointSubscription, error) {
+	return c.Events().CreatePullPointSubscription(ctx, filter, initialTerminationTime, subscriptionPolicy)
+}
+
+func (c *Client) PullMessages(ctx context.Context, subscriptionReference string, timeout time.Duration, messageLimit int) ([]NotificationMessage, error) {
+	return c.Events().PullMessages(ctx, subscriptionReference, timeout, messageLimit)
+}
+
+func (c *Client) Seek(ctx context.Context, subscriptionReference string, utcTime time.Time, reverse bool) error {
+	return c.Events().Seek(ctx, subscriptionReference, utcTime, reverse)
+}
+
+func (c *Client) SetEventSynchronizationPoint(ctx context.Context, subscriptionReference string) error {
+	return c.Events().SetEventSynchronizationPoint(ctx, subscriptionReference)
+}
+
+func (c *Client) Unsubscribe(ctx context.Context, subscriptionReference string) error {
+	return c.Events().Unsubscribe(ctx, subscriptionReference)
+}
+
+func (c *Client) RenewSubscription(ctx context.Context, subscriptionReference string, terminationTime time.Duration) (time.Time, time.Time, error) {
+	return c.Events().RenewSubscription(ctx, subscriptionReference, terminationTime)
+}
+
+func (c *Client) GetEventProperties(ctx context.Context) (*EventProperties, error) {
+	return c.Events().GetEventProperties(ctx)
+}
+
+func (c *Client) AddEventBroker(ctx context.Context, config *EventBrokerConfig) error {
+	return c.Events().AddEventBroker(ctx, config)
+}
+
+func (c *Client) DeleteEventBroker(ctx context.Context, address string) error {
+	return c.Events().DeleteEventBroker(ctx, address)
+}
+
+func (c *Client) GetEventBrokers(ctx context.Context) ([]*EventBrokerConfig, error) {
+	return c.Events().GetEventBrokers(ctx)
+}
+
+// --- transitional delegators: DeviceIOService ---
+func (c *Client) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOServiceCapabilities, error) {
+	return c.DeviceIO().GetDeviceIOServiceCapabilities(ctx)
+}
+
+func (c *Client) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) {
+	return c.DeviceIO().GetDigitalInputs(ctx)
+}
+
+func (c *Client) GetDigitalInputConfigurationOptions(ctx context.Context, token string) (*DigitalInputConfigurationOptions, error) {
+	return c.DeviceIO().GetDigitalInputConfigurationOptions(ctx, token)
+}
+
+func (c *Client) SetDigitalInputConfigurations(ctx context.Context, inputs []*DigitalInput) error {
+	return c.DeviceIO().SetDigitalInputConfigurations(ctx, inputs)
+}
+
+func (c *Client) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
+	return c.DeviceIO().GetVideoOutputs(ctx)
+}
+
+func (c *Client) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
+	return c.DeviceIO().GetSerialPorts(ctx)
+}
+
+func (c *Client) GetSerialPortConfiguration(ctx context.Context, serialPortToken string) (*SerialPortConfiguration, error) {
+	return c.DeviceIO().GetSerialPortConfiguration(ctx, serialPortToken)
+}
+
+func (c *Client) GetSerialPortConfigurationOptions(ctx context.Context, serialPortToken string) (*SerialPortConfigurationOptions, error) {
+	return c.DeviceIO().GetSerialPortConfigurationOptions(ctx, serialPortToken)
+}
+
+func (c *Client) SetSerialPortConfiguration(ctx context.Context, config *SerialPortConfiguration) error {
+	return c.DeviceIO().SetSerialPortConfiguration(ctx, config)
+}
+
+func (c *Client) SendReceiveSerialCommand(ctx context.Context, serialPortToken string, data []byte, timeoutSeconds, dataLength int) ([]byte, error) {
+	return c.DeviceIO().SendReceiveSerialCommand(ctx, serialPortToken, data, timeoutSeconds, dataLength)
+}
+
+func (c *Client) GetVideoOutputConfiguration(ctx context.Context, videoOutputToken string) (*VideoOutputConfiguration, error) {
+	return c.DeviceIO().GetVideoOutputConfiguration(ctx, videoOutputToken)
+}
+
+func (c *Client) GetVideoOutputConfigurationOptions(ctx context.Context, videoOutputToken string) (*VideoOutputConfigurationOptions, error) {
+	return c.DeviceIO().GetVideoOutputConfigurationOptions(ctx, videoOutputToken)
+}
+
+func (c *Client) SetVideoOutputConfiguration(ctx context.Context, config *VideoOutputConfiguration) error {
+	return c.DeviceIO().SetVideoOutputConfiguration(ctx, config)
+}
+
+func (c *Client) GetRelayOutputOptions(ctx context.Context, relayOutputToken string) (*RelayOutputOptions, error) {
+	return c.DeviceIO().GetRelayOutputOptions(ctx, relayOutputToken)
 }

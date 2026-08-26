@@ -67,8 +67,8 @@ func convertToPTZSpeedXML(s *PTZSpeed) *ptzSpeedXML {
 }
 
 // ContinuousMove starts continuous PTZ movement.
-func (c *Client) ContinuousMove(ctx context.Context, profileToken string, velocity *PTZSpeed, timeout *string) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, velocity *PTZSpeed, timeout *string) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -88,8 +88,8 @@ func (c *Client) ContinuousMove(ctx context.Context, profileToken string, veloci
 		Timeout:      timeout,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("ContinuousMove failed: %w", err)
@@ -99,8 +99,8 @@ func (c *Client) ContinuousMove(ctx context.Context, profileToken string, veloci
 }
 
 // AbsoluteMove moves PTZ to an absolute position.
-func (c *Client) AbsoluteMove(ctx context.Context, profileToken string, position *PTZVector, speed *PTZSpeed) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, position *PTZVector, speed *PTZSpeed) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -120,8 +120,8 @@ func (c *Client) AbsoluteMove(ctx context.Context, profileToken string, position
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AbsoluteMove failed: %w", err)
@@ -131,8 +131,8 @@ func (c *Client) AbsoluteMove(ctx context.Context, profileToken string, position
 }
 
 // RelativeMove moves PTZ relative to current position.
-func (c *Client) RelativeMove(ctx context.Context, profileToken string, translation *PTZVector, speed *PTZSpeed) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, translation *PTZVector, speed *PTZSpeed) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -152,8 +152,8 @@ func (c *Client) RelativeMove(ctx context.Context, profileToken string, translat
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RelativeMove failed: %w", err)
@@ -163,8 +163,8 @@ func (c *Client) RelativeMove(ctx context.Context, profileToken string, translat
 }
 
 // Stop stops PTZ movement.
-func (c *Client) Stop(ctx context.Context, profileToken string, panTilt, zoom bool) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoom bool) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -189,8 +189,8 @@ func (c *Client) Stop(ctx context.Context, profileToken string, panTilt, zoom bo
 		req.Zoom = &zoom
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
@@ -200,8 +200,8 @@ func (c *Client) Stop(ctx context.Context, profileToken string, panTilt, zoom bo
 }
 
 // GetStatus retrieves PTZ status.
-func (c *Client) GetStatus(ctx context.Context, profileToken string) (*PTZStatus, error) {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZStatus, error) {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -242,8 +242,8 @@ func (c *Client) GetStatus(ctx context.Context, profileToken string) (*PTZStatus
 
 	var resp GetStatusResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)
@@ -281,8 +281,8 @@ func (c *Client) GetStatus(ctx context.Context, profileToken string) (*PTZStatus
 }
 
 // GetPresets retrieves PTZ presets.
-func (c *Client) GetPresets(ctx context.Context, profileToken string) ([]*PTZPreset, error) {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PTZPreset, error) {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -319,8 +319,8 @@ func (c *Client) GetPresets(ctx context.Context, profileToken string) ([]*PTZPre
 
 	var resp GetPresetsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPresets failed: %w", err)
@@ -357,8 +357,8 @@ func (c *Client) GetPresets(ctx context.Context, profileToken string) ([]*PTZPre
 }
 
 // GotoPreset moves PTZ to a preset position.
-func (c *Client) GotoPreset(ctx context.Context, profileToken, presetToken string, speed *PTZSpeed) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken string, speed *PTZSpeed) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -378,8 +378,8 @@ func (c *Client) GotoPreset(ctx context.Context, profileToken, presetToken strin
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoPreset failed: %w", err)
@@ -389,8 +389,8 @@ func (c *Client) GotoPreset(ctx context.Context, profileToken, presetToken strin
 }
 
 // SetPreset sets a preset position.
-func (c *Client) SetPreset(ctx context.Context, profileToken, presetName, presetToken string) (string, error) {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, presetToken string) (string, error) {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return "", ErrServiceNotSupported
 	}
@@ -422,8 +422,8 @@ func (c *Client) SetPreset(ctx context.Context, profileToken, presetName, preset
 
 	var resp SetPresetResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SetPreset failed: %w", err)
@@ -433,8 +433,8 @@ func (c *Client) SetPreset(ctx context.Context, profileToken, presetName, preset
 }
 
 // RemovePreset removes a preset.
-func (c *Client) RemovePreset(ctx context.Context, profileToken, presetToken string) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken string) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -452,8 +452,8 @@ func (c *Client) RemovePreset(ctx context.Context, profileToken, presetToken str
 		PresetToken:  presetToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePreset failed: %w", err)
@@ -463,8 +463,8 @@ func (c *Client) RemovePreset(ctx context.Context, profileToken, presetToken str
 }
 
 // GotoHomePosition moves PTZ to home position.
-func (c *Client) GotoHomePosition(ctx context.Context, profileToken string, speed *PTZSpeed) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, speed *PTZSpeed) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -482,8 +482,8 @@ func (c *Client) GotoHomePosition(ctx context.Context, profileToken string, spee
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoHomePosition failed: %w", err)
@@ -493,8 +493,8 @@ func (c *Client) GotoHomePosition(ctx context.Context, profileToken string, spee
 }
 
 // SetHomePosition sets the current position as home position.
-func (c *Client) SetHomePosition(ctx context.Context, profileToken string) error {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) error {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -510,8 +510,8 @@ func (c *Client) SetHomePosition(ctx context.Context, profileToken string) error
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHomePosition failed: %w", err)
@@ -521,8 +521,8 @@ func (c *Client) SetHomePosition(ctx context.Context, profileToken string) error
 }
 
 // GetConfiguration retrieves PTZ configuration.
-func (c *Client) GetConfiguration(ctx context.Context, configurationToken string) (*PTZConfiguration, error) {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken string) (*PTZConfiguration, error) {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -550,8 +550,8 @@ func (c *Client) GetConfiguration(ctx context.Context, configurationToken string
 
 	var resp GetConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfiguration failed: %w", err)
@@ -566,8 +566,8 @@ func (c *Client) GetConfiguration(ctx context.Context, configurationToken string
 }
 
 // GetConfigurations retrieves all PTZ configurations.
-func (c *Client) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, error) {
-	endpoint := c.ptzEndpoint
+func (s *PTZService) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, error) {
+	endpoint := s.client.ptzEndpoint
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -593,8 +593,8 @@ func (c *Client) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, er
 
 	var resp GetConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfigurations failed: %w", err)
