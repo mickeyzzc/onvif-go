@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Get profiles
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil {
 		log.Fatalf("Failed to get profiles: %v", err)
 	}
@@ -54,7 +54,7 @@ func main() {
 func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken string) {
 	// Get current PTZ status
 	fmt.Println("Getting current PTZ status...")
-	status, err := client.GetStatus(ctx, profileToken)
+	status, err := client.PTZ().GetStatus(ctx, profileToken)
 	if err != nil {
 		log.Printf("Warning: Failed to get PTZ status: %v\n", err)
 	} else {
@@ -74,7 +74,7 @@ func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken stri
 
 	// Get presets
 	fmt.Println("Getting PTZ presets...")
-	presets, err := client.GetPresets(ctx, profileToken)
+	presets, err := client.PTZ().GetPresets(ctx, profileToken)
 	if err != nil {
 		log.Printf("Warning: Failed to get presets: %v\n", err)
 	} else {
@@ -94,7 +94,7 @@ func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken stri
 		},
 	}
 	timeout := "PT2S" // 2 seconds
-	if err := client.ContinuousMove(ctx, profileToken, velocity, &timeout); err != nil {
+	if err := client.PTZ().ContinuousMove(ctx, profileToken, velocity, &timeout); err != nil {
 		log.Printf("Failed to move: %v\n", err)
 	} else {
 		time.Sleep(2 * time.Second)
@@ -102,7 +102,7 @@ func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken stri
 
 	// Stop movement
 	fmt.Println("Stopping camera movement...")
-	if err := client.Stop(ctx, profileToken, true, false); err != nil {
+	if err := client.PTZ().Stop(ctx, profileToken, true, false); err != nil {
 		log.Printf("Failed to stop: %v\n", err)
 	}
 
@@ -117,7 +117,7 @@ func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken stri
 			X: 0.1, // Zoom in
 		},
 	}
-	if err := client.RelativeMove(ctx, profileToken, translation, nil); err != nil {
+	if err := client.PTZ().RelativeMove(ctx, profileToken, translation, nil); err != nil {
 		log.Printf("Failed to relative move: %v\n", err)
 	} else {
 		time.Sleep(2 * time.Second)
@@ -134,7 +134,7 @@ func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken stri
 			X: 0.0,
 		},
 	}
-	if err := client.AbsoluteMove(ctx, profileToken, homePosition, nil); err != nil {
+	if err := client.PTZ().AbsoluteMove(ctx, profileToken, homePosition, nil); err != nil {
 		log.Printf("Failed to absolute move: %v\n", err)
 	} else {
 		time.Sleep(2 * time.Second)
@@ -143,7 +143,7 @@ func demonstratePTZ(ctx context.Context, client *onvif.Client, profileToken stri
 	// Go to preset if available
 	if len(presets) > 0 {
 		fmt.Printf("\nGoing to preset: %s\n", presets[0].Name)
-		if err := client.GotoPreset(ctx, profileToken, presets[0].Token, nil); err != nil {
+		if err := client.PTZ().GotoPreset(ctx, profileToken, presets[0].Token, nil); err != nil {
 			log.Printf("Failed to go to preset: %v\n", err)
 		} else {
 			time.Sleep(2 * time.Second)

@@ -31,7 +31,7 @@ func main() {
 
 	// Get device information
 	fmt.Println("\nRetrieving device information...")
-	info, err := client.GetDeviceInformation(ctx)
+	info, err := client.Device().GetDeviceInformation(ctx)
 	if err != nil {
 		log.Fatalf("Failed to get device information: %v", err)
 	}
@@ -51,7 +51,7 @@ func main() {
 
 	// Get media profiles
 	fmt.Println("\nRetrieving media profiles...")
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil {
 		log.Fatalf("Failed to get profiles: %v", err)
 	}
@@ -73,7 +73,7 @@ func main() {
 		}
 
 		// Get stream URI
-		streamURI, err := client.GetStreamURI(ctx, profile.Token)
+		streamURI, err := client.Media().GetStreamURI(ctx, profile.Token)
 		if err != nil {
 			fmt.Printf("  Stream URI: Error - %v\n", err)
 		} else {
@@ -81,7 +81,7 @@ func main() {
 		}
 
 		// Get snapshot URI
-		snapshotURI, err := client.GetSnapshotURI(ctx, profile.Token)
+		snapshotURI, err := client.Media().GetSnapshotURI(ctx, profile.Token)
 		if err != nil {
 			fmt.Printf("  Snapshot URI: Error - %v\n", err)
 		} else {

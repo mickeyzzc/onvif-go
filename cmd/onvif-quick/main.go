@@ -207,7 +207,7 @@ func connectAndShowInfo() {
 	ctx := context.Background()
 
 	// Get device info
-	info, err := client.GetDeviceInformation(ctx)
+	info, err := client.Device().GetDeviceInformation(ctx)
 	if err != nil {
 		fmt.Printf("❌ Connection failed: %v\n", err)
 
@@ -221,12 +221,12 @@ func connectAndShowInfo() {
 	// Initialize and get profiles
 	//nolint:errcheck // Ignore initialization errors, we'll catch them on GetProfiles
 	_ = client.Initialize(ctx)
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err == nil && len(profiles) > 0 {
 		fmt.Printf("📺 %d profile(s) available\n", len(profiles))
 
 		// Show first stream URL
-		streamURI, err := client.GetStreamURI(ctx, profiles[0].Token)
+		streamURI, err := client.Media().GetStreamURI(ctx, profiles[0].Token)
 		if err == nil {
 			fmt.Printf("📡 Stream: %s\n", streamURI.URI)
 		}
@@ -270,7 +270,7 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 	//nolint:errcheck // Ignore initialization errors, we'll catch them on GetProfiles
 	_ = client.Initialize(ctx)
 
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil || len(profiles) == 0 {
 		fmt.Println("❌ No profiles found")
 
@@ -280,7 +280,7 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 	profileToken := profiles[0].Token
 
 	// Check PTZ status
-	status, err := client.GetStatus(ctx, profileToken)
+	status, err := client.PTZ().GetStatus(ctx, profileToken)
 	if err != nil {
 		fmt.Printf("❌ PTZ not supported: %v\n", err)
 
@@ -327,7 +327,7 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 
 	if velocity != nil {
 		timeout := fmt.Sprintf("PT%dS", ptzStepSize)
-		err = client.ContinuousMove(ctx, profileToken, velocity, &timeout)
+		err = client.PTZ().ContinuousMove(ctx, profileToken, velocity, &timeout)
 		if err != nil {
 			fmt.Printf("❌ Error: %v\n", err)
 
@@ -336,9 +336,9 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 		fmt.Println("✅ Moving for 2 seconds...")
 		time.Sleep(ptzStepSize * time.Second)
 		//nolint:errcheck // Stop error is not critical for demo
-		_ = client.Stop(ctx, profileToken, true, false)
+		_ = client.PTZ().Stop(ctx, profileToken, true, false)
 	} else if position != nil {
-		err = client.AbsoluteMove(ctx, profileToken, position, nil)
+		err = client.PTZ().AbsoluteMove(ctx, profileToken, position, nil)
 		if err != nil {
 			fmt.Printf("❌ Error: %v\n", err)
 
@@ -387,7 +387,7 @@ func getStreamURLs() {
 	//nolint:errcheck // Ignore initialization errors, we'll catch them on GetProfiles
 	_ = client.Initialize(ctx)
 
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil {
 		fmt.Printf("❌ Error: %v\n", err)
 
@@ -406,7 +406,7 @@ func getStreamURLs() {
 		fmt.Printf("📹 Profile %d: %s\n", i+1, profile.Name)
 
 		// Stream URI
-		streamURI, err := client.GetStreamURI(ctx, profile.Token)
+		streamURI, err := client.Media().GetStreamURI(ctx, profile.Token)
 		if err != nil {
 			fmt.Printf("   Stream: ❌ Error\n")
 		} else {
@@ -414,7 +414,7 @@ func getStreamURLs() {
 		}
 
 		// Snapshot URI
-		snapshotURI, err := client.GetSnapshotURI(ctx, profile.Token)
+		snapshotURI, err := client.Media().GetSnapshotURI(ctx, profile.Token)
 		if err != nil {
 			fmt.Printf("   Snapshot: ❌ Error\n")
 		} else {

@@ -171,7 +171,7 @@ func TestGetRemoteUser(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	remoteUser, err := client.GetRemoteUser(ctx)
+	remoteUser, err := client.Security().GetRemoteUser(ctx)
 	if err != nil {
 		t.Fatalf("GetRemoteUser failed: %v", err)
 	}
@@ -201,7 +201,7 @@ func TestSetRemoteUser(t *testing.T) {
 		UseDerivedPassword: true,
 	}
 
-	err = client.SetRemoteUser(ctx, remoteUser)
+	err = client.Security().SetRemoteUser(ctx, remoteUser)
 	if err != nil {
 		t.Fatalf("SetRemoteUser failed: %v", err)
 	}
@@ -217,7 +217,7 @@ func TestGetIPAddressFilter(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	filter, err := client.GetIPAddressFilter(ctx)
+	filter, err := client.Security().GetIPAddressFilter(ctx)
 	if err != nil {
 		t.Fatalf("GetIPAddressFilter failed: %v", err)
 	}
@@ -256,7 +256,7 @@ func TestSetIPAddressFilter(t *testing.T) {
 		},
 	}
 
-	err = client.SetIPAddressFilter(ctx, filter)
+	err = client.Security().SetIPAddressFilter(ctx, filter)
 	if err != nil {
 		t.Fatalf("SetIPAddressFilter failed: %v", err)
 	}
@@ -279,7 +279,7 @@ func TestAddIPAddressFilter(t *testing.T) {
 		},
 	}
 
-	err = client.AddIPAddressFilter(ctx, filter)
+	err = client.Security().AddIPAddressFilter(ctx, filter)
 	if err != nil {
 		t.Fatalf("AddIPAddressFilter failed: %v", err)
 	}
@@ -302,7 +302,7 @@ func TestRemoveIPAddressFilter(t *testing.T) {
 		},
 	}
 
-	err = client.RemoveIPAddressFilter(ctx, filter)
+	err = client.Security().RemoveIPAddressFilter(ctx, filter)
 	if err != nil {
 		t.Fatalf("RemoveIPAddressFilter failed: %v", err)
 	}
@@ -318,7 +318,7 @@ func TestGetZeroConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	zeroConf, err := client.GetZeroConfiguration(ctx)
+	zeroConf, err := client.Security().GetZeroConfiguration(ctx)
 	if err != nil {
 		t.Fatalf("GetZeroConfiguration failed: %v", err)
 	}
@@ -346,7 +346,7 @@ func TestSetZeroConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	err = client.SetZeroConfiguration(ctx, "eth0", true)
+	err = client.Security().SetZeroConfiguration(ctx, "eth0", true)
 	if err != nil {
 		t.Fatalf("SetZeroConfiguration failed: %v", err)
 	}
@@ -362,7 +362,7 @@ func TestGetPasswordComplexityConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	config, err := client.GetPasswordComplexityConfiguration(ctx)
+	config, err := client.Security().GetPasswordComplexityConfiguration(ctx)
 	if err != nil {
 		t.Fatalf("GetPasswordComplexityConfiguration failed: %v", err)
 	}
@@ -411,7 +411,7 @@ func TestSetPasswordComplexityConfiguration(t *testing.T) {
 		PolicyConfigurationLocked: false,
 	}
 
-	err = client.SetPasswordComplexityConfiguration(ctx, config)
+	err = client.Security().SetPasswordComplexityConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetPasswordComplexityConfiguration failed: %v", err)
 	}
@@ -427,7 +427,7 @@ func TestGetPasswordHistoryConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	config, err := client.GetPasswordHistoryConfiguration(ctx)
+	config, err := client.Security().GetPasswordHistoryConfiguration(ctx)
 	if err != nil {
 		t.Fatalf("GetPasswordHistoryConfiguration failed: %v", err)
 	}
@@ -456,7 +456,7 @@ func TestSetPasswordHistoryConfiguration(t *testing.T) {
 		Length:  10,
 	}
 
-	err = client.SetPasswordHistoryConfiguration(ctx, config)
+	err = client.Security().SetPasswordHistoryConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetPasswordHistoryConfiguration failed: %v", err)
 	}
@@ -472,7 +472,7 @@ func TestGetAuthFailureWarningConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	config, err := client.GetAuthFailureWarningConfiguration(ctx)
+	config, err := client.Security().GetAuthFailureWarningConfiguration(ctx)
 	if err != nil {
 		t.Fatalf("GetAuthFailureWarningConfiguration failed: %v", err)
 	}
@@ -506,7 +506,7 @@ func TestSetAuthFailureWarningConfiguration(t *testing.T) {
 		MaxAuthFailures: 3,
 	}
 
-	err = client.SetAuthFailureWarningConfiguration(ctx, config)
+	err = client.Security().SetAuthFailureWarningConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetAuthFailureWarningConfiguration failed: %v", err)
 	}
@@ -533,7 +533,7 @@ func BenchmarkGetRemoteUser(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetRemoteUser(ctx)
+		_, _ = client.Security().GetRemoteUser(ctx)
 	}
 }
 
@@ -551,7 +551,7 @@ func BenchmarkSetRemoteUser(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetRemoteUser(ctx, remoteUser)
+		_ = client.Security().SetRemoteUser(ctx, remoteUser)
 	}
 }
 
@@ -564,7 +564,7 @@ func BenchmarkGetIPAddressFilter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetIPAddressFilter(ctx)
+		_, _ = client.Security().GetIPAddressFilter(ctx)
 	}
 }
 
@@ -587,7 +587,7 @@ func BenchmarkSetIPAddressFilter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetIPAddressFilter(ctx, filter)
+		_ = client.Security().SetIPAddressFilter(ctx, filter)
 	}
 }
 
@@ -606,7 +606,7 @@ func BenchmarkAddIPAddressFilter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.AddIPAddressFilter(ctx, filter)
+		_ = client.Security().AddIPAddressFilter(ctx, filter)
 	}
 }
 
@@ -625,7 +625,7 @@ func BenchmarkRemoveIPAddressFilter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.RemoveIPAddressFilter(ctx, filter)
+		_ = client.Security().RemoveIPAddressFilter(ctx, filter)
 	}
 }
 
@@ -638,7 +638,7 @@ func BenchmarkGetZeroConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetZeroConfiguration(ctx)
+		_, _ = client.Security().GetZeroConfiguration(ctx)
 	}
 }
 
@@ -651,7 +651,7 @@ func BenchmarkSetZeroConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetZeroConfiguration(ctx, "eth0", true)
+		_ = client.Security().SetZeroConfiguration(ctx, "eth0", true)
 	}
 }
 
@@ -664,7 +664,7 @@ func BenchmarkGetPasswordComplexityConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetPasswordComplexityConfiguration(ctx)
+		_, _ = client.Security().GetPasswordComplexityConfiguration(ctx)
 	}
 }
 
@@ -685,7 +685,7 @@ func BenchmarkSetPasswordComplexityConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetPasswordComplexityConfiguration(ctx, config)
+		_ = client.Security().SetPasswordComplexityConfiguration(ctx, config)
 	}
 }
 
@@ -698,7 +698,7 @@ func BenchmarkGetPasswordHistoryConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetPasswordHistoryConfiguration(ctx)
+		_, _ = client.Security().GetPasswordHistoryConfiguration(ctx)
 	}
 }
 
@@ -715,7 +715,7 @@ func BenchmarkSetPasswordHistoryConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetPasswordHistoryConfiguration(ctx, config)
+		_ = client.Security().SetPasswordHistoryConfiguration(ctx, config)
 	}
 }
 
@@ -728,7 +728,7 @@ func BenchmarkGetAuthFailureWarningConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetAuthFailureWarningConfiguration(ctx)
+		_, _ = client.Security().GetAuthFailureWarningConfiguration(ctx)
 	}
 }
 
@@ -746,7 +746,7 @@ func BenchmarkSetAuthFailureWarningConfiguration(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetAuthFailureWarningConfiguration(ctx, config)
+		_ = client.Security().SetAuthFailureWarningConfiguration(ctx, config)
 	}
 }
 
@@ -781,6 +781,6 @@ func BenchmarkIPAddressFilterWithManyAddresses(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = client.SetIPAddressFilter(ctx, filter)
+		_ = client.Security().SetIPAddressFilter(ctx, filter)
 	}
 }

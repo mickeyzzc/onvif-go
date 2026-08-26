@@ -55,7 +55,7 @@ func TestGetDeviceInformation_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	info, err := client.GetDeviceInformation(ctx)
+	info, err := client.Device().GetDeviceInformation(ctx)
 	if err != nil {
 		t.Fatalf("GetDeviceInformation() failed: %v", err)
 	}
@@ -168,7 +168,7 @@ func TestGetCapabilities_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	caps, err := client.GetCapabilities(ctx)
+	caps, err := client.Device().GetCapabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetCapabilities() failed: %v", err)
 	}
@@ -264,7 +264,7 @@ func TestGetServices_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	services, err := client.GetServices(ctx, false)
+	services, err := client.Device().GetServices(ctx, false)
 	if err != nil {
 		t.Fatalf("GetServices() failed: %v", err)
 	}
@@ -332,7 +332,7 @@ func TestGetServiceCapabilities_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	caps, err := client.GetServiceCapabilities(ctx)
+	caps, err := client.Device().GetServiceCapabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetServiceCapabilities() failed: %v", err)
 	}
@@ -405,7 +405,7 @@ func TestGetSystemDateAndTime_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	dateTime, err := client.GetSystemDateAndTime(ctx)
+	dateTime, err := client.Device().GetSystemDateAndTime(ctx)
 	if err != nil {
 		t.Fatalf("GetSystemDateAndTime() failed: %v", err)
 	}
@@ -453,7 +453,7 @@ func TestGetHostname_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	hostname, err := client.GetHostname(ctx)
+	hostname, err := client.Device().GetHostname(ctx)
 	if err != nil {
 		t.Fatalf("GetHostname() failed: %v", err)
 	}
@@ -516,7 +516,7 @@ func TestGetScopes_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	scopes, err := client.GetScopes(ctx)
+	scopes, err := client.Device().GetScopes(ctx)
 	if err != nil {
 		t.Fatalf("GetScopes() failed: %v", err)
 	}
@@ -579,7 +579,7 @@ func TestGetUsers_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	users, err := client.GetUsers(ctx)
+	users, err := client.Device().GetUsers(ctx)
 	if err != nil {
 		t.Fatalf("GetUsers() failed: %v", err)
 	}

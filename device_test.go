@@ -63,7 +63,7 @@ func TestGetDeviceInformation(t *testing.T) {
 				t.Fatalf("Failed to create client: %v", err)
 			}
 
-			deviceInfo, err := client.GetDeviceInformation(context.Background())
+			deviceInfo, err := client.Device().GetDeviceInformation(context.Background())
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetDeviceInformation() error = %v, wantErr %v", err, tt.wantErr)
 
@@ -110,7 +110,7 @@ func TestGetCapabilities(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	capabilities, err := client.GetCapabilities(context.Background())
+	capabilities, err := client.Device().GetCapabilities(context.Background())
 	if err != nil {
 		t.Fatalf("GetCapabilities() error = %v", err)
 	}
@@ -147,7 +147,7 @@ func TestGetHostname(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	hostname, err := client.GetHostname(context.Background())
+	hostname, err := client.Device().GetHostname(context.Background())
 	if err != nil {
 		t.Fatalf("GetHostname() error = %v", err)
 	}
@@ -197,7 +197,7 @@ func TestSetHostname(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	err = client.SetHostname(context.Background(), "new-hostname")
+	err = client.Device().SetHostname(context.Background(), "new-hostname")
 	if err != nil {
 		t.Fatalf("SetHostname() error = %v", err)
 	}
@@ -230,7 +230,7 @@ func TestGetDNS(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	dns, err := client.GetDNS(context.Background())
+	dns, err := client.Device().GetDNS(context.Background())
 	if err != nil {
 		t.Fatalf("GetDNS() error = %v", err)
 	}
@@ -271,7 +271,7 @@ func TestGetUsers(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	users, err := client.GetUsers(context.Background())
+	users, err := client.Device().GetUsers(context.Background())
 	if err != nil {
 		t.Fatalf("GetUsers() error = %v", err)
 	}
@@ -311,7 +311,7 @@ func TestCreateUsers(t *testing.T) {
 		},
 	}
 
-	err = client.CreateUsers(context.Background(), users)
+	err = client.Device().CreateUsers(context.Background(), users)
 	if err != nil {
 		t.Fatalf("CreateUsers() error = %v", err)
 	}
@@ -335,7 +335,7 @@ func TestDeleteUsers(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	err = client.DeleteUsers(context.Background(), []string{"testuser"})
+	err = client.Device().DeleteUsers(context.Background(), []string{"testuser"})
 	if err != nil {
 		t.Fatalf("DeleteUsers() error = %v", err)
 	}
@@ -378,7 +378,7 @@ func TestGetNetworkInterfaces(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	interfaces, err := client.GetNetworkInterfaces(context.Background())
+	interfaces, err := client.Device().GetNetworkInterfaces(context.Background())
 	if err != nil {
 		t.Fatalf("GetNetworkInterfaces() error = %v", err)
 	}
@@ -419,7 +419,7 @@ func TestGetServices(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	services, err := client.GetServices(context.Background(), true)
+	services, err := client.Device().GetServices(context.Background(), true)
 	if err != nil {
 		t.Fatalf("GetServices() error = %v", err)
 	}
@@ -457,7 +457,7 @@ func TestGetServiceCapabilities(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	caps, err := client.GetServiceCapabilities(context.Background())
+	caps, err := client.Device().GetServiceCapabilities(context.Background())
 	if err != nil {
 		t.Fatalf("GetServiceCapabilities() error = %v", err)
 	}
@@ -487,7 +487,7 @@ func TestGetDiscoveryMode(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	mode, err := client.GetDiscoveryMode(context.Background())
+	mode, err := client.Device().GetDiscoveryMode(context.Background())
 	if err != nil {
 		t.Fatalf("GetDiscoveryMode() error = %v", err)
 	}
@@ -515,7 +515,7 @@ func TestSetDiscoveryMode(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	err = client.SetDiscoveryMode(context.Background(), DiscoveryModeDiscoverable)
+	err = client.Device().SetDiscoveryMode(context.Background(), DiscoveryModeDiscoverable)
 	if err != nil {
 		t.Fatalf("SetDiscoveryMode() error = %v", err)
 	}
@@ -541,7 +541,7 @@ func TestGetEndpointReference(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	guid, err := client.GetEndpointReference(context.Background())
+	guid, err := client.Device().GetEndpointReference(context.Background())
 	if err != nil {
 		t.Fatalf("GetEndpointReference() error = %v", err)
 	}
@@ -581,7 +581,7 @@ func TestGetNetworkProtocols(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	protocols, err := client.GetNetworkProtocols(context.Background())
+	protocols, err := client.Device().GetNetworkProtocols(context.Background())
 	if err != nil {
 		t.Fatalf("GetNetworkProtocols() error = %v", err)
 	}
@@ -617,7 +617,7 @@ func TestSetNetworkProtocols(t *testing.T) {
 		{Name: NetworkProtocolHTTP, Enabled: true, Port: []int{8080}},
 	}
 
-	err = client.SetNetworkProtocols(context.Background(), protocols)
+	err = client.Device().SetNetworkProtocols(context.Background(), protocols)
 	if err != nil {
 		t.Fatalf("SetNetworkProtocols() error = %v", err)
 	}
@@ -645,7 +645,7 @@ func TestGetNetworkDefaultGateway(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	gateway, err := client.GetNetworkDefaultGateway(context.Background())
+	gateway, err := client.Device().GetNetworkDefaultGateway(context.Background())
 	if err != nil {
 		t.Fatalf("GetNetworkDefaultGateway() error = %v", err)
 	}
@@ -677,7 +677,7 @@ func TestSetNetworkDefaultGateway(t *testing.T) {
 		IPv4Address: []string{"192.168.1.1"},
 	}
 
-	err = client.SetNetworkDefaultGateway(context.Background(), gateway)
+	err = client.Device().SetNetworkDefaultGateway(context.Background(), gateway)
 	if err != nil {
 		t.Fatalf("SetNetworkDefaultGateway() error = %v", err)
 	}
@@ -707,6 +707,6 @@ func BenchmarkDeviceGetDeviceInformation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = client.GetDeviceInformation(ctx)
+		_, _ = client.Device().GetDeviceInformation(ctx)
 	}
 }

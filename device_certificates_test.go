@@ -197,7 +197,7 @@ func TestGetCertificates(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	certs, err := client.GetCertificates(ctx)
+	certs, err := client.Device().GetCertificates(ctx)
 	if err != nil {
 		t.Fatalf("GetCertificates failed: %v", err)
 	}
@@ -221,7 +221,7 @@ func TestGetCACertificates(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	certs, err := client.GetCACertificates(ctx)
+	certs, err := client.Device().GetCACertificates(ctx)
 	if err != nil {
 		t.Fatalf("GetCACertificates failed: %v", err)
 	}
@@ -254,7 +254,7 @@ func TestLoadCertificates(t *testing.T) {
 		},
 	}
 
-	err = client.LoadCertificates(ctx, certs)
+	err = client.Device().LoadCertificates(ctx, certs)
 	if err != nil {
 		t.Fatalf("LoadCertificates failed: %v", err)
 	}
@@ -279,7 +279,7 @@ func TestLoadCACertificates(t *testing.T) {
 		},
 	}
 
-	err = client.LoadCACertificates(ctx, certs)
+	err = client.Device().LoadCACertificates(ctx, certs)
 	if err != nil {
 		t.Fatalf("LoadCACertificates failed: %v", err)
 	}
@@ -295,7 +295,7 @@ func TestCreateCertificate(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	cert, err := client.CreateCertificate(ctx, "cert-new", "CN=New Device", "2024-01-01T00:00:00Z", "2025-01-01T00:00:00Z")
+	cert, err := client.Device().CreateCertificate(ctx, "cert-new", "CN=New Device", "2024-01-01T00:00:00Z", "2025-01-01T00:00:00Z")
 	if err != nil {
 		t.Fatalf("CreateCertificate failed: %v", err)
 	}
@@ -315,7 +315,7 @@ func TestDeleteCertificates(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	err = client.DeleteCertificates(ctx, []string{"cert-001", "cert-002"})
+	err = client.Device().DeleteCertificates(ctx, []string{"cert-001", "cert-002"})
 	if err != nil {
 		t.Fatalf("DeleteCertificates failed: %v", err)
 	}
@@ -331,7 +331,7 @@ func TestGetCertificateInformation(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	info, err := client.GetCertificateInformation(ctx, "cert-001")
+	info, err := client.Device().GetCertificateInformation(ctx, "cert-001")
 	if err != nil {
 		t.Fatalf("GetCertificateInformation failed: %v", err)
 	}
@@ -359,7 +359,7 @@ func TestGetCertificatesStatus(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	statuses, err := client.GetCertificatesStatus(ctx)
+	statuses, err := client.Device().GetCertificatesStatus(ctx)
 	if err != nil {
 		t.Fatalf("GetCertificatesStatus failed: %v", err)
 	}
@@ -394,7 +394,7 @@ func TestSetCertificatesStatus(t *testing.T) {
 		},
 	}
 
-	err = client.SetCertificatesStatus(ctx, statuses)
+	err = client.Device().SetCertificatesStatus(ctx, statuses)
 	if err != nil {
 		t.Fatalf("SetCertificatesStatus failed: %v", err)
 	}
@@ -410,7 +410,7 @@ func TestGetPkcs10Request(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	csr, err := client.GetPkcs10Request(ctx, "cert-csr", "CN=Device CSR", nil)
+	csr, err := client.Device().GetPkcs10Request(ctx, "cert-csr", "CN=Device CSR", nil)
 	if err != nil {
 		t.Fatalf("GetPkcs10Request failed: %v", err)
 	}
@@ -452,7 +452,7 @@ func TestLoadCertificateWithPrivateKey(t *testing.T) {
 		},
 	}
 
-	err = client.LoadCertificateWithPrivateKey(ctx, certs, privateKeys, []string{"cert-with-key"})
+	err = client.Device().LoadCertificateWithPrivateKey(ctx, certs, privateKeys, []string{"cert-with-key"})
 	if err != nil {
 		t.Fatalf("LoadCertificateWithPrivateKey failed: %v", err)
 	}
@@ -468,7 +468,7 @@ func TestGetClientCertificateMode(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	enabled, err := client.GetClientCertificateMode(ctx)
+	enabled, err := client.Device().GetClientCertificateMode(ctx)
 	if err != nil {
 		t.Fatalf("GetClientCertificateMode failed: %v", err)
 	}
@@ -488,7 +488,7 @@ func TestSetClientCertificateMode(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	err = client.SetClientCertificateMode(ctx, true)
+	err = client.Device().SetClientCertificateMode(ctx, true)
 	if err != nil {
 		t.Fatalf("SetClientCertificateMode failed: %v", err)
 	}

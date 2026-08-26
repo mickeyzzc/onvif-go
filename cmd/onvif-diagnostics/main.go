@@ -411,7 +411,7 @@ func testGetDeviceInformation(ctx context.Context, client *onvif.Client, report 
 	start := time.Now()
 	result := &DeviceInfoResult{}
 
-	info, err := client.GetDeviceInformation(ctx)
+	info, err := client.Device().GetDeviceInformation(ctx)
 	result.ResponseTime = time.Since(start).String()
 
 	if err != nil {
@@ -436,7 +436,7 @@ func testGetSystemDateTime(ctx context.Context, client *onvif.Client, report *Ca
 	start := time.Now()
 	result := &SystemDateTimeResult{}
 
-	dateTime, err := client.GetSystemDateAndTime(ctx)
+	dateTime, err := client.Device().GetSystemDateAndTime(ctx)
 	result.ResponseTime = time.Since(start).String()
 
 	if err != nil {
@@ -461,7 +461,7 @@ func testGetCapabilities(ctx context.Context, client *onvif.Client, report *Came
 	start := time.Now()
 	result := &CapabilitiesResult{}
 
-	capabilities, err := client.GetCapabilities(ctx)
+	capabilities, err := client.Device().GetCapabilities(ctx)
 	result.ResponseTime = time.Since(start).String()
 
 	if err != nil {
@@ -507,7 +507,7 @@ func testGetProfiles(ctx context.Context, client *onvif.Client, report *CameraRe
 	start := time.Now()
 	result := &ProfilesResult{}
 
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	result.ResponseTime = time.Since(start).String()
 
 	if err != nil {
@@ -551,7 +551,7 @@ func testGetStreamURIs(ctx context.Context, client *onvif.Client, profiles []*on
 			ProfileName:  profile.Name,
 		}
 
-		streamURI, err := client.GetStreamURI(ctx, profile.Token)
+		streamURI, err := client.Media().GetStreamURI(ctx, profile.Token)
 		result.ResponseTime = time.Since(start).String()
 
 		if err != nil {
@@ -597,7 +597,7 @@ func testGetSnapshotURIs(ctx context.Context, client *onvif.Client, profiles []*
 			ProfileName:  profile.Name,
 		}
 
-		snapshotURI, err := client.GetSnapshotURI(ctx, profile.Token)
+		snapshotURI, err := client.Media().GetSnapshotURI(ctx, profile.Token)
 		result.ResponseTime = time.Since(start).String()
 
 		if err != nil {
@@ -652,7 +652,7 @@ func testGetVideoEncoders(
 			ProfileName:  profile.Name,
 		}
 
-		config, err := client.GetVideoEncoderConfiguration(ctx, profile.VideoEncoderConfiguration.Token)
+		config, err := client.Media().GetVideoEncoderConfiguration(ctx, profile.VideoEncoderConfiguration.Token)
 		result.ResponseTime = time.Since(start).String()
 
 		if err != nil {
@@ -716,7 +716,7 @@ func testGetImagingSettings(
 			VideoSourceToken: token,
 		}
 
-		settings, err := client.GetImagingSettings(ctx, token)
+		settings, err := client.Imaging().GetImagingSettings(ctx, token)
 		result.ResponseTime = time.Since(start).String()
 
 		if err != nil {
@@ -771,7 +771,7 @@ func testGetPTZStatus(
 			ProfileName:  profile.Name,
 		}
 
-		status, err := client.GetStatus(ctx, profile.Token)
+		status, err := client.PTZ().GetStatus(ctx, profile.Token)
 		result.ResponseTime = time.Since(start).String()
 
 		if err != nil {
@@ -830,7 +830,7 @@ func testGetPTZPresets(
 			ProfileName:  profile.Name,
 		}
 
-		presets, err := client.GetPresets(ctx, profile.Token)
+		presets, err := client.PTZ().GetPresets(ctx, profile.Token)
 		result.ResponseTime = time.Since(start).String()
 
 		if err != nil {
@@ -998,43 +998,43 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetHostname", func() error { _, err := client.GetHostname(ctx); return fmt.Errorf("GetHostname: %w", err) }}, //nolint:nlreturn
-		{"GetDNS", func() error { _, err := client.GetDNS(ctx); return fmt.Errorf("GetDNS: %w", err) }},                //nolint:nlreturn
-		{"GetNTP", func() error { _, err := client.GetNTP(ctx); return fmt.Errorf("GetNTP: %w", err) }},                //nolint:nlreturn
+		{"GetHostname", func() error { _, err := client.Device().GetHostname(ctx); return fmt.Errorf("GetHostname: %w", err) }}, //nolint:nlreturn
+		{"GetDNS", func() error { _, err := client.Device().GetDNS(ctx); return fmt.Errorf("GetDNS: %w", err) }},                //nolint:nlreturn
+		{"GetNTP", func() error { _, err := client.Device().GetNTP(ctx); return fmt.Errorf("GetNTP: %w", err) }},                //nolint:nlreturn
 		{"GetNetworkInterfaces", func() error {
-			_, err := client.GetNetworkInterfaces(ctx)
+			_, err := client.Device().GetNetworkInterfaces(ctx)
 
 			return fmt.Errorf("GetNetworkInterfaces: %w", err)
 		}},
 		{"GetNetworkProtocols", func() error {
-			_, err := client.GetNetworkProtocols(ctx)
+			_, err := client.Device().GetNetworkProtocols(ctx)
 
 			return fmt.Errorf("GetNetworkProtocols: %w", err)
 		}},
 		{"GetNetworkDefaultGateway", func() error {
-			_, err := client.GetNetworkDefaultGateway(ctx)
+			_, err := client.Device().GetNetworkDefaultGateway(ctx)
 
 			return fmt.Errorf("GetNetworkDefaultGateway: %w", err)
 		}},
-		{"GetScopes", func() error { _, err := client.GetScopes(ctx); return err }},
-		{"GetUsers", func() error { _, err := client.GetUsers(ctx); return err }},
-		{"GetDiscoveryMode", func() error { _, err := client.GetDiscoveryMode(ctx); return err }},
-		{"GetRemoteDiscoveryMode", func() error { _, err := client.GetRemoteDiscoveryMode(ctx); return err }},
-		{"GetEndpointReference", func() error { _, err := client.GetEndpointReference(ctx); return err }},
-		{"GetRelayOutputs", func() error { _, err := client.GetRelayOutputs(ctx); return err }},
-		{"GetRemoteUser", func() error { _, err := client.GetRemoteUser(ctx); return err }},
-		{"GetIPAddressFilter", func() error { _, err := client.GetIPAddressFilter(ctx); return err }},
-		{"GetZeroConfiguration", func() error { _, err := client.GetZeroConfiguration(ctx); return err }},
-		{"GetServices", func() error { _, err := client.GetServices(ctx, true); return err }},
-		{"GetServiceCapabilities", func() error { _, err := client.GetServiceCapabilities(ctx); return err }},
-		{"GetStorageConfigurations", func() error { _, err := client.GetStorageConfigurations(ctx); return err }},
-		{"GetGeoLocation", func() error { _, err := client.GetGeoLocation(ctx); return err }},
-		{"GetDPAddresses", func() error { _, err := client.GetDPAddresses(ctx); return err }},
-		{"GetAccessPolicy", func() error { _, err := client.GetAccessPolicy(ctx); return err }},
-		{"GetWsdlURL", func() error { _, err := client.GetWsdlURL(ctx); return err }},
-		{"GetPasswordComplexityConfiguration", func() error { _, err := client.GetPasswordComplexityConfiguration(ctx); return err }},
-		{"GetPasswordHistoryConfiguration", func() error { _, err := client.GetPasswordHistoryConfiguration(ctx); return err }},
-		{"GetAuthFailureWarningConfiguration", func() error { _, err := client.GetAuthFailureWarningConfiguration(ctx); return err }},
+		{"GetScopes", func() error { _, err := client.Device().GetScopes(ctx); return err }},
+		{"GetUsers", func() error { _, err := client.Device().GetUsers(ctx); return err }},
+		{"GetDiscoveryMode", func() error { _, err := client.Device().GetDiscoveryMode(ctx); return err }},
+		{"GetRemoteDiscoveryMode", func() error { _, err := client.Device().GetRemoteDiscoveryMode(ctx); return err }},
+		{"GetEndpointReference", func() error { _, err := client.Device().GetEndpointReference(ctx); return err }},
+		{"GetRelayOutputs", func() error { _, err := client.Device().GetRelayOutputs(ctx); return err }},
+		{"GetRemoteUser", func() error { _, err := client.Security().GetRemoteUser(ctx); return err }},
+		{"GetIPAddressFilter", func() error { _, err := client.Security().GetIPAddressFilter(ctx); return err }},
+		{"GetZeroConfiguration", func() error { _, err := client.Security().GetZeroConfiguration(ctx); return err }},
+		{"GetServices", func() error { _, err := client.Device().GetServices(ctx, true); return err }},
+		{"GetServiceCapabilities", func() error { _, err := client.Device().GetServiceCapabilities(ctx); return err }},
+		{"GetStorageConfigurations", func() error { _, err := client.Device().GetStorageConfigurations(ctx); return err }},
+		{"GetGeoLocation", func() error { _, err := client.Device().GetGeoLocation(ctx); return err }},
+		{"GetDPAddresses", func() error { _, err := client.Device().GetDPAddresses(ctx); return err }},
+		{"GetAccessPolicy", func() error { _, err := client.Device().GetAccessPolicy(ctx); return err }},
+		{"GetWsdlURL", func() error { _, err := client.Device().GetWsdlURL(ctx); return err }},
+		{"GetPasswordComplexityConfiguration", func() error { _, err := client.Security().GetPasswordComplexityConfiguration(ctx); return err }},
+		{"GetPasswordHistoryConfiguration", func() error { _, err := client.Security().GetPasswordHistoryConfiguration(ctx); return err }},
+		{"GetAuthFailureWarningConfiguration", func() error { _, err := client.Security().GetAuthFailureWarningConfiguration(ctx); return err }},
 	}
 
 	for _, op := range deviceOps {
@@ -1064,7 +1064,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 	}
 
 	// Get video sources
-	videoSources, err := client.GetVideoSources(ctx)
+	videoSources, err := client.Media().GetVideoSources(ctx)
 	totalOps++
 	if err != nil {
 		if *verbose {
@@ -1079,7 +1079,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 	}
 
 	// Get audio sources
-	audioSources, err := client.GetAudioSources(ctx)
+	audioSources, err := client.Media().GetAudioSources(ctx)
 	totalOps++
 	if err != nil {
 		if *verbose {
@@ -1094,7 +1094,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 	}
 
 	// Get audio outputs
-	_, err = client.GetAudioOutputs(ctx)
+	_, err = client.Media().GetAudioOutputs(ctx)
 	totalOps++
 	if err != nil {
 		if *verbose {
@@ -1114,7 +1114,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 
 		for _, profile := range report.Profiles.Data {
 			// GetProfile
-			_, err := client.GetProfile(ctx, profile.Token)
+			_, err := client.Media().GetProfile(ctx, profile.Token)
 			totalOps++
 			if err != nil {
 				failCount++
@@ -1123,7 +1123,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 			}
 
 			// GetStreamURI
-			_, err = client.GetStreamURI(ctx, profile.Token)
+			_, err = client.Media().GetStreamURI(ctx, profile.Token)
 			totalOps++
 			if err != nil {
 				failCount++
@@ -1132,7 +1132,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 			}
 
 			// GetSnapshotURI
-			_, err = client.GetSnapshotURI(ctx, profile.Token)
+			_, err = client.Media().GetSnapshotURI(ctx, profile.Token)
 			totalOps++
 			if err != nil {
 				failCount++
@@ -1142,7 +1142,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 
 			// PTZ operations (if PTZ configuration exists)
 			if profile.PTZConfiguration != nil {
-				_, err = client.GetStatus(ctx, profile.Token)
+				_, err = client.PTZ().GetStatus(ctx, profile.Token)
 				totalOps++
 				if err != nil {
 					failCount++
@@ -1150,7 +1150,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 					successCount++
 				}
 
-				_, err = client.GetPresets(ctx, profile.Token)
+				_, err = client.PTZ().GetPresets(ctx, profile.Token)
 				totalOps++
 				if err != nil {
 					failCount++
@@ -1161,7 +1161,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 
 			// Video encoder configuration
 			if profile.VideoEncoderConfiguration != nil {
-				_, err = client.GetVideoEncoderConfiguration(ctx, profile.VideoEncoderConfiguration.Token)
+				_, err = client.Media().GetVideoEncoderConfiguration(ctx, profile.VideoEncoderConfiguration.Token)
 				totalOps++
 				if err != nil {
 					failCount++
@@ -1169,7 +1169,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 					successCount++
 				}
 
-				_, err = client.GetVideoEncoderConfigurationOptions(ctx, profile.VideoEncoderConfiguration.Token)
+				_, err = client.Media().GetVideoEncoderConfigurationOptions(ctx, profile.VideoEncoderConfiguration.Token)
 				totalOps++
 				if err != nil {
 					failCount++
@@ -1180,7 +1180,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 
 			// Audio encoder configuration
 			if profile.AudioEncoderConfiguration != nil {
-				_, err = client.GetAudioEncoderConfiguration(ctx, profile.AudioEncoderConfiguration.Token)
+				_, err = client.Media().GetAudioEncoderConfiguration(ctx, profile.AudioEncoderConfiguration.Token)
 				totalOps++
 				if err != nil {
 					failCount++
@@ -1198,7 +1198,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 
 		for _, source := range videoSources {
 			// Imaging settings
-			_, err := client.GetImagingSettings(ctx, source.Token)
+			_, err := client.Imaging().GetImagingSettings(ctx, source.Token)
 			totalOps++
 			if err != nil {
 				failCount++
@@ -1207,7 +1207,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 			}
 
 			// Imaging options
-			_, err = client.GetOptions(ctx, source.Token)
+			_, err = client.Imaging().GetOptions(ctx, source.Token)
 			totalOps++
 			if err != nil {
 				failCount++
@@ -1216,7 +1216,7 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 			}
 
 			// Imaging move options
-			_, err = client.GetMoveOptions(ctx, source.Token)
+			_, err = client.Imaging().GetMoveOptions(ctx, source.Token)
 			totalOps++
 			if err != nil {
 				failCount++
@@ -1233,13 +1233,13 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetVideoSourceConfigurations", func() error { _, err := client.GetVideoSourceConfigurations(ctx); return err }},
-		{"GetVideoEncoderConfigurations", func() error { _, err := client.GetVideoEncoderConfigurations(ctx); return err }},
-		{"GetAudioSourceConfigurations", func() error { _, err := client.GetAudioSourceConfigurations(ctx); return err }},
-		{"GetAudioEncoderConfigurations", func() error { _, err := client.GetAudioEncoderConfigurations(ctx); return err }},
-		{"GetAudioOutputConfigurations", func() error { _, err := client.GetAudioOutputConfigurations(ctx); return err }},
-		{"GetMetadataConfigurations", func() error { _, err := client.GetMetadataConfigurations(ctx); return err }},
-		{"GetMediaServiceCapabilities", func() error { _, err := client.GetMediaServiceCapabilities(ctx); return err }},
+		{"GetVideoSourceConfigurations", func() error { _, err := client.Media().GetVideoSourceConfigurations(ctx); return err }},
+		{"GetVideoEncoderConfigurations", func() error { _, err := client.Media().GetVideoEncoderConfigurations(ctx); return err }},
+		{"GetAudioSourceConfigurations", func() error { _, err := client.Media().GetAudioSourceConfigurations(ctx); return err }},
+		{"GetAudioEncoderConfigurations", func() error { _, err := client.Media().GetAudioEncoderConfigurations(ctx); return err }},
+		{"GetAudioOutputConfigurations", func() error { _, err := client.Media().GetAudioOutputConfigurations(ctx); return err }},
+		{"GetMetadataConfigurations", func() error { _, err := client.Media().GetMetadataConfigurations(ctx); return err }},
+		{"GetMediaServiceCapabilities", func() error { _, err := client.Media().GetMediaServiceCapabilities(ctx); return err }},
 	}
 
 	for _, op := range configOps {
@@ -1264,8 +1264,8 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetEventServiceCapabilities", func() error { _, err := client.GetEventServiceCapabilities(ctx); return err }},
-		{"GetEventProperties", func() error { _, err := client.GetEventProperties(ctx); return err }},
+		{"GetEventServiceCapabilities", func() error { _, err := client.Events().GetEventServiceCapabilities(ctx); return err }},
+		{"GetEventProperties", func() error { _, err := client.Events().GetEventProperties(ctx); return err }},
 	}
 
 	for _, op := range eventOps {
@@ -1290,10 +1290,10 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetCertificates", func() error { _, err := client.GetCertificates(ctx); return err }},
-		{"GetCACertificates", func() error { _, err := client.GetCACertificates(ctx); return err }},
-		{"GetCertificatesStatus", func() error { _, err := client.GetCertificatesStatus(ctx); return err }},
-		{"GetClientCertificateMode", func() error { _, err := client.GetClientCertificateMode(ctx); return err }},
+		{"GetCertificates", func() error { _, err := client.Device().GetCertificates(ctx); return err }},
+		{"GetCACertificates", func() error { _, err := client.Device().GetCACertificates(ctx); return err }},
+		{"GetCertificatesStatus", func() error { _, err := client.Device().GetCertificatesStatus(ctx); return err }},
+		{"GetClientCertificateMode", func() error { _, err := client.Device().GetClientCertificateMode(ctx); return err }},
 	}
 
 	for _, op := range certOps {
@@ -1318,8 +1318,8 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetDot11Capabilities", func() error { _, err := client.GetDot11Capabilities(ctx); return err }},
-		{"GetDot1XConfigurations", func() error { _, err := client.GetDot1XConfigurations(ctx); return err }},
+		{"GetDot11Capabilities", func() error { _, err := client.Device().GetDot11Capabilities(ctx); return err }},
+		{"GetDot1XConfigurations", func() error { _, err := client.Device().GetDot1XConfigurations(ctx); return err }},
 	}
 
 	for _, op := range wifiOps {

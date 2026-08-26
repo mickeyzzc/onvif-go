@@ -122,7 +122,7 @@ func TestGetStorageConfigurations(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	configs, err := client.GetStorageConfigurations(ctx)
+	configs, err := client.Device().GetStorageConfigurations(ctx)
 	if err != nil {
 		t.Fatalf("GetStorageConfigurations failed: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestGetStorageConfiguration(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	config, err := client.GetStorageConfiguration(ctx, "storage-001")
+	config, err := client.Device().GetStorageConfiguration(ctx, "storage-001")
 	if err != nil {
 		t.Fatalf("GetStorageConfiguration failed: %v", err)
 	}
@@ -203,7 +203,7 @@ func TestCreateStorageConfiguration(t *testing.T) {
 		},
 	}
 
-	token, err := client.CreateStorageConfiguration(ctx, config)
+	token, err := client.Device().CreateStorageConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("CreateStorageConfiguration failed: %v", err)
 	}
@@ -232,7 +232,7 @@ func TestSetStorageConfiguration(t *testing.T) {
 		},
 	}
 
-	err = client.SetStorageConfiguration(ctx, config)
+	err = client.Device().SetStorageConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetStorageConfiguration failed: %v", err)
 	}
@@ -248,7 +248,7 @@ func TestDeleteStorageConfiguration(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	err = client.DeleteStorageConfiguration(ctx, "storage-old")
+	err = client.Device().DeleteStorageConfiguration(ctx, "storage-old")
 	if err != nil {
 		t.Fatalf("DeleteStorageConfiguration failed: %v", err)
 	}
@@ -264,7 +264,7 @@ func TestSetHashingAlgorithm(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	err = client.SetHashingAlgorithm(ctx, "SHA-256")
+	err = client.Device().SetHashingAlgorithm(ctx, "SHA-256")
 	if err != nil {
 		t.Fatalf("SetHashingAlgorithm failed: %v", err)
 	}

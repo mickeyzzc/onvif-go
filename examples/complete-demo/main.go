@@ -90,7 +90,7 @@ func connectToCamera() *onvif.Client {
 func getDeviceInfo(client *onvif.Client) {
 	ctx := context.Background()
 
-	info, err := client.GetDeviceInformation(ctx)
+	info, err := client.Device().GetDeviceInformation(ctx)
 	if err != nil {
 		log.Printf("Failed to get device info: %v", err)
 		return
@@ -102,7 +102,7 @@ func getDeviceInfo(client *onvif.Client) {
 	fmt.Printf("Serial: %s\n", info.SerialNumber)
 
 	// Get capabilities
-	caps, err := client.GetCapabilities(ctx)
+	caps, err := client.Device().GetCapabilities(ctx)
 	if err != nil {
 		log.Printf("Failed to get capabilities: %v", err)
 		return
@@ -127,7 +127,7 @@ func getDeviceInfo(client *onvif.Client) {
 func getMediaProfiles(client *onvif.Client) []*onvif.Profile {
 	ctx := context.Background()
 
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil {
 		log.Printf("Failed to get profiles: %v", err)
 		return nil
@@ -149,7 +149,7 @@ func getMediaProfiles(client *onvif.Client) []*onvif.Profile {
 		}
 
 		// Get stream URI
-		streamURI, err := client.GetStreamURI(ctx, profile.Token)
+		streamURI, err := client.Media().GetStreamURI(ctx, profile.Token)
 		if err != nil {
 			fmt.Printf("  Stream URI: Error - %v\n", err)
 		} else {
@@ -157,7 +157,7 @@ func getMediaProfiles(client *onvif.Client) []*onvif.Profile {
 		}
 
 		// Get snapshot URI
-		snapshotURI, err := client.GetSnapshotURI(ctx, profile.Token)
+		snapshotURI, err := client.Media().GetSnapshotURI(ctx, profile.Token)
 		if err != nil {
 			fmt.Printf("  Snapshot URI: Error - %v\n", err)
 		} else {
@@ -173,7 +173,7 @@ func controlPTZ(client *onvif.Client, profileToken string) {
 	ctx := context.Background()
 
 	// Get current status
-	status, err := client.GetStatus(ctx, profileToken)
+	status, err := client.PTZ().GetStatus(ctx, profileToken)
 	if err != nil {
 		log.Printf("PTZ not supported: %v", err)
 		return
@@ -188,7 +188,7 @@ func controlPTZ(client *onvif.Client, profileToken string) {
 	}
 
 	// Get presets
-	presets, err := client.GetPresets(ctx, profileToken)
+	presets, err := client.PTZ().GetPresets(ctx, profileToken)
 	if err != nil {
 		log.Printf("Failed to get presets: %v", err)
 	} else {
@@ -205,17 +205,17 @@ func controlPTZ(client *onvif.Client, profileToken string) {
 			PanTilt: &onvif.Vector2D{X: 0.3, Y: 0.0},
 		}
 		timeout := "PT1S"
-		if err := client.ContinuousMove(ctx, profileToken, velocity, &timeout); err != nil {
+		if err := client.PTZ().ContinuousMove(ctx, profileToken, velocity, &timeout); err != nil {
 			log.Printf("Move failed: %v", err)
 		}
 		time.Sleep(1 * time.Second)
-		client.Stop(ctx, profileToken, true, false)
+		client.PTZ().Stop(ctx, profileToken, true, false)
 
 		// Return to home
 		home := &onvif.PTZVector{
 			PanTilt: &onvif.Vector2D{X: 0.0, Y: 0.0},
 		}
-		client.AbsoluteMove(ctx, profileToken, home, nil)
+		client.PTZ().AbsoluteMove(ctx, profileToken, home, nil)
 	*/
 
 	fmt.Println("PTZ operations available (commented out in demo)")
@@ -226,7 +226,7 @@ func adjustImaging(client *onvif.Client, videoSourceToken string) {
 	ctx := context.Background()
 
 	// Get current settings
-	settings, err := client.GetImagingSettings(ctx, videoSourceToken)
+	settings, err := client.Imaging().GetImagingSettings(ctx, videoSourceToken)
 	if err != nil {
 		log.Printf("Failed to get imaging settings: %v", err)
 		return
@@ -264,7 +264,7 @@ func adjustImaging(client *onvif.Client, videoSourceToken string) {
 		newBrightness := 55.0
 		settings.Brightness = &newBrightness
 
-		if err := client.SetImagingSettings(ctx, videoSourceToken, settings, true); err != nil {
+		if err := client.Imaging().SetImagingSettings(ctx, videoSourceToken, settings, true); err != nil {
 			log.Printf("Failed to set imaging settings: %v", err)
 		} else {
 			fmt.Println("\nImaging settings updated!")

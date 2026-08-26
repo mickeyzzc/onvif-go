@@ -33,7 +33,7 @@ func TestBosch_FLEXIDOME_indoor_5100i_IR_8710066(t *testing.T) {
 	defer cancel()
 
 	t.Run("GetDeviceInformation", func(t *testing.T) {
-		info, err := client.GetDeviceInformation(ctx)
+		info, err := client.Device().GetDeviceInformation(ctx)
 		if err != nil {
 			t.Errorf("GetDeviceInformation failed: %v", err)
 			return
@@ -54,14 +54,14 @@ func TestBosch_FLEXIDOME_indoor_5100i_IR_8710066(t *testing.T) {
 	})
 
 	t.Run("GetSystemDateAndTime", func(t *testing.T) {
-		_, err := client.GetSystemDateAndTime(ctx)
+		_, err := client.Device().GetSystemDateAndTime(ctx)
 		if err != nil {
 			t.Errorf("GetSystemDateAndTime failed: %v", err)
 		}
 	})
 
 	t.Run("GetCapabilities", func(t *testing.T) {
-		caps, err := client.GetCapabilities(ctx)
+		caps, err := client.Device().GetCapabilities(ctx)
 		if err != nil {
 			t.Errorf("GetCapabilities failed: %v", err)
 			return
@@ -79,7 +79,7 @@ func TestBosch_FLEXIDOME_indoor_5100i_IR_8710066(t *testing.T) {
 	})
 
 	t.Run("GetProfiles", func(t *testing.T) {
-		profiles, err := client.GetProfiles(ctx)
+		profiles, err := client.Media().GetProfiles(ctx)
 		if err != nil {
 			t.Errorf("GetProfiles failed: %v", err)
 			return

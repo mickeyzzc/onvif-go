@@ -46,7 +46,7 @@ func TestEnhancedDeviceFeatures(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("GetHostname", func(t *testing.T) {
-		hostname, err := client.GetHostname(ctx)
+		hostname, err := client.Device().GetHostname(ctx)
 		if err != nil {
 			t.Fatalf("GetHostname failed: %v", err)
 		}
@@ -60,7 +60,7 @@ func TestEnhancedDeviceFeatures(t *testing.T) {
 	})
 
 	t.Run("GetDNS", func(t *testing.T) {
-		dns, err := client.GetDNS(ctx)
+		dns, err := client.Device().GetDNS(ctx)
 		if err != nil {
 			t.Fatalf("GetDNS failed: %v", err)
 		}
@@ -84,7 +84,7 @@ func TestEnhancedDeviceFeatures(t *testing.T) {
 	})
 
 	t.Run("GetNTP", func(t *testing.T) {
-		ntp, err := client.GetNTP(ctx)
+		ntp, err := client.Device().GetNTP(ctx)
 		if err != nil {
 			t.Fatalf("GetNTP failed: %v", err)
 		}
@@ -103,7 +103,7 @@ func TestEnhancedDeviceFeatures(t *testing.T) {
 	})
 
 	t.Run("GetNetworkInterfaces", func(t *testing.T) {
-		interfaces, err := client.GetNetworkInterfaces(ctx)
+		interfaces, err := client.Device().GetNetworkInterfaces(ctx)
 		if err != nil {
 			t.Fatalf("GetNetworkInterfaces failed: %v", err)
 		}
@@ -141,7 +141,7 @@ func TestEnhancedDeviceFeatures(t *testing.T) {
 	})
 
 	t.Run("GetScopes", func(t *testing.T) {
-		scopes, err := client.GetScopes(ctx)
+		scopes, err := client.Device().GetScopes(ctx)
 		if err != nil {
 			t.Fatalf("GetScopes failed: %v", err)
 		}
@@ -181,7 +181,7 @@ func TestEnhancedDeviceFeatures(t *testing.T) {
 	})
 
 	t.Run("GetUsers", func(t *testing.T) {
-		users, err := client.GetUsers(ctx)
+		users, err := client.Device().GetUsers(ctx)
 		if err != nil {
 			t.Fatalf("GetUsers failed: %v", err)
 		}
@@ -232,7 +232,7 @@ func TestEnhancedMediaFeatures(t *testing.T) {
 	}
 
 	t.Run("GetVideoSources", func(t *testing.T) {
-		sources, err := client.GetVideoSources(ctx)
+		sources, err := client.Media().GetVideoSources(ctx)
 		if err != nil {
 			t.Fatalf("GetVideoSources failed: %v", err)
 		}
@@ -266,7 +266,7 @@ func TestEnhancedMediaFeatures(t *testing.T) {
 	})
 
 	t.Run("GetAudioSources", func(t *testing.T) {
-		sources, err := client.GetAudioSources(ctx)
+		sources, err := client.Media().GetAudioSources(ctx)
 		if err != nil {
 			t.Fatalf("GetAudioSources failed: %v", err)
 		}
@@ -286,7 +286,7 @@ func TestEnhancedMediaFeatures(t *testing.T) {
 	})
 
 	t.Run("GetAudioOutputs", func(t *testing.T) {
-		outputs, err := client.GetAudioOutputs(ctx)
+		outputs, err := client.Media().GetAudioOutputs(ctx)
 		if err != nil {
 			t.Fatalf("GetAudioOutputs failed: %v", err)
 		}
@@ -326,7 +326,7 @@ func TestEnhancedImagingFeatures(t *testing.T) {
 	}
 
 	// Get video source token
-	sources, err := client.GetVideoSources(ctx)
+	sources, err := client.Media().GetVideoSources(ctx)
 	if err != nil || len(sources) == 0 {
 		t.Skip("No video sources available for imaging tests")
 	}
@@ -334,7 +334,7 @@ func TestEnhancedImagingFeatures(t *testing.T) {
 	videoSourceToken := sources[0].Token
 
 	t.Run("GetOptions", func(t *testing.T) {
-		options, err := client.GetOptions(ctx, videoSourceToken)
+		options, err := client.Imaging().GetOptions(ctx, videoSourceToken)
 		if err != nil {
 			t.Fatalf("GetOptions failed: %v", err)
 		}
@@ -372,7 +372,7 @@ func TestEnhancedImagingFeatures(t *testing.T) {
 	})
 
 	t.Run("GetMoveOptions", func(t *testing.T) {
-		moveOptions, err := client.GetMoveOptions(ctx, videoSourceToken)
+		moveOptions, err := client.Imaging().GetMoveOptions(ctx, videoSourceToken)
 		if err != nil {
 			t.Fatalf("GetMoveOptions failed: %v", err)
 		}

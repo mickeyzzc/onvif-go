@@ -240,7 +240,7 @@ func TestGetDeviceIOServiceCapabilities(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	caps, err := client.GetDeviceIOServiceCapabilities(ctx)
+	caps, err := client.DeviceIO().GetDeviceIOServiceCapabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetDeviceIOServiceCapabilities failed: %v", err)
 	}
@@ -292,7 +292,7 @@ func TestGetDigitalInputs(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	inputs, err := client.GetDigitalInputs(ctx)
+	inputs, err := client.DeviceIO().GetDigitalInputs(ctx)
 	if err != nil {
 		t.Fatalf("GetDigitalInputs failed: %v", err)
 	}
@@ -324,7 +324,7 @@ func TestGetDigitalInputConfigurationOptions(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	options, err := client.GetDigitalInputConfigurationOptions(ctx, "input_001")
+	options, err := client.DeviceIO().GetDigitalInputConfigurationOptions(ctx, "input_001")
 	if err != nil {
 		t.Fatalf("GetDigitalInputConfigurationOptions failed: %v", err)
 	}
@@ -344,7 +344,7 @@ func TestGetDigitalInputConfigurationOptionsInvalidToken(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetDigitalInputConfigurationOptions(ctx, "")
+	_, err = client.DeviceIO().GetDigitalInputConfigurationOptions(ctx, "")
 	if !errors.Is(err, ErrInvalidDigitalInputToken) {
 		t.Errorf("Expected ErrInvalidDigitalInputToken, got %v", err)
 	}
@@ -366,7 +366,7 @@ func TestSetDigitalInputConfigurations(t *testing.T) {
 		{Token: "input_002", IdleState: DigitalIdleClosed},
 	}
 
-	err = client.SetDigitalInputConfigurations(ctx, inputs)
+	err = client.DeviceIO().SetDigitalInputConfigurations(ctx, inputs)
 	if err != nil {
 		t.Fatalf("SetDigitalInputConfigurations failed: %v", err)
 	}
@@ -384,14 +384,14 @@ func TestSetDigitalInputConfigurationsValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test empty inputs.
-	err = client.SetDigitalInputConfigurations(ctx, []*DigitalInput{})
+	err = client.DeviceIO().SetDigitalInputConfigurations(ctx, []*DigitalInput{})
 	if !errors.Is(err, ErrDigitalInputConfigNil) {
 		t.Errorf("Expected ErrDigitalInputConfigNil, got %v", err)
 	}
 
 	// Test input with empty token.
 	inputs := []*DigitalInput{{Token: "", IdleState: DigitalIdleOpen}}
-	err = client.SetDigitalInputConfigurations(ctx, inputs)
+	err = client.DeviceIO().SetDigitalInputConfigurations(ctx, inputs)
 	if !errors.Is(err, ErrInvalidDigitalInputToken) {
 		t.Errorf("Expected ErrInvalidDigitalInputToken, got %v", err)
 	}
@@ -407,7 +407,7 @@ func TestGetVideoOutputs(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	outputs, err := client.GetVideoOutputs(ctx)
+	outputs, err := client.DeviceIO().GetVideoOutputs(ctx)
 	if err != nil {
 		t.Fatalf("GetVideoOutputs failed: %v", err)
 	}
@@ -451,7 +451,7 @@ func TestGetSerialPorts(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	ports, err := client.GetSerialPorts(ctx)
+	ports, err := client.DeviceIO().GetSerialPorts(ctx)
 	if err != nil {
 		t.Fatalf("GetSerialPorts failed: %v", err)
 	}
@@ -483,7 +483,7 @@ func TestGetSerialPortConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	config, err := client.GetSerialPortConfiguration(ctx, "serial_001")
+	config, err := client.DeviceIO().GetSerialPortConfiguration(ctx, "serial_001")
 	if err != nil {
 		t.Fatalf("GetSerialPortConfiguration failed: %v", err)
 	}
@@ -523,7 +523,7 @@ func TestGetSerialPortConfigurationInvalidToken(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetSerialPortConfiguration(ctx, "")
+	_, err = client.DeviceIO().GetSerialPortConfiguration(ctx, "")
 	if !errors.Is(err, ErrInvalidSerialPortToken) {
 		t.Errorf("Expected ErrInvalidSerialPortToken, got %v", err)
 	}
@@ -539,7 +539,7 @@ func TestGetSerialPortConfigurationOptions(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	options, err := client.GetSerialPortConfigurationOptions(ctx, "serial_001")
+	options, err := client.DeviceIO().GetSerialPortConfigurationOptions(ctx, "serial_001")
 	if err != nil {
 		t.Fatalf("GetSerialPortConfigurationOptions failed: %v", err)
 	}
@@ -571,7 +571,7 @@ func TestGetSerialPortConfigurationOptionsInvalidToken(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetSerialPortConfigurationOptions(ctx, "")
+	_, err = client.DeviceIO().GetSerialPortConfigurationOptions(ctx, "")
 	if !errors.Is(err, ErrInvalidSerialPortToken) {
 		t.Errorf("Expected ErrInvalidSerialPortToken, got %v", err)
 	}
@@ -597,7 +597,7 @@ func TestSetSerialPortConfiguration(t *testing.T) {
 		StopBit:         1,
 	}
 
-	err = client.SetSerialPortConfiguration(ctx, config)
+	err = client.DeviceIO().SetSerialPortConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetSerialPortConfiguration failed: %v", err)
 	}
@@ -615,14 +615,14 @@ func TestSetSerialPortConfigurationValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test nil config.
-	err = client.SetSerialPortConfiguration(ctx, nil)
+	err = client.DeviceIO().SetSerialPortConfiguration(ctx, nil)
 	if !errors.Is(err, ErrSerialPortConfigNil) {
 		t.Errorf("Expected ErrSerialPortConfigNil, got %v", err)
 	}
 
 	// Test empty token.
 	config := &SerialPortConfiguration{Token: ""}
-	err = client.SetSerialPortConfiguration(ctx, config)
+	err = client.DeviceIO().SetSerialPortConfiguration(ctx, config)
 	if !errors.Is(err, ErrInvalidSerialPortToken) {
 		t.Errorf("Expected ErrInvalidSerialPortToken, got %v", err)
 	}
@@ -639,7 +639,7 @@ func TestSendReceiveSerialCommand(t *testing.T) {
 
 	ctx := context.Background()
 
-	response, err := client.SendReceiveSerialCommand(ctx, "serial_001", []byte("HELLO"), 5, 10)
+	response, err := client.DeviceIO().SendReceiveSerialCommand(ctx, "serial_001", []byte("HELLO"), 5, 10)
 	if err != nil {
 		t.Fatalf("SendReceiveSerialCommand failed: %v", err)
 	}
@@ -661,13 +661,13 @@ func TestSendReceiveSerialCommandValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test empty token.
-	_, err = client.SendReceiveSerialCommand(ctx, "", []byte("HELLO"), 5, 10)
+	_, err = client.DeviceIO().SendReceiveSerialCommand(ctx, "", []byte("HELLO"), 5, 10)
 	if !errors.Is(err, ErrInvalidSerialPortToken) {
 		t.Errorf("Expected ErrInvalidSerialPortToken, got %v", err)
 	}
 
 	// Test empty data.
-	_, err = client.SendReceiveSerialCommand(ctx, "serial_001", []byte{}, 5, 10)
+	_, err = client.DeviceIO().SendReceiveSerialCommand(ctx, "serial_001", []byte{}, 5, 10)
 	if !errors.Is(err, ErrInvalidSerialData) {
 		t.Errorf("Expected ErrInvalidSerialData, got %v", err)
 	}
@@ -733,7 +733,7 @@ func TestGetVideoOutputConfiguration(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	config, err := client.GetVideoOutputConfiguration(ctx, "video_out_001")
+	config, err := client.DeviceIO().GetVideoOutputConfiguration(ctx, "video_out_001")
 	if err != nil {
 		t.Fatalf("GetVideoOutputConfiguration failed: %v", err)
 	}
@@ -765,7 +765,7 @@ func TestGetVideoOutputConfigurationInvalidToken(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetVideoOutputConfiguration(ctx, "")
+	_, err = client.DeviceIO().GetVideoOutputConfiguration(ctx, "")
 	if !errors.Is(err, ErrInvalidVideoOutputToken) {
 		t.Errorf("Expected ErrInvalidVideoOutputToken, got %v", err)
 	}
@@ -781,7 +781,7 @@ func TestGetVideoOutputConfigurationOptions(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	options, err := client.GetVideoOutputConfigurationOptions(ctx, "video_out_001")
+	options, err := client.DeviceIO().GetVideoOutputConfigurationOptions(ctx, "video_out_001")
 	if err != nil {
 		t.Fatalf("GetVideoOutputConfigurationOptions failed: %v", err)
 	}
@@ -809,7 +809,7 @@ func TestGetVideoOutputConfigurationOptionsInvalidToken(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetVideoOutputConfigurationOptions(ctx, "")
+	_, err = client.DeviceIO().GetVideoOutputConfigurationOptions(ctx, "")
 	if !errors.Is(err, ErrInvalidVideoOutputToken) {
 		t.Errorf("Expected ErrInvalidVideoOutputToken, got %v", err)
 	}
@@ -834,7 +834,7 @@ func TestSetVideoOutputConfiguration(t *testing.T) {
 		ForcePersistence: true,
 	}
 
-	err = client.SetVideoOutputConfiguration(ctx, config)
+	err = client.DeviceIO().SetVideoOutputConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetVideoOutputConfiguration failed: %v", err)
 	}
@@ -852,14 +852,14 @@ func TestSetVideoOutputConfigurationValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test nil config.
-	err = client.SetVideoOutputConfiguration(ctx, nil)
+	err = client.DeviceIO().SetVideoOutputConfiguration(ctx, nil)
 	if !errors.Is(err, ErrVideoOutputConfigNil) {
 		t.Errorf("Expected ErrVideoOutputConfigNil, got %v", err)
 	}
 
 	// Test empty token.
 	config := &VideoOutputConfiguration{Token: ""}
-	err = client.SetVideoOutputConfiguration(ctx, config)
+	err = client.DeviceIO().SetVideoOutputConfiguration(ctx, config)
 	if !errors.Is(err, ErrInvalidVideoOutputToken) {
 		t.Errorf("Expected ErrInvalidVideoOutputToken, got %v", err)
 	}
@@ -875,7 +875,7 @@ func TestGetRelayOutputOptions(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	options, err := client.GetRelayOutputOptions(ctx, "relay_001")
+	options, err := client.DeviceIO().GetRelayOutputOptions(ctx, "relay_001")
 	if err != nil {
 		t.Fatalf("GetRelayOutputOptions failed: %v", err)
 	}
@@ -915,7 +915,7 @@ func TestGetRelayOutputOptionsInvalidToken(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetRelayOutputOptions(ctx, "")
+	_, err = client.DeviceIO().GetRelayOutputOptions(ctx, "")
 	if !errors.Is(err, ErrInvalidRelayOutputToken) {
 		t.Errorf("Expected ErrInvalidRelayOutputToken, got %v", err)
 	}

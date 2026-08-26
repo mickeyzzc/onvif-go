@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Get profiles
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil {
 		log.Fatalf("Failed to get profiles: %v", err)
 	}
@@ -55,7 +55,7 @@ func main() {
 
 	// Get current imaging settings
 	fmt.Println("Getting current imaging settings...")
-	settings, err := client.GetImagingSettings(ctx, videoSourceToken)
+	settings, err := client.Imaging().GetImagingSettings(ctx, videoSourceToken)
 	if err != nil {
 		log.Fatalf("Failed to get imaging settings: %v", err)
 	}
@@ -115,7 +115,7 @@ func main() {
 	}
 
 	// Apply new settings
-	if err := client.SetImagingSettings(ctx, videoSourceToken, settings, true); err != nil {
+	if err := client.Imaging().SetImagingSettings(ctx, videoSourceToken, settings, true); err != nil {
 		log.Fatalf("Failed to set imaging settings: %v", err)
 	}
 
@@ -123,7 +123,7 @@ func main() {
 
 	// Verify changes
 	fmt.Println("\nVerifying new settings...")
-	updatedSettings, err := client.GetImagingSettings(ctx, videoSourceToken)
+	updatedSettings, err := client.Imaging().GetImagingSettings(ctx, videoSourceToken)
 	if err != nil {
 		log.Fatalf("Failed to get updated imaging settings: %v", err)
 	}

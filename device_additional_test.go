@@ -125,7 +125,7 @@ func TestGetGeoLocation(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	locations, err := client.GetGeoLocation(ctx)
+	locations, err := client.Device().GetGeoLocation(ctx)
 	if err != nil {
 		t.Fatalf("GetGeoLocation failed: %v", err)
 	}
@@ -182,7 +182,7 @@ func TestSetGeoLocation(t *testing.T) {
 		},
 	}
 
-	err = client.SetGeoLocation(ctx, locations)
+	err = client.Device().SetGeoLocation(ctx, locations)
 	if err != nil {
 		t.Fatalf("SetGeoLocation failed: %v", err)
 	}
@@ -202,7 +202,7 @@ func TestDeleteGeoLocation(t *testing.T) {
 		{Token: "location1"},
 	}
 
-	err = client.DeleteGeoLocation(ctx, locations)
+	err = client.Device().DeleteGeoLocation(ctx, locations)
 	if err != nil {
 		t.Fatalf("DeleteGeoLocation failed: %v", err)
 	}
@@ -218,7 +218,7 @@ func TestGetDPAddresses(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	addresses, err := client.GetDPAddresses(ctx)
+	addresses, err := client.Device().GetDPAddresses(ctx)
 	if err != nil {
 		t.Fatalf("GetDPAddresses failed: %v", err)
 	}
@@ -261,7 +261,7 @@ func TestSetDPAddresses(t *testing.T) {
 		},
 	}
 
-	err = client.SetDPAddresses(ctx, addresses)
+	err = client.Device().SetDPAddresses(ctx, addresses)
 	if err != nil {
 		t.Fatalf("SetDPAddresses failed: %v", err)
 	}
@@ -277,7 +277,7 @@ func TestGetAccessPolicy(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	policy, err := client.GetAccessPolicy(ctx)
+	policy, err := client.Device().GetAccessPolicy(ctx)
 	if err != nil {
 		t.Fatalf("GetAccessPolicy failed: %v", err)
 	}
@@ -308,7 +308,7 @@ func TestSetAccessPolicy(t *testing.T) {
 		},
 	}
 
-	err = client.SetAccessPolicy(ctx, policy)
+	err = client.Device().SetAccessPolicy(ctx, policy)
 	if err != nil {
 		t.Fatalf("SetAccessPolicy failed: %v", err)
 	}
@@ -324,7 +324,7 @@ func TestGetWsdlUrl(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	url, err := client.GetWsdlURL(ctx)
+	url, err := client.Device().GetWsdlURL(ctx)
 	if err != nil {
 		t.Fatalf("GetWsdlURL failed: %v", err)
 	}

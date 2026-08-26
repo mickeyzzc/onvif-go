@@ -158,7 +158,7 @@ func TestGetDot11Capabilities(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	caps, err := client.GetDot11Capabilities(ctx)
+	caps, err := client.Device().GetDot11Capabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetDot11Capabilities failed: %v", err)
 	}
@@ -190,7 +190,7 @@ func TestGetDot11Status(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	status, err := client.GetDot11Status(ctx, "wifi0")
+	status, err := client.Device().GetDot11Status(ctx, "wifi0")
 	if err != nil {
 		t.Fatalf("GetDot11Status failed: %v", err)
 	}
@@ -230,7 +230,7 @@ func TestGetDot1XConfiguration(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	config, err := client.GetDot1XConfiguration(ctx, "dot1x-config-001")
+	config, err := client.Device().GetDot1XConfiguration(ctx, "dot1x-config-001")
 	if err != nil {
 		t.Fatalf("GetDot1XConfiguration failed: %v", err)
 	}
@@ -254,7 +254,7 @@ func TestGetDot1XConfigurations(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	configs, err := client.GetDot1XConfigurations(ctx)
+	configs, err := client.Device().GetDot1XConfigurations(ctx)
 	if err != nil {
 		t.Fatalf("GetDot1XConfigurations failed: %v", err)
 	}
@@ -295,7 +295,7 @@ func TestSetDot1XConfiguration(t *testing.T) {
 		Identity:                "updated@example.com",
 	}
 
-	err = client.SetDot1XConfiguration(ctx, config)
+	err = client.Device().SetDot1XConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("SetDot1XConfiguration failed: %v", err)
 	}
@@ -316,7 +316,7 @@ func TestCreateDot1XConfiguration(t *testing.T) {
 		Identity:                "new@example.com",
 	}
 
-	err = client.CreateDot1XConfiguration(ctx, config)
+	err = client.Device().CreateDot1XConfiguration(ctx, config)
 	if err != nil {
 		t.Fatalf("CreateDot1XConfiguration failed: %v", err)
 	}
@@ -332,7 +332,7 @@ func TestDeleteDot1XConfiguration(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	err = client.DeleteDot1XConfiguration(ctx, "dot1x-config-001")
+	err = client.Device().DeleteDot1XConfiguration(ctx, "dot1x-config-001")
 	if err != nil {
 		t.Fatalf("DeleteDot1XConfiguration failed: %v", err)
 	}
@@ -348,7 +348,7 @@ func TestScanAvailableDot11Networks(t *testing.T) {
 	}
 	ctx := context.Background()
 
-	networks, err := client.ScanAvailableDot11Networks(ctx, "wifi0")
+	networks, err := client.Device().ScanAvailableDot11Networks(ctx, "wifi0")
 	if err != nil {
 		t.Fatalf("ScanAvailableDot11Networks failed: %v", err)
 	}

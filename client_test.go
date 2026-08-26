@@ -476,7 +476,7 @@ func TestGetDeviceInformationWithMockServer(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetDeviceInformation(ctx)
+	_, err = client.Device().GetDeviceInformation(ctx)
 	// We expect an error since we're not returning valid SOAP
 	if err == nil {
 		t.Errorf("Expected error with empty response, but got none")
@@ -499,7 +499,7 @@ func TestGetDeviceInformationWithAuth(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetDeviceInformation(ctx)
+	_, err = client.Device().GetDeviceInformation(ctx)
 	if err == nil {
 		t.Errorf("Expected authentication error, but got none")
 	}
@@ -540,7 +540,7 @@ func TestGetProfilesRequiresInitialization(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	_, err = client.GetProfiles(ctx)
+	_, err = client.Media().GetProfiles(ctx)
 	// Should fail because Initialize was not called
 	if err == nil {
 		t.Errorf("Expected error when GetProfiles called without Initialize")
@@ -566,7 +566,7 @@ func TestContextTimeout(t *testing.T) {
 	defer cancel()
 
 	// This should timeout
-	_, err = client.GetDeviceInformation(ctx)
+	_, err = client.Device().GetDeviceInformation(ctx)
 	if err == nil {
 		t.Errorf("Expected timeout error, but got none")
 	}
@@ -624,7 +624,7 @@ func BenchmarkGetDeviceInformation(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := client.GetDeviceInformation(ctx)
+		_, err := client.Device().GetDeviceInformation(ctx)
 		if err != nil {
 			b.Fatalf("GetDeviceInformation() failed: %v", err)
 		}
@@ -632,7 +632,7 @@ func BenchmarkGetDeviceInformation(b *testing.B) {
 }
 
 // Example test.
-func ExampleClient_GetDeviceInformation() {
+func ExampleDeviceService_GetDeviceInformation() {
 	// Create client
 	client, err := NewClient(
 		"http://192.168.1.100/onvif/device_service",
@@ -645,7 +645,7 @@ func ExampleClient_GetDeviceInformation() {
 
 	// Get device information
 	ctx := context.Background()
-	info, err := client.GetDeviceInformation(ctx)
+	info, err := client.Device().GetDeviceInformation(ctx)
 	if err != nil {
 		panic(err)
 	}

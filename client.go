@@ -227,7 +227,7 @@ func isLoopbackHost(host string) bool {
 // Initialize discovers and initializes service endpoints.
 func (c *Client) Initialize(ctx context.Context) error {
 	// Get device information and capabilities
-	capabilities, err := c.GetCapabilities(ctx)
+	capabilities, err := c.Device().GetCapabilities(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to get capabilities: %w", err)
 	}

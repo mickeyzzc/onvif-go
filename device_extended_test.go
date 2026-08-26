@@ -144,7 +144,7 @@ func TestAddScopes(t *testing.T) {
 		"onvif://www.onvif.org/name/camera-entrance",
 	}
 
-	err = client.AddScopes(ctx, scopes)
+	err = client.Device().AddScopes(ctx, scopes)
 	if err != nil {
 		t.Fatalf("AddScopes failed: %v", err)
 	}
@@ -162,7 +162,7 @@ func TestRemoveScopes(t *testing.T) {
 	ctx := context.Background()
 	scopes := []string{"onvif://www.onvif.org/location/test"}
 
-	removed, err := client.RemoveScopes(ctx, scopes)
+	removed, err := client.Device().RemoveScopes(ctx, scopes)
 	if err != nil {
 		t.Fatalf("RemoveScopes failed: %v", err)
 	}
@@ -188,7 +188,7 @@ func TestSetScopes(t *testing.T) {
 	ctx := context.Background()
 	scopes := []string{"scope1", "scope2"}
 
-	err = client.SetScopes(ctx, scopes)
+	err = client.Device().SetScopes(ctx, scopes)
 	if err != nil {
 		t.Fatalf("SetScopes failed: %v", err)
 	}
@@ -204,7 +204,7 @@ func TestGetRelayOutputs(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	relays, err := client.GetRelayOutputs(ctx)
+	relays, err := client.Device().GetRelayOutputs(ctx)
 	if err != nil {
 		t.Fatalf("GetRelayOutputs failed: %v", err)
 	}
@@ -241,7 +241,7 @@ func TestSetRelayOutputSettings(t *testing.T) {
 		IdleState: RelayIdleStateClosed,
 	}
 
-	err = client.SetRelayOutputSettings(ctx, "relay1", settings)
+	err = client.Device().SetRelayOutputSettings(ctx, "relay1", settings)
 	if err != nil {
 		t.Fatalf("SetRelayOutputSettings failed: %v", err)
 	}
@@ -259,13 +259,13 @@ func TestSetRelayOutputState(t *testing.T) {
 	ctx := context.Background()
 
 	// Test active state
-	err = client.SetRelayOutputState(ctx, "relay1", RelayLogicalStateActive)
+	err = client.Device().SetRelayOutputState(ctx, "relay1", RelayLogicalStateActive)
 	if err != nil {
 		t.Fatalf("SetRelayOutputState (active) failed: %v", err)
 	}
 
 	// Test inactive state
-	err = client.SetRelayOutputState(ctx, "relay1", RelayLogicalStateInactive)
+	err = client.Device().SetRelayOutputState(ctx, "relay1", RelayLogicalStateInactive)
 	if err != nil {
 		t.Fatalf("SetRelayOutputState (inactive) failed: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestSendAuxiliaryCommand(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	response, err := client.SendAuxiliaryCommand(ctx, "tt:IRLamp|On")
+	response, err := client.Device().SendAuxiliaryCommand(ctx, "tt:IRLamp|On")
 	if err != nil {
 		t.Fatalf("SendAuxiliaryCommand failed: %v", err)
 	}
@@ -301,7 +301,7 @@ func TestGetSystemLog(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	log, err := client.GetSystemLog(ctx, SystemLogTypeSystem)
+	log, err := client.Device().GetSystemLog(ctx, SystemLogTypeSystem)
 	if err != nil {
 		t.Fatalf("GetSystemLog failed: %v", err)
 	}
@@ -323,13 +323,13 @@ func TestSetSystemFactoryDefault(t *testing.T) {
 	ctx := context.Background()
 
 	// Test soft reset
-	err = client.SetSystemFactoryDefault(ctx, FactoryDefaultSoft)
+	err = client.Device().SetSystemFactoryDefault(ctx, FactoryDefaultSoft)
 	if err != nil {
 		t.Fatalf("SetSystemFactoryDefault (soft) failed: %v", err)
 	}
 
 	// Test hard reset
-	err = client.SetSystemFactoryDefault(ctx, FactoryDefaultHard)
+	err = client.Device().SetSystemFactoryDefault(ctx, FactoryDefaultHard)
 	if err != nil {
 		t.Fatalf("SetSystemFactoryDefault (hard) failed: %v", err)
 	}
@@ -345,7 +345,7 @@ func TestStartFirmwareUpgrade(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	uploadURI, delay, downtime, err := client.StartFirmwareUpgrade(ctx)
+	uploadURI, delay, downtime, err := client.Device().StartFirmwareUpgrade(ctx)
 	if err != nil {
 		t.Fatalf("StartFirmwareUpgrade failed: %v", err)
 	}

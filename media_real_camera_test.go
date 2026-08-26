@@ -66,7 +66,7 @@ func TestGetMediaServiceCapabilities_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	capabilities, err := client.GetMediaServiceCapabilities(ctx)
+	capabilities, err := client.Media().GetMediaServiceCapabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetMediaServiceCapabilities() failed: %v", err)
 	}
@@ -151,7 +151,7 @@ func TestGetProfiles_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	profiles, err := client.GetProfiles(ctx)
+	profiles, err := client.Media().GetProfiles(ctx)
 	if err != nil {
 		t.Fatalf("GetProfiles() failed: %v", err)
 	}
@@ -225,7 +225,7 @@ func TestGetVideoSources_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	sources, err := client.GetVideoSources(ctx)
+	sources, err := client.Media().GetVideoSources(ctx)
 	if err != nil {
 		t.Fatalf("GetVideoSources() failed: %v", err)
 	}
@@ -286,7 +286,7 @@ func TestGetAudioSources_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	sources, err := client.GetAudioSources(ctx)
+	sources, err := client.Media().GetAudioSources(ctx)
 	if err != nil {
 		t.Fatalf("GetAudioSources() failed: %v", err)
 	}
@@ -339,7 +339,7 @@ func TestGetAudioOutputs_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	outputs, err := client.GetAudioOutputs(ctx)
+	outputs, err := client.Media().GetAudioOutputs(ctx)
 	if err != nil {
 		t.Fatalf("GetAudioOutputs() failed: %v", err)
 	}
@@ -397,7 +397,7 @@ func TestGetStreamURI_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	uri, err := client.GetStreamURI(ctx, "0")
+	uri, err := client.Media().GetStreamURI(ctx, "0")
 	if err != nil {
 		t.Fatalf("GetStreamURI() failed: %v", err)
 	}
@@ -455,7 +455,7 @@ func TestGetSnapshotURI_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	uri, err := client.GetSnapshotURI(ctx, "0")
+	uri, err := client.Media().GetSnapshotURI(ctx, "0")
 	if err != nil {
 		t.Fatalf("GetSnapshotURI() failed: %v", err)
 	}
@@ -525,7 +525,7 @@ func TestGetVideoEncoderConfiguration_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	config, err := client.GetVideoEncoderConfiguration(ctx, "EncCfg_L1S1")
+	config, err := client.Media().GetVideoEncoderConfiguration(ctx, "EncCfg_L1S1")
 	if err != nil {
 		t.Fatalf("GetVideoEncoderConfiguration() failed: %v", err)
 	}
@@ -614,7 +614,7 @@ func TestGetVideoEncoderConfigurationOptions_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	options, err := client.GetVideoEncoderConfigurationOptions(ctx, "EncCfg_L1S1")
+	options, err := client.Media().GetVideoEncoderConfigurationOptions(ctx, "EncCfg_L1S1")
 	if err != nil {
 		t.Fatalf("GetVideoEncoderConfigurationOptions() failed: %v", err)
 	}
@@ -679,7 +679,7 @@ func TestGetAudioEncoderConfigurationOptions_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	options, err := client.GetAudioEncoderConfigurationOptions(ctx, "", "")
+	options, err := client.Media().GetAudioEncoderConfigurationOptions(ctx, "", "")
 	if err != nil {
 		t.Fatalf("GetAudioEncoderConfigurationOptions() failed: %v", err)
 	}
@@ -728,7 +728,7 @@ func TestGetAudioOutputConfigurationOptions_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	options, err := client.GetAudioOutputConfigurationOptions(ctx, "")
+	options, err := client.Media().GetAudioOutputConfigurationOptions(ctx, "")
 	if err != nil {
 		t.Fatalf("GetAudioOutputConfigurationOptions() failed: %v", err)
 	}
@@ -783,7 +783,7 @@ func TestGetMetadataConfigurationOptions_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	options, err := client.GetMetadataConfigurationOptions(ctx, "", "")
+	options, err := client.Media().GetMetadataConfigurationOptions(ctx, "", "")
 	if err != nil {
 		t.Fatalf("GetMetadataConfigurationOptions() failed: %v", err)
 	}
@@ -838,7 +838,7 @@ func TestGetAudioDecoderConfigurationOptions_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	options, err := client.GetAudioDecoderConfigurationOptions(ctx, "")
+	options, err := client.Media().GetAudioDecoderConfigurationOptions(ctx, "")
 	if err != nil {
 		t.Fatalf("GetAudioDecoderConfigurationOptions() failed: %v", err)
 	}
@@ -889,7 +889,7 @@ func TestSetSynchronizationPoint_Bosch(t *testing.T) {
 	client.mediaEndpoint = server.URL
 
 	ctx := context.Background()
-	err = client.SetSynchronizationPoint(ctx, "0")
+	err = client.Media().SetSynchronizationPoint(ctx, "0")
 	if err != nil {
 		t.Fatalf("SetSynchronizationPoint() failed: %v", err)
 	}

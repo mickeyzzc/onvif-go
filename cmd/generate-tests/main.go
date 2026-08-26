@@ -319,7 +319,7 @@ func generateDeviceTests(ops []operationInfo) []GeneratedTest {
 
 	// Standard device tests
 	deviceOps := map[string]string{
-		"GetDeviceInformation": `info, err := client.GetDeviceInformation(ctx)
+		"GetDeviceInformation": `info, err := client.Device().GetDeviceInformation(ctx)
 		if err != nil {
 			t.Errorf("GetDeviceInformation failed: %v", err)
 			return
@@ -332,12 +332,12 @@ func generateDeviceTests(ops []operationInfo) []GeneratedTest {
 		}
 		t.Logf("Device: %s %s (Firmware: %s)", info.Manufacturer, info.Model, info.FirmwareVersion)`,
 
-		"GetSystemDateAndTime": `_, err := client.GetSystemDateAndTime(ctx)
+		"GetSystemDateAndTime": `_, err := client.Device().GetSystemDateAndTime(ctx)
 		if err != nil {
 			t.Errorf("GetSystemDateAndTime failed: %v", err)
 		}`,
 
-		"GetCapabilities": `caps, err := client.GetCapabilities(ctx)
+		"GetCapabilities": `caps, err := client.Device().GetCapabilities(ctx)
 		if err != nil {
 			t.Errorf("GetCapabilities failed: %v", err)
 			return
@@ -345,28 +345,28 @@ func generateDeviceTests(ops []operationInfo) []GeneratedTest {
 		t.Logf("Capabilities: Device=%v, Media=%v, Imaging=%v, PTZ=%v",
 			caps.Device != nil, caps.Media != nil, caps.Imaging != nil, caps.PTZ != nil)`,
 
-		"GetHostname": `hostname, err := client.GetHostname(ctx)
+		"GetHostname": `hostname, err := client.Device().GetHostname(ctx)
 		if err != nil {
 			t.Errorf("GetHostname failed: %v", err)
 			return
 		}
 		t.Logf("Hostname: %s", hostname)`,
 
-		"GetScopes": `scopes, err := client.GetScopes(ctx)
+		"GetScopes": `scopes, err := client.Device().GetScopes(ctx)
 		if err != nil {
 			t.Errorf("GetScopes failed: %v", err)
 			return
 		}
 		t.Logf("Scopes: %d", len(scopes))`,
 
-		"GetNetworkInterfaces": `interfaces, err := client.GetNetworkInterfaces(ctx)
+		"GetNetworkInterfaces": `interfaces, err := client.Device().GetNetworkInterfaces(ctx)
 		if err != nil {
 			t.Errorf("GetNetworkInterfaces failed: %v", err)
 			return
 		}
 		t.Logf("Network interfaces: %d", len(interfaces))`,
 
-		"GetServices": `services, err := client.GetServices(ctx, true)
+		"GetServices": `services, err := client.Device().GetServices(ctx, true)
 		if err != nil {
 			t.Errorf("GetServices failed: %v", err)
 			return
@@ -400,7 +400,7 @@ func generateMediaTests(ops []operationInfo) []GeneratedTest {
 	var tests []GeneratedTest
 
 	mediaOps := map[string]string{
-		"GetProfiles": `profiles, err := client.GetProfiles(ctx)
+		"GetProfiles": `profiles, err := client.Media().GetProfiles(ctx)
 		if err != nil {
 			t.Errorf("GetProfiles failed: %v", err)
 			return
@@ -410,42 +410,42 @@ func generateMediaTests(ops []operationInfo) []GeneratedTest {
 		}
 		t.Logf("Found %d profile(s)", len(profiles))`,
 
-		"GetVideoSources": `sources, err := client.GetVideoSources(ctx)
+		"GetVideoSources": `sources, err := client.Media().GetVideoSources(ctx)
 		if err != nil {
 			t.Errorf("GetVideoSources failed: %v", err)
 			return
 		}
 		t.Logf("Video sources: %d", len(sources))`,
 
-		"GetVideoSourceConfigurations": `configs, err := client.GetVideoSourceConfigurations(ctx)
+		"GetVideoSourceConfigurations": `configs, err := client.Media().GetVideoSourceConfigurations(ctx)
 		if err != nil {
 			t.Errorf("GetVideoSourceConfigurations failed: %v", err)
 			return
 		}
 		t.Logf("Video source configs: %d", len(configs))`,
 
-		"GetVideoEncoderConfigurations": `configs, err := client.GetVideoEncoderConfigurations(ctx)
+		"GetVideoEncoderConfigurations": `configs, err := client.Media().GetVideoEncoderConfigurations(ctx)
 		if err != nil {
 			t.Errorf("GetVideoEncoderConfigurations failed: %v", err)
 			return
 		}
 		t.Logf("Video encoder configs: %d", len(configs))`,
 
-		"GetAudioSources": `sources, err := client.GetAudioSources(ctx)
+		"GetAudioSources": `sources, err := client.Media().GetAudioSources(ctx)
 		if err != nil {
 			t.Errorf("GetAudioSources failed: %v", err)
 			return
 		}
 		t.Logf("Audio sources: %d", len(sources))`,
 
-		"GetAudioSourceConfigurations": `configs, err := client.GetAudioSourceConfigurations(ctx)
+		"GetAudioSourceConfigurations": `configs, err := client.Media().GetAudioSourceConfigurations(ctx)
 		if err != nil {
 			t.Errorf("GetAudioSourceConfigurations failed: %v", err)
 			return
 		}
 		t.Logf("Audio source configs: %d", len(configs))`,
 
-		"GetMetadataConfigurations": `configs, err := client.GetMetadataConfigurations(ctx)
+		"GetMetadataConfigurations": `configs, err := client.Media().GetMetadataConfigurations(ctx)
 		if err != nil {
 			t.Errorf("GetMetadataConfigurations failed: %v", err)
 			return
@@ -492,7 +492,7 @@ func generateProfileDependentTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("GetStreamURI_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`uri, err := client.GetStreamURI(ctx, "%s")
+					Code: fmt.Sprintf(`uri, err := client.Media().GetStreamURI(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetStreamURI failed: %%v", err)
 			return
@@ -507,7 +507,7 @@ func generateProfileDependentTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("GetSnapshotURI_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`uri, err := client.GetSnapshotURI(ctx, "%s")
+					Code: fmt.Sprintf(`uri, err := client.Media().GetSnapshotURI(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetSnapshotURI failed: %%v", err)
 			return
@@ -522,7 +522,7 @@ func generateProfileDependentTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("GetProfile_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`profile, err := client.GetProfile(ctx, "%s")
+					Code: fmt.Sprintf(`profile, err := client.Media().GetProfile(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetProfile failed: %%v", err)
 			return
@@ -564,7 +564,7 @@ func generatePTZTests(ops []operationInfo) []GeneratedTest {
 		}
 		t.Logf("PTZ nodes: %d", len(nodes))`,
 
-		"GetConfigurations": `configs, err := client.GetConfigurations(ctx)
+		"GetConfigurations": `configs, err := client.PTZ().GetConfigurations(ctx)
 		if err != nil {
 			t.Errorf("GetConfigurations failed: %v", err)
 			return
@@ -600,7 +600,7 @@ func generatePTZTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("PTZ_GetStatus_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`status, err := client.GetStatus(ctx, "%s")
+					Code: fmt.Sprintf(`status, err := client.PTZ().GetStatus(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetStatus failed: %%v", err)
 			return
@@ -613,7 +613,7 @@ func generatePTZTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("PTZ_GetPresets_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`presets, err := client.GetPresets(ctx, "%s")
+					Code: fmt.Sprintf(`presets, err := client.PTZ().GetPresets(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetPresets failed: %%v", err)
 			return
@@ -662,7 +662,7 @@ func generateImagingTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("GetImagingSettings_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`settings, err := client.GetImagingSettings(ctx, "%s")
+					Code: fmt.Sprintf(`settings, err := client.Imaging().GetImagingSettings(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetImagingSettings failed: %%v", err)
 			return
@@ -675,7 +675,7 @@ func generateImagingTests(ops []operationInfo) []GeneratedTest {
 				testName := fmt.Sprintf("GetImagingOptions_%s", sanitizeToken(token))
 				tests = append(tests, GeneratedTest{
 					Name: testName,
-					Code: fmt.Sprintf(`options, err := client.GetOptions(ctx, "%s")
+					Code: fmt.Sprintf(`options, err := client.Imaging().GetOptions(ctx, "%s")
 		if err != nil {
 			t.Errorf("GetOptions failed: %%v", err)
 			return

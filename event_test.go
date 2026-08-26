@@ -192,7 +192,7 @@ func TestGetEventServiceCapabilities(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	caps, err := client.GetEventServiceCapabilities(ctx)
+	caps, err := client.Events().GetEventServiceCapabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetEventServiceCapabilities failed: %v", err)
 	}
@@ -242,7 +242,7 @@ func TestCreatePullPointSubscription(t *testing.T) {
 	ctx := context.Background()
 
 	// Test with no filter and default termination time.
-	sub, err := client.CreatePullPointSubscription(ctx, "", nil, "")
+	sub, err := client.Events().CreatePullPointSubscription(ctx, "", nil, "")
 	if err != nil {
 		t.Fatalf("CreatePullPointSubscription failed: %v", err)
 	}
@@ -261,7 +261,7 @@ func TestCreatePullPointSubscription(t *testing.T) {
 
 	// Test with filter and termination time.
 	termTime := 1 * time.Hour
-	sub2, err := client.CreatePullPointSubscription(ctx, "tns1:VideoSource/MotionAlarm", &termTime, "policy1")
+	sub2, err := client.Events().CreatePullPointSubscription(ctx, "tns1:VideoSource/MotionAlarm", &termTime, "policy1")
 	if err != nil {
 		t.Fatalf("CreatePullPointSubscription with filter failed: %v", err)
 	}
@@ -284,7 +284,7 @@ func TestCreatePullPointSubscriptionInvalidTerminationTime(t *testing.T) {
 
 	// Test with invalid (negative) termination time.
 	invalidTime := -1 * time.Hour
-	_, err = client.CreatePullPointSubscription(ctx, "", &invalidTime, "")
+	_, err = client.Events().CreatePullPointSubscription(ctx, "", &invalidTime, "")
 	if !errors.Is(err, ErrInvalidTerminationTime) {
 		t.Errorf("Expected ErrInvalidTerminationTime, got %v", err)
 	}
@@ -301,7 +301,7 @@ func TestPullMessages(t *testing.T) {
 
 	ctx := context.Background()
 
-	messages, err := client.PullMessages(ctx, server.URL+"/subscription/1", 30*time.Second, 10)
+	messages, err := client.Events().PullMessages(ctx, server.URL+"/subscription/1", 30*time.Second, 10)
 	if err != nil {
 		t.Fatalf("PullMessages failed: %v", err)
 	}
@@ -342,19 +342,19 @@ func TestPullMessagesValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test empty subscription reference.
-	_, err = client.PullMessages(ctx, "", 30*time.Second, 10)
+	_, err = client.Events().PullMessages(ctx, "", 30*time.Second, 10)
 	if !errors.Is(err, ErrInvalidSubscriptionReference) {
 		t.Errorf("Expected ErrInvalidSubscriptionReference, got %v", err)
 	}
 
 	// Test invalid timeout.
-	_, err = client.PullMessages(ctx, server.URL+"/subscription/1", 0, 10)
+	_, err = client.Events().PullMessages(ctx, server.URL+"/subscription/1", 0, 10)
 	if !errors.Is(err, ErrInvalidTimeout) {
 		t.Errorf("Expected ErrInvalidTimeout, got %v", err)
 	}
 
 	// Test invalid message limit.
-	_, err = client.PullMessages(ctx, server.URL+"/subscription/1", 30*time.Second, 0)
+	_, err = client.Events().PullMessages(ctx, server.URL+"/subscription/1", 30*time.Second, 0)
 	if !errors.Is(err, ErrInvalidMessageLimit) {
 		t.Errorf("Expected ErrInvalidMessageLimit, got %v", err)
 	}
@@ -371,13 +371,13 @@ func TestSeek(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.Seek(ctx, server.URL+"/subscription/1", time.Now().Add(-1*time.Hour), false)
+	err = client.Events().Seek(ctx, server.URL+"/subscription/1", time.Now().Add(-1*time.Hour), false)
 	if err != nil {
 		t.Fatalf("Seek failed: %v", err)
 	}
 
 	// Test with reverse.
-	err = client.Seek(ctx, server.URL+"/subscription/1", time.Now().Add(-1*time.Hour), true)
+	err = client.Events().Seek(ctx, server.URL+"/subscription/1", time.Now().Add(-1*time.Hour), true)
 	if err != nil {
 		t.Fatalf("Seek with reverse failed: %v", err)
 	}
@@ -394,7 +394,7 @@ func TestSeekInvalidSubscriptionReference(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.Seek(ctx, "", time.Now(), false)
+	err = client.Events().Seek(ctx, "", time.Now(), false)
 	if !errors.Is(err, ErrInvalidSubscriptionReference) {
 		t.Errorf("Expected ErrInvalidSubscriptionReference, got %v", err)
 	}
@@ -411,7 +411,7 @@ func TestSetEventSynchronizationPoint(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.SetEventSynchronizationPoint(ctx, server.URL+"/subscription/1")
+	err = client.Events().SetEventSynchronizationPoint(ctx, server.URL+"/subscription/1")
 	if err != nil {
 		t.Fatalf("SetEventSynchronizationPoint failed: %v", err)
 	}
@@ -428,7 +428,7 @@ func TestSetEventSynchronizationPointInvalidSubscriptionReference(t *testing.T) 
 
 	ctx := context.Background()
 
-	err = client.SetEventSynchronizationPoint(ctx, "")
+	err = client.Events().SetEventSynchronizationPoint(ctx, "")
 	if !errors.Is(err, ErrInvalidSubscriptionReference) {
 		t.Errorf("Expected ErrInvalidSubscriptionReference, got %v", err)
 	}
@@ -445,7 +445,7 @@ func TestUnsubscribe(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.Unsubscribe(ctx, server.URL+"/subscription/1")
+	err = client.Events().Unsubscribe(ctx, server.URL+"/subscription/1")
 	if err != nil {
 		t.Fatalf("Unsubscribe failed: %v", err)
 	}
@@ -462,7 +462,7 @@ func TestUnsubscribeInvalidSubscriptionReference(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.Unsubscribe(ctx, "")
+	err = client.Events().Unsubscribe(ctx, "")
 	if !errors.Is(err, ErrInvalidSubscriptionReference) {
 		t.Errorf("Expected ErrInvalidSubscriptionReference, got %v", err)
 	}
@@ -479,7 +479,7 @@ func TestRenewSubscription(t *testing.T) {
 
 	ctx := context.Background()
 
-	currentTime, terminationTime, err := client.RenewSubscription(ctx, server.URL+"/subscription/1", 2*time.Hour)
+	currentTime, terminationTime, err := client.Events().RenewSubscription(ctx, server.URL+"/subscription/1", 2*time.Hour)
 	if err != nil {
 		t.Fatalf("RenewSubscription failed: %v", err)
 	}
@@ -505,13 +505,13 @@ func TestRenewSubscriptionValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test empty subscription reference.
-	_, _, err = client.RenewSubscription(ctx, "", time.Hour)
+	_, _, err = client.Events().RenewSubscription(ctx, "", time.Hour)
 	if !errors.Is(err, ErrInvalidSubscriptionReference) {
 		t.Errorf("Expected ErrInvalidSubscriptionReference, got %v", err)
 	}
 
 	// Test invalid termination time.
-	_, _, err = client.RenewSubscription(ctx, server.URL+"/subscription/1", 0)
+	_, _, err = client.Events().RenewSubscription(ctx, server.URL+"/subscription/1", 0)
 	if !errors.Is(err, ErrInvalidTerminationTime) {
 		t.Errorf("Expected ErrInvalidTerminationTime, got %v", err)
 	}
@@ -528,7 +528,7 @@ func TestGetEventProperties(t *testing.T) {
 
 	ctx := context.Background()
 
-	props, err := client.GetEventProperties(ctx)
+	props, err := client.Events().GetEventProperties(ctx)
 	if err != nil {
 		t.Fatalf("GetEventProperties failed: %v", err)
 	}
@@ -569,7 +569,7 @@ func TestAddEventBroker(t *testing.T) {
 		QoS:         1,
 	}
 
-	err = client.AddEventBroker(ctx, config)
+	err = client.Events().AddEventBroker(ctx, config)
 	if err != nil {
 		t.Fatalf("AddEventBroker failed: %v", err)
 	}
@@ -587,14 +587,14 @@ func TestAddEventBrokerValidation(t *testing.T) {
 	ctx := context.Background()
 
 	// Test nil config.
-	err = client.AddEventBroker(ctx, nil)
+	err = client.Events().AddEventBroker(ctx, nil)
 	if err == nil {
 		t.Error("Expected error for nil config")
 	}
 
 	// Test empty address.
 	config := &EventBrokerConfig{Address: ""}
-	err = client.AddEventBroker(ctx, config)
+	err = client.Events().AddEventBroker(ctx, config)
 	if !errors.Is(err, ErrInvalidEventBrokerAddress) {
 		t.Errorf("Expected ErrInvalidEventBrokerAddress, got %v", err)
 	}
@@ -611,7 +611,7 @@ func TestDeleteEventBroker(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.DeleteEventBroker(ctx, "mqtt://broker.example.com:1883")
+	err = client.Events().DeleteEventBroker(ctx, "mqtt://broker.example.com:1883")
 	if err != nil {
 		t.Fatalf("DeleteEventBroker failed: %v", err)
 	}
@@ -628,7 +628,7 @@ func TestDeleteEventBrokerInvalidAddress(t *testing.T) {
 
 	ctx := context.Background()
 
-	err = client.DeleteEventBroker(ctx, "")
+	err = client.Events().DeleteEventBroker(ctx, "")
 	if !errors.Is(err, ErrInvalidEventBrokerAddress) {
 		t.Errorf("Expected ErrInvalidEventBrokerAddress, got %v", err)
 	}
@@ -645,7 +645,7 @@ func TestGetEventBrokers(t *testing.T) {
 
 	ctx := context.Background()
 
-	brokers, err := client.GetEventBrokers(ctx)
+	brokers, err := client.Events().GetEventBrokers(ctx)
 	if err != nil {
 		t.Fatalf("GetEventBrokers failed: %v", err)
 	}
@@ -728,7 +728,7 @@ func TestSetEventEndpoint(t *testing.T) {
 	}
 
 	newEndpoint := "http://192.168.1.100/onvif/events"
-	client.SetEventEndpoint(newEndpoint)
+	client.Events().SetEventEndpoint(newEndpoint)
 
 	// Verify endpoint was set.
 	endpoint := client.Events().getEventEndpoint()
