@@ -212,11 +212,13 @@ func TestSendResponse(t *testing.T) {
 
 	w := httptest.NewRecorder()
 
-	response := map[string]string{
-		"Result": "Success",
+	// encoding/xml cannot marshal maps as nested field content; handler
+	// responses are always structs (see RegisterHandler call sites).
+	type testResponse struct {
+		Result string
 	}
 
-	handler.sendResponse(w, response)
+	handler.sendResponse(w, testResponse{Result: "Success"})
 
 	if w.Code != http.StatusOK {
 		t.Errorf("Expected status 200, got %d", w.Code)
@@ -380,8 +382,10 @@ func TestResponseHandling(t *testing.T) {
 		return &TestResponse{Result: "Success"}, nil
 	})
 
+	// ONVIF is SOAP 1.2 only — the envelope namespace must be the 2003/05
+	// form the library's Envelope type declares.
 	soapBody := `<?xml version="1.0"?>
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
   <soap:Body>
     <TestAction/>
   </soap:Body>

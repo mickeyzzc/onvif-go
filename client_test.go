@@ -698,10 +698,12 @@ func TestFixLocalhostURL(t *testing.T) {
 			expectedURL: "http://192.168.1.100/onvif/media_service",
 		},
 		{
-			name:        "different valid IP unchanged",
+			// v1.1.7 semantics: an advertised host that disagrees with the
+			// endpoint we reached is a stale address — rewrite to the endpoint.
+			name:        "different valid IP rewritten to endpoint host",
 			clientURL:   "http://192.168.1.100/onvif/device_service",
 			serviceURL:  "http://192.168.1.50/onvif/media_service",
-			expectedURL: "http://192.168.1.50/onvif/media_service",
+			expectedURL: "http://192.168.1.100/onvif/media_service",
 		},
 		{
 			name:        "HTTPS localhost",

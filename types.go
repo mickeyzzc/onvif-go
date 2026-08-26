@@ -1187,7 +1187,7 @@ type StorageConfiguration struct {
 type StorageConfigurationData struct {
 	Type                       string
 	LocalPath                  string
-	StorageURI                 string
+	StorageURI                 string `xml:"StorageUri"`
 	User                       *UserCredential
 	CertPathValidationPolicyID string
 }
