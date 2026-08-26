@@ -10,19 +10,19 @@ import (
 const mediaNamespace = "http://www.onvif.org/ver10/media/wsdl"
 
 // getMediaEndpoint returns the media endpoint, falling back to the default endpoint if not set.
-func (c *Client) getMediaEndpoint() string {
-	if c.mediaEndpoint != "" {
-		return c.mediaEndpoint
+func (s *MediaService) getMediaEndpoint() string {
+	if s.client.mediaEndpoint != "" {
+		return s.client.mediaEndpoint
 	}
 
-	return c.endpoint
+	return s.client.endpoint
 }
 
 // GetProfiles retrieves all media profiles.
 //
 //nolint:funlen // GetProfiles has many statements due to parsing complex profile structures
-func (c *Client) GetProfiles(ctx context.Context) ([]*Profile, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetProfiles(ctx context.Context) ([]*Profile, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetProfiles struct {
 		XMLName xml.Name `xml:"trt:GetProfiles"`
@@ -77,8 +77,8 @@ func (c *Client) GetProfiles(ctx context.Context) ([]*Profile, error) {
 
 	var resp GetProfilesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfiles failed: %w", err)
@@ -147,8 +147,8 @@ func (c *Client) GetProfiles(ctx context.Context) ([]*Profile, error) {
 }
 
 // GetStreamURI retrieves the stream URI for a profile.
-func (c *Client) GetStreamURI(ctx context.Context, profileToken string) (*MediaURI, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*MediaURI, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetStreamURI struct {
 		XMLName     xml.Name `xml:"trt:GetStreamUri"`
@@ -183,8 +183,8 @@ func (c *Client) GetStreamURI(ctx context.Context, profileToken string) (*MediaU
 
 	var resp GetStreamURIResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStreamURI failed: %w", err)
@@ -198,8 +198,8 @@ func (c *Client) GetStreamURI(ctx context.Context, profileToken string) (*MediaU
 }
 
 // GetSnapshotURI retrieves the snapshot URI for a profile.
-func (c *Client) GetSnapshotURI(ctx context.Context, profileToken string) (*MediaURI, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetSnapshotURI(ctx context.Context, profileToken string) (*MediaURI, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetSnapshotURI struct {
 		XMLName      xml.Name `xml:"trt:GetSnapshotUri"`
@@ -224,8 +224,8 @@ func (c *Client) GetSnapshotURI(ctx context.Context, profileToken string) (*Medi
 
 	var resp GetSnapshotURIResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSnapshotURI failed: %w", err)
@@ -239,11 +239,11 @@ func (c *Client) GetSnapshotURI(ctx context.Context, profileToken string) (*Medi
 }
 
 // GetVideoEncoderConfiguration retrieves video encoder configuration.
-func (c *Client) GetVideoEncoderConfiguration(
+func (s *MediaService) GetVideoEncoderConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*VideoEncoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoEncoderConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetVideoEncoderConfiguration"`
@@ -278,8 +278,8 @@ func (c *Client) GetVideoEncoderConfiguration(
 
 	var resp GetVideoEncoderConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfiguration failed: %w", err)
@@ -312,8 +312,8 @@ func (c *Client) GetVideoEncoderConfiguration(
 }
 
 // GetVideoSources retrieves all video sources.
-func (c *Client) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoSources struct {
 		XMLName xml.Name `xml:"trt:GetVideoSources"`
@@ -338,8 +338,8 @@ func (c *Client) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
 
 	var resp GetVideoSourcesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSources failed: %w", err)
@@ -361,8 +361,8 @@ func (c *Client) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
 }
 
 // GetAudioSources retrieves all audio sources.
-func (c *Client) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioSources struct {
 		XMLName xml.Name `xml:"trt:GetAudioSources"`
@@ -383,8 +383,8 @@ func (c *Client) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
 
 	var resp GetAudioSourcesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSources failed: %w", err)
@@ -402,8 +402,8 @@ func (c *Client) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
 }
 
 // GetAudioOutputs retrieves all audio outputs.
-func (c *Client) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioOutputs struct {
 		XMLName xml.Name `xml:"trt:GetAudioOutputs"`
@@ -423,8 +423,8 @@ func (c *Client) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
 
 	var resp GetAudioOutputsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputs failed: %w", err)
@@ -441,8 +441,8 @@ func (c *Client) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
 }
 
 // CreateProfile creates a new media profile.
-func (c *Client) CreateProfile(ctx context.Context, name, token string) (*Profile, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) CreateProfile(ctx context.Context, name, token string) (*Profile, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type CreateProfile struct {
 		XMLName xml.Name `xml:"trt:CreateProfile"`
@@ -469,8 +469,8 @@ func (c *Client) CreateProfile(ctx context.Context, name, token string) (*Profil
 
 	var resp CreateProfileResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateProfile failed: %w", err)
@@ -483,8 +483,8 @@ func (c *Client) CreateProfile(ctx context.Context, name, token string) (*Profil
 }
 
 // DeleteProfile deletes a media profile.
-func (c *Client) DeleteProfile(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) DeleteProfile(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type DeleteProfile struct {
 		XMLName      xml.Name `xml:"trt:DeleteProfile"`
@@ -497,8 +497,8 @@ func (c *Client) DeleteProfile(ctx context.Context, profileToken string) error {
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteProfile failed: %w", err)
@@ -508,12 +508,12 @@ func (c *Client) DeleteProfile(ctx context.Context, profileToken string) error {
 }
 
 // SetVideoEncoderConfiguration sets video encoder configuration.
-func (c *Client) SetVideoEncoderConfiguration(
+func (s *MediaService) SetVideoEncoderConfiguration(
 	ctx context.Context,
 	config *VideoEncoderConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type SetVideoEncoderConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetVideoEncoderConfiguration"`
@@ -575,8 +575,8 @@ func (c *Client) SetVideoEncoderConfiguration(
 		}
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoEncoderConfiguration failed: %w", err)
@@ -586,8 +586,8 @@ func (c *Client) SetVideoEncoderConfiguration(
 }
 
 // GetMediaServiceCapabilities retrieves media service capabilities.
-func (c *Client) GetMediaServiceCapabilities(ctx context.Context) (*MediaServiceCapabilities, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetMediaServiceCapabilities(ctx context.Context) (*MediaServiceCapabilities, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetServiceCapabilities struct {
 		XMLName xml.Name `xml:"trt:GetServiceCapabilities"`
@@ -620,8 +620,8 @@ func (c *Client) GetMediaServiceCapabilities(ctx context.Context) (*MediaService
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMediaServiceCapabilities failed: %w", err)
@@ -652,10 +652,10 @@ func (c *Client) GetMediaServiceCapabilities(ctx context.Context) (*MediaService
 // GetVideoEncoderConfigurationOptions retrieves available options for video encoder configuration.
 //
 //nolint:funlen // GetVideoEncoderConfigurationOptions has many statements due to parsing complex encoder options
-func (c *Client) GetVideoEncoderConfigurationOptions(
+func (s *MediaService) GetVideoEncoderConfigurationOptions(
 	ctx context.Context, configurationToken string,
 ) (*VideoEncoderConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoEncoderConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetVideoEncoderConfigurationOptions"`
@@ -717,8 +717,8 @@ func (c *Client) GetVideoEncoderConfigurationOptions(
 
 	var resp GetVideoEncoderConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurationOptions failed: %w", err)
@@ -790,11 +790,11 @@ func (c *Client) GetVideoEncoderConfigurationOptions(
 }
 
 // GetAudioEncoderConfiguration retrieves audio encoder configuration.
-func (c *Client) GetAudioEncoderConfiguration(
+func (s *MediaService) GetAudioEncoderConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioEncoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioEncoderConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetAudioEncoderConfiguration"`
@@ -832,8 +832,8 @@ func (c *Client) GetAudioEncoderConfiguration(
 
 	var resp GetAudioEncoderConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfiguration failed: %w", err)
@@ -867,12 +867,12 @@ func (c *Client) GetAudioEncoderConfiguration(
 }
 
 // SetAudioEncoderConfiguration sets audio encoder configuration.
-func (c *Client) SetAudioEncoderConfiguration(
+func (s *MediaService) SetAudioEncoderConfiguration(
 	ctx context.Context,
 	config *AudioEncoderConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type SetAudioEncoderConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetAudioEncoderConfiguration"`
@@ -945,8 +945,8 @@ func (c *Client) SetAudioEncoderConfiguration(
 		}
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioEncoderConfiguration failed: %w", err)
@@ -956,11 +956,11 @@ func (c *Client) SetAudioEncoderConfiguration(
 }
 
 // GetMetadataConfiguration retrieves metadata configuration.
-func (c *Client) GetMetadataConfiguration(
+func (s *MediaService) GetMetadataConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*MetadataConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetMetadataConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetMetadataConfiguration"`
@@ -1001,8 +1001,8 @@ func (c *Client) GetMetadataConfiguration(
 
 	var resp GetMetadataConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfiguration failed: %w", err)
@@ -1045,12 +1045,12 @@ func (c *Client) GetMetadataConfiguration(
 }
 
 // SetMetadataConfiguration sets metadata configuration.
-func (c *Client) SetMetadataConfiguration(
+func (s *MediaService) SetMetadataConfiguration(
 	ctx context.Context,
 	config *MetadataConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type SetMetadataConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetMetadataConfiguration"`
@@ -1134,8 +1134,8 @@ func (c *Client) SetMetadataConfiguration(
 		}
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetMetadataConfiguration failed: %w", err)
@@ -1145,8 +1145,8 @@ func (c *Client) SetMetadataConfiguration(
 }
 
 // GetVideoSourceModes retrieves available video source modes.
-func (c *Client) GetVideoSourceModes(ctx context.Context, videoSourceToken string) ([]*VideoSourceMode, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetVideoSourceModes(ctx context.Context, videoSourceToken string) ([]*VideoSourceMode, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoSourceModes struct {
 		XMLName          xml.Name `xml:"trt:GetVideoSourceModes"`
@@ -1173,8 +1173,8 @@ func (c *Client) GetVideoSourceModes(ctx context.Context, videoSourceToken strin
 
 	var resp GetVideoSourceModesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceModes failed: %w", err)
@@ -1196,8 +1196,8 @@ func (c *Client) GetVideoSourceModes(ctx context.Context, videoSourceToken strin
 }
 
 // SetVideoSourceMode sets the video source mode.
-func (c *Client) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetVideoSourceMode struct {
 		XMLName          xml.Name `xml:"trt:SetVideoSourceMode"`
@@ -1212,8 +1212,8 @@ func (c *Client) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeT
 		ModeToken:        modeToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceMode failed: %w", err)
@@ -1223,8 +1223,8 @@ func (c *Client) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeT
 }
 
 // SetSynchronizationPoint sets a synchronization point for the stream.
-func (c *Client) SetSynchronizationPoint(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetSynchronizationPoint(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetSynchronizationPoint struct {
 		XMLName      xml.Name `xml:"trt:SetSynchronizationPoint"`
@@ -1237,8 +1237,8 @@ func (c *Client) SetSynchronizationPoint(ctx context.Context, profileToken strin
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
@@ -1248,8 +1248,8 @@ func (c *Client) SetSynchronizationPoint(ctx context.Context, profileToken strin
 }
 
 // GetOSDs retrieves all OSD configurations.
-func (c *Client) GetOSDs(ctx context.Context, configurationToken string) ([]*OSDConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetOSDs(ctx context.Context, configurationToken string) ([]*OSDConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetOSDs struct {
 		XMLName            xml.Name `xml:"trt:GetOSDs"`
@@ -1273,8 +1273,8 @@ func (c *Client) GetOSDs(ctx context.Context, configurationToken string) ([]*OSD
 
 	var resp GetOSDsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDs failed: %w", err)
@@ -1291,8 +1291,8 @@ func (c *Client) GetOSDs(ctx context.Context, configurationToken string) ([]*OSD
 }
 
 // GetOSD retrieves a specific OSD configuration.
-func (c *Client) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetOSD struct {
 		XMLName  xml.Name `xml:"trt:GetOSD"`
@@ -1314,8 +1314,8 @@ func (c *Client) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration
 
 	var resp GetOSDResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSD failed: %w", err)
@@ -1327,8 +1327,8 @@ func (c *Client) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration
 }
 
 // SetOSD sets OSD configuration.
-func (c *Client) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetOSD struct {
 		XMLName xml.Name `xml:"trt:SetOSD"`
@@ -1345,8 +1345,8 @@ func (c *Client) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
 	}
 	req.OSD.Token = osd.Token
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetOSD failed: %w", err)
@@ -1356,12 +1356,12 @@ func (c *Client) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
 }
 
 // CreateOSD creates a new OSD configuration.
-func (c *Client) CreateOSD(
+func (s *MediaService) CreateOSD(
 	ctx context.Context,
 	videoSourceConfigurationToken string,
 	osd *OSDConfiguration,
 ) (*OSDConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type CreateOSD struct {
 		XMLName                       xml.Name `xml:"trt:CreateOSD"`
@@ -1391,8 +1391,8 @@ func (c *Client) CreateOSD(
 
 	var resp CreateOSDResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateOSD failed: %w", err)
@@ -1404,8 +1404,8 @@ func (c *Client) CreateOSD(
 }
 
 // DeleteOSD deletes an OSD configuration.
-func (c *Client) DeleteOSD(ctx context.Context, osdToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) DeleteOSD(ctx context.Context, osdToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type DeleteOSD struct {
 		XMLName  xml.Name `xml:"trt:DeleteOSD"`
@@ -1418,8 +1418,8 @@ func (c *Client) DeleteOSD(ctx context.Context, osdToken string) error {
 		OSDToken: osdToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteOSD failed: %w", err)
@@ -1429,8 +1429,8 @@ func (c *Client) DeleteOSD(ctx context.Context, osdToken string) error {
 }
 
 // StartMulticastStreaming starts multicast streaming.
-func (c *Client) StartMulticastStreaming(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) StartMulticastStreaming(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type StartMulticastStreaming struct {
 		XMLName      xml.Name `xml:"trt:StartMulticastStreaming"`
@@ -1443,8 +1443,8 @@ func (c *Client) StartMulticastStreaming(ctx context.Context, profileToken strin
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StartMulticastStreaming failed: %w", err)
@@ -1454,8 +1454,8 @@ func (c *Client) StartMulticastStreaming(ctx context.Context, profileToken strin
 }
 
 // StopMulticastStreaming stops multicast streaming.
-func (c *Client) StopMulticastStreaming(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) StopMulticastStreaming(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type StopMulticastStreaming struct {
 		XMLName      xml.Name `xml:"trt:StopMulticastStreaming"`
@@ -1468,8 +1468,8 @@ func (c *Client) StopMulticastStreaming(ctx context.Context, profileToken string
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StopMulticastStreaming failed: %w", err)
@@ -1479,8 +1479,8 @@ func (c *Client) StopMulticastStreaming(ctx context.Context, profileToken string
 }
 
 // GetProfile retrieves a specific media profile.
-func (c *Client) GetProfile(ctx context.Context, profileToken string) (*Profile, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetProfile(ctx context.Context, profileToken string) (*Profile, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetProfile struct {
 		XMLName      xml.Name `xml:"trt:GetProfile"`
@@ -1503,8 +1503,8 @@ func (c *Client) GetProfile(ctx context.Context, profileToken string) (*Profile,
 
 	var resp GetProfileResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfile failed: %w", err)
@@ -1517,8 +1517,8 @@ func (c *Client) GetProfile(ctx context.Context, profileToken string) (*Profile,
 }
 
 // SetProfile sets profile configuration.
-func (c *Client) SetProfile(ctx context.Context, profile *Profile) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetProfile(ctx context.Context, profile *Profile) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetProfile struct {
 		XMLName xml.Name `xml:"trt:SetProfile"`
@@ -1537,8 +1537,8 @@ func (c *Client) SetProfile(ctx context.Context, profile *Profile) error {
 	req.Profile.Token = profile.Token
 	req.Profile.Name = profile.Name
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetProfile failed: %w", err)
@@ -1548,8 +1548,8 @@ func (c *Client) SetProfile(ctx context.Context, profile *Profile) error {
 }
 
 // AddVideoEncoderConfiguration adds video encoder configuration to a profile.
-func (c *Client) AddVideoEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddVideoEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddVideoEncoderConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddVideoEncoderConfiguration"`
@@ -1564,8 +1564,8 @@ func (c *Client) AddVideoEncoderConfiguration(ctx context.Context, profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoEncoderConfiguration failed: %w", err)
@@ -1575,8 +1575,8 @@ func (c *Client) AddVideoEncoderConfiguration(ctx context.Context, profileToken,
 }
 
 // RemoveVideoEncoderConfiguration removes video encoder configuration from a profile.
-func (c *Client) RemoveVideoEncoderConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveVideoEncoderConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveVideoEncoderConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveVideoEncoderConfiguration"`
@@ -1589,8 +1589,8 @@ func (c *Client) RemoveVideoEncoderConfiguration(ctx context.Context, profileTok
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoEncoderConfiguration failed: %w", err)
@@ -1600,8 +1600,8 @@ func (c *Client) RemoveVideoEncoderConfiguration(ctx context.Context, profileTok
 }
 
 // AddAudioEncoderConfiguration adds audio encoder configuration to a profile.
-func (c *Client) AddAudioEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddAudioEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddAudioEncoderConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddAudioEncoderConfiguration"`
@@ -1616,8 +1616,8 @@ func (c *Client) AddAudioEncoderConfiguration(ctx context.Context, profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioEncoderConfiguration failed: %w", err)
@@ -1627,8 +1627,8 @@ func (c *Client) AddAudioEncoderConfiguration(ctx context.Context, profileToken,
 }
 
 // RemoveAudioEncoderConfiguration removes audio encoder configuration from a profile.
-func (c *Client) RemoveAudioEncoderConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveAudioEncoderConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveAudioEncoderConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveAudioEncoderConfiguration"`
@@ -1641,8 +1641,8 @@ func (c *Client) RemoveAudioEncoderConfiguration(ctx context.Context, profileTok
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioEncoderConfiguration failed: %w", err)
@@ -1652,8 +1652,8 @@ func (c *Client) RemoveAudioEncoderConfiguration(ctx context.Context, profileTok
 }
 
 // AddAudioSourceConfiguration adds audio source configuration to a profile.
-func (c *Client) AddAudioSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddAudioSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddAudioSourceConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddAudioSourceConfiguration"`
@@ -1668,8 +1668,8 @@ func (c *Client) AddAudioSourceConfiguration(ctx context.Context, profileToken, 
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioSourceConfiguration failed: %w", err)
@@ -1679,8 +1679,8 @@ func (c *Client) AddAudioSourceConfiguration(ctx context.Context, profileToken, 
 }
 
 // RemoveAudioSourceConfiguration removes audio source configuration from a profile.
-func (c *Client) RemoveAudioSourceConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveAudioSourceConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveAudioSourceConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveAudioSourceConfiguration"`
@@ -1693,8 +1693,8 @@ func (c *Client) RemoveAudioSourceConfiguration(ctx context.Context, profileToke
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioSourceConfiguration failed: %w", err)
@@ -1704,8 +1704,8 @@ func (c *Client) RemoveAudioSourceConfiguration(ctx context.Context, profileToke
 }
 
 // AddVideoSourceConfiguration adds video source configuration to a profile.
-func (c *Client) AddVideoSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddVideoSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddVideoSourceConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddVideoSourceConfiguration"`
@@ -1720,8 +1720,8 @@ func (c *Client) AddVideoSourceConfiguration(ctx context.Context, profileToken, 
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoSourceConfiguration failed: %w", err)
@@ -1731,8 +1731,8 @@ func (c *Client) AddVideoSourceConfiguration(ctx context.Context, profileToken, 
 }
 
 // RemoveVideoSourceConfiguration removes video source configuration from a profile.
-func (c *Client) RemoveVideoSourceConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveVideoSourceConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveVideoSourceConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveVideoSourceConfiguration"`
@@ -1745,8 +1745,8 @@ func (c *Client) RemoveVideoSourceConfiguration(ctx context.Context, profileToke
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoSourceConfiguration failed: %w", err)
@@ -1756,8 +1756,8 @@ func (c *Client) RemoveVideoSourceConfiguration(ctx context.Context, profileToke
 }
 
 // AddPTZConfiguration adds PTZ configuration to a profile.
-func (c *Client) AddPTZConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddPTZConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddPTZConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddPTZConfiguration"`
@@ -1772,8 +1772,8 @@ func (c *Client) AddPTZConfiguration(ctx context.Context, profileToken, configur
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddPTZConfiguration failed: %w", err)
@@ -1783,8 +1783,8 @@ func (c *Client) AddPTZConfiguration(ctx context.Context, profileToken, configur
 }
 
 // RemovePTZConfiguration removes PTZ configuration from a profile.
-func (c *Client) RemovePTZConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemovePTZConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemovePTZConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemovePTZConfiguration"`
@@ -1797,8 +1797,8 @@ func (c *Client) RemovePTZConfiguration(ctx context.Context, profileToken string
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePTZConfiguration failed: %w", err)
@@ -1808,8 +1808,8 @@ func (c *Client) RemovePTZConfiguration(ctx context.Context, profileToken string
 }
 
 // AddMetadataConfiguration adds metadata configuration to a profile.
-func (c *Client) AddMetadataConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddMetadataConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddMetadataConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddMetadataConfiguration"`
@@ -1824,8 +1824,8 @@ func (c *Client) AddMetadataConfiguration(ctx context.Context, profileToken, con
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddMetadataConfiguration failed: %w", err)
@@ -1835,8 +1835,8 @@ func (c *Client) AddMetadataConfiguration(ctx context.Context, profileToken, con
 }
 
 // RemoveMetadataConfiguration removes metadata configuration from a profile.
-func (c *Client) RemoveMetadataConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveMetadataConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveMetadataConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveMetadataConfiguration"`
@@ -1849,8 +1849,8 @@ func (c *Client) RemoveMetadataConfiguration(ctx context.Context, profileToken s
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveMetadataConfiguration failed: %w", err)
@@ -1860,11 +1860,11 @@ func (c *Client) RemoveMetadataConfiguration(ctx context.Context, profileToken s
 }
 
 // GetAudioEncoderConfigurationOptions retrieves available options for audio encoder configuration.
-func (c *Client) GetAudioEncoderConfigurationOptions(
+func (s *MediaService) GetAudioEncoderConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*AudioEncoderConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioEncoderConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetAudioEncoderConfigurationOptions"`
@@ -1894,8 +1894,8 @@ func (c *Client) GetAudioEncoderConfigurationOptions(
 
 	var resp GetAudioEncoderConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurationOptions failed: %w", err)
@@ -1909,11 +1909,11 @@ func (c *Client) GetAudioEncoderConfigurationOptions(
 }
 
 // GetMetadataConfigurationOptions retrieves available options for metadata configuration.
-func (c *Client) GetMetadataConfigurationOptions(
+func (s *MediaService) GetMetadataConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*MetadataConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetMetadataConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetMetadataConfigurationOptions"`
@@ -1945,8 +1945,8 @@ func (c *Client) GetMetadataConfigurationOptions(
 
 	var resp GetMetadataConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurationOptions failed: %w", err)
@@ -1964,8 +1964,8 @@ func (c *Client) GetMetadataConfigurationOptions(
 }
 
 // GetAudioOutputConfiguration retrieves audio output configuration.
-func (c *Client) GetAudioOutputConfiguration(ctx context.Context, configurationToken string) (*AudioOutputConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioOutputConfiguration(ctx context.Context, configurationToken string) (*AudioOutputConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioOutputConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetAudioOutputConfiguration"`
@@ -1990,8 +1990,8 @@ func (c *Client) GetAudioOutputConfiguration(ctx context.Context, configurationT
 
 	var resp GetAudioOutputConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfiguration failed: %w", err)
@@ -2006,8 +2006,8 @@ func (c *Client) GetAudioOutputConfiguration(ctx context.Context, configurationT
 }
 
 // SetAudioOutputConfiguration sets audio output configuration.
-func (c *Client) SetAudioOutputConfiguration(ctx context.Context, config *AudioOutputConfiguration, forcePersistence bool) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetAudioOutputConfiguration(ctx context.Context, config *AudioOutputConfiguration, forcePersistence bool) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetAudioOutputConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetAudioOutputConfiguration"`
@@ -2033,8 +2033,8 @@ func (c *Client) SetAudioOutputConfiguration(ctx context.Context, config *AudioO
 	req.Configuration.UseCount = config.UseCount
 	req.Configuration.OutputToken = config.OutputToken
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioOutputConfiguration failed: %w", err)
@@ -2044,11 +2044,11 @@ func (c *Client) SetAudioOutputConfiguration(ctx context.Context, config *AudioO
 }
 
 // GetAudioOutputConfigurationOptions retrieves available options for audio output configuration.
-func (c *Client) GetAudioOutputConfigurationOptions(
+func (s *MediaService) GetAudioOutputConfigurationOptions(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioOutputConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioOutputConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetAudioOutputConfigurationOptions"`
@@ -2072,8 +2072,8 @@ func (c *Client) GetAudioOutputConfigurationOptions(
 
 	var resp GetAudioOutputConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurationOptions failed: %w", err)
@@ -2085,11 +2085,11 @@ func (c *Client) GetAudioOutputConfigurationOptions(
 }
 
 // GetAudioDecoderConfigurationOptions retrieves available options for audio decoder configuration.
-func (c *Client) GetAudioDecoderConfigurationOptions(
+func (s *MediaService) GetAudioDecoderConfigurationOptions(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioDecoderConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioDecoderConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetAudioDecoderConfigurationOptions"`
@@ -2122,8 +2122,8 @@ func (c *Client) GetAudioDecoderConfigurationOptions(
 
 	var resp GetAudioDecoderConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurationOptions failed: %w", err)
@@ -2151,11 +2151,11 @@ func (c *Client) GetAudioDecoderConfigurationOptions(
 }
 
 // GetGuaranteedNumberOfVideoEncoderInstances retrieves the guaranteed number of video encoder instances.
-func (c *Client) GetGuaranteedNumberOfVideoEncoderInstances(
+func (s *MediaService) GetGuaranteedNumberOfVideoEncoderInstances(
 	ctx context.Context,
 	configurationToken string,
 ) (*GuaranteedNumberOfVideoEncoderInstances, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetGuaranteedNumberOfVideoEncoderInstances struct {
 		XMLName            xml.Name `xml:"trt:GetGuaranteedNumberOfVideoEncoderInstances"`
@@ -2178,8 +2178,8 @@ func (c *Client) GetGuaranteedNumberOfVideoEncoderInstances(
 
 	var resp GetGuaranteedNumberOfVideoEncoderInstancesResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetGuaranteedNumberOfVideoEncoderInstances failed: %w", err)
@@ -2194,8 +2194,8 @@ func (c *Client) GetGuaranteedNumberOfVideoEncoderInstances(
 }
 
 // GetOSDOptions retrieves available options for OSD configuration.
-func (c *Client) GetOSDOptions(ctx context.Context, configurationToken string) (*OSDConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetOSDOptions(ctx context.Context, configurationToken string) (*OSDConfigurationOptions, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetOSDOptions struct {
 		XMLName            xml.Name `xml:"trt:GetOSDOptions"`
@@ -2219,8 +2219,8 @@ func (c *Client) GetOSDOptions(ctx context.Context, configurationToken string) (
 
 	var resp GetOSDOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDOptions failed: %w", err)
@@ -2232,8 +2232,8 @@ func (c *Client) GetOSDOptions(ctx context.Context, configurationToken string) (
 }
 
 // GetVideoSourceConfigurations retrieves all video source configurations.
-func (c *Client) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSourceConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSourceConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoSourceConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetVideoSourceConfigurations"`
@@ -2262,8 +2262,8 @@ func (c *Client) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSour
 
 	var resp GetVideoSourceConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurations failed: %w", err)
@@ -2292,8 +2292,8 @@ func (c *Client) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSour
 }
 
 // GetAudioSourceConfigurations retrieves all audio source configurations.
-func (c *Client) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSourceConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSourceConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioSourceConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetAudioSourceConfigurations"`
@@ -2316,8 +2316,8 @@ func (c *Client) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSour
 
 	var resp GetAudioSourceConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurations failed: %w", err)
@@ -2337,8 +2337,8 @@ func (c *Client) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSour
 }
 
 // GetVideoEncoderConfigurations retrieves all video encoder configurations.
-func (c *Client) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEncoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEncoderConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoEncoderConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetVideoEncoderConfigurations"`
@@ -2390,8 +2390,8 @@ func (c *Client) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEnc
 
 	var resp GetVideoEncoderConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurations failed: %w", err)
@@ -2458,8 +2458,8 @@ func (c *Client) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEnc
 }
 
 // GetAudioEncoderConfigurations retrieves all audio encoder configurations.
-func (c *Client) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEncoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEncoderConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioEncoderConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetAudioEncoderConfigurations"`
@@ -2495,8 +2495,8 @@ func (c *Client) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEnc
 
 	var resp GetAudioEncoderConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurations failed: %w", err)
@@ -2535,11 +2535,11 @@ func (c *Client) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEnc
 }
 
 // GetVideoSourceConfiguration retrieves a specific video source configuration.
-func (c *Client) GetVideoSourceConfiguration(
+func (s *MediaService) GetVideoSourceConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*VideoSourceConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoSourceConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetVideoSourceConfiguration"`
@@ -2570,8 +2570,8 @@ func (c *Client) GetVideoSourceConfiguration(
 
 	var resp GetVideoSourceConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfiguration failed: %w", err)
@@ -2597,8 +2597,8 @@ func (c *Client) GetVideoSourceConfiguration(
 }
 
 // GetAudioSourceConfiguration retrieves a specific audio source configuration.
-func (c *Client) GetAudioSourceConfiguration(ctx context.Context, configurationToken string) (*AudioSourceConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioSourceConfiguration(ctx context.Context, configurationToken string) (*AudioSourceConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioSourceConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetAudioSourceConfiguration"`
@@ -2623,8 +2623,8 @@ func (c *Client) GetAudioSourceConfiguration(ctx context.Context, configurationT
 
 	var resp GetAudioSourceConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfiguration failed: %w", err)
@@ -2639,11 +2639,11 @@ func (c *Client) GetAudioSourceConfiguration(ctx context.Context, configurationT
 }
 
 // GetVideoSourceConfigurationOptions retrieves available options for video source configuration.
-func (c *Client) GetVideoSourceConfigurationOptions(
+func (s *MediaService) GetVideoSourceConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*VideoSourceConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoSourceConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetVideoSourceConfigurationOptions"`
@@ -2677,8 +2677,8 @@ func (c *Client) GetVideoSourceConfigurationOptions(
 
 	var resp GetVideoSourceConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurationOptions failed: %w", err)
@@ -2699,11 +2699,11 @@ func (c *Client) GetVideoSourceConfigurationOptions(
 }
 
 // GetAudioSourceConfigurationOptions retrieves available options for audio source configuration.
-func (c *Client) GetAudioSourceConfigurationOptions(
+func (s *MediaService) GetAudioSourceConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*AudioSourceConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioSourceConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetAudioSourceConfigurationOptions"`
@@ -2731,8 +2731,8 @@ func (c *Client) GetAudioSourceConfigurationOptions(
 
 	var resp GetAudioSourceConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurationOptions failed: %w", err)
@@ -2744,12 +2744,12 @@ func (c *Client) GetAudioSourceConfigurationOptions(
 }
 
 // SetVideoSourceConfiguration sets video source configuration.
-func (c *Client) SetVideoSourceConfiguration(
+func (s *MediaService) SetVideoSourceConfiguration(
 	ctx context.Context,
 	config *VideoSourceConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type SetVideoSourceConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetVideoSourceConfiguration"`
@@ -2795,8 +2795,8 @@ func (c *Client) SetVideoSourceConfiguration(
 		}
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceConfiguration failed: %w", err)
@@ -2806,8 +2806,8 @@ func (c *Client) SetVideoSourceConfiguration(
 }
 
 // SetAudioSourceConfiguration sets audio source configuration.
-func (c *Client) SetAudioSourceConfiguration(ctx context.Context, config *AudioSourceConfiguration, forcePersistence bool) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetAudioSourceConfiguration(ctx context.Context, config *AudioSourceConfiguration, forcePersistence bool) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetAudioSourceConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetAudioSourceConfiguration"`
@@ -2833,8 +2833,8 @@ func (c *Client) SetAudioSourceConfiguration(ctx context.Context, config *AudioS
 	req.Configuration.UseCount = config.UseCount
 	req.Configuration.SourceToken = config.SourceToken
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioSourceConfiguration failed: %w", err)
@@ -2844,11 +2844,11 @@ func (c *Client) SetAudioSourceConfiguration(ctx context.Context, config *AudioS
 }
 
 // GetCompatibleVideoEncoderConfigurations retrieves compatible video encoder configurations for a profile.
-func (c *Client) GetCompatibleVideoEncoderConfigurations(
+func (s *MediaService) GetCompatibleVideoEncoderConfigurations(
 	ctx context.Context,
 	profileToken string,
 ) ([]*VideoEncoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleVideoEncoderConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleVideoEncoderConfigurations"`
@@ -2883,8 +2883,8 @@ func (c *Client) GetCompatibleVideoEncoderConfigurations(
 
 	var resp GetCompatibleVideoEncoderConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoEncoderConfigurations failed: %w", err)
@@ -2922,11 +2922,11 @@ func (c *Client) GetCompatibleVideoEncoderConfigurations(
 }
 
 // GetCompatibleVideoSourceConfigurations retrieves compatible video source configurations for a profile.
-func (c *Client) GetCompatibleVideoSourceConfigurations(
+func (s *MediaService) GetCompatibleVideoSourceConfigurations(
 	ctx context.Context,
 	profileToken string,
 ) ([]*VideoSourceConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleVideoSourceConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleVideoSourceConfigurations"`
@@ -2957,8 +2957,8 @@ func (c *Client) GetCompatibleVideoSourceConfigurations(
 
 	var resp GetCompatibleVideoSourceConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoSourceConfigurations failed: %w", err)
@@ -2987,11 +2987,11 @@ func (c *Client) GetCompatibleVideoSourceConfigurations(
 }
 
 // GetCompatibleAudioEncoderConfigurations retrieves compatible audio encoder configurations for a profile.
-func (c *Client) GetCompatibleAudioEncoderConfigurations(
+func (s *MediaService) GetCompatibleAudioEncoderConfigurations(
 	ctx context.Context,
 	profileToken string,
 ) ([]*AudioEncoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleAudioEncoderConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleAudioEncoderConfigurations"`
@@ -3018,8 +3018,8 @@ func (c *Client) GetCompatibleAudioEncoderConfigurations(
 
 	var resp GetCompatibleAudioEncoderConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioEncoderConfigurations failed: %w", err)
@@ -3041,8 +3041,8 @@ func (c *Client) GetCompatibleAudioEncoderConfigurations(
 }
 
 // GetCompatibleAudioSourceConfigurations retrieves compatible audio source configurations for a profile.
-func (c *Client) GetCompatibleAudioSourceConfigurations(ctx context.Context, profileToken string) ([]*AudioSourceConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetCompatibleAudioSourceConfigurations(ctx context.Context, profileToken string) ([]*AudioSourceConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleAudioSourceConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleAudioSourceConfigurations"`
@@ -3067,8 +3067,8 @@ func (c *Client) GetCompatibleAudioSourceConfigurations(ctx context.Context, pro
 
 	var resp GetCompatibleAudioSourceConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioSourceConfigurations failed: %w", err)
@@ -3088,8 +3088,8 @@ func (c *Client) GetCompatibleAudioSourceConfigurations(ctx context.Context, pro
 }
 
 // GetCompatiblePTZConfigurations retrieves compatible PTZ configurations for a profile.
-func (c *Client) GetCompatiblePTZConfigurations(ctx context.Context, profileToken string) ([]*PTZConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetCompatiblePTZConfigurations(ctx context.Context, profileToken string) ([]*PTZConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatiblePTZConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatiblePTZConfigurations"`
@@ -3114,8 +3114,8 @@ func (c *Client) GetCompatiblePTZConfigurations(ctx context.Context, profileToke
 
 	var resp GetCompatiblePTZConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatiblePTZConfigurations failed: %w", err)
@@ -3135,8 +3135,8 @@ func (c *Client) GetCompatiblePTZConfigurations(ctx context.Context, profileToke
 }
 
 // GetCompatibleMetadataConfigurations retrieves compatible metadata configurations for a profile.
-func (c *Client) GetCompatibleMetadataConfigurations(ctx context.Context, profileToken string) ([]*MetadataConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetCompatibleMetadataConfigurations(ctx context.Context, profileToken string) ([]*MetadataConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleMetadataConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleMetadataConfigurations"`
@@ -3161,8 +3161,8 @@ func (c *Client) GetCompatibleMetadataConfigurations(ctx context.Context, profil
 
 	var resp GetCompatibleMetadataConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleMetadataConfigurations failed: %w", err)
@@ -3182,8 +3182,8 @@ func (c *Client) GetCompatibleMetadataConfigurations(ctx context.Context, profil
 }
 
 // GetCompatibleAudioOutputConfigurations retrieves compatible audio output configurations for a profile.
-func (c *Client) GetCompatibleAudioOutputConfigurations(ctx context.Context, profileToken string) ([]*AudioOutputConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetCompatibleAudioOutputConfigurations(ctx context.Context, profileToken string) ([]*AudioOutputConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleAudioOutputConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleAudioOutputConfigurations"`
@@ -3208,8 +3208,8 @@ func (c *Client) GetCompatibleAudioOutputConfigurations(ctx context.Context, pro
 
 	var resp GetCompatibleAudioOutputConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioOutputConfigurations failed: %w", err)
@@ -3229,8 +3229,8 @@ func (c *Client) GetCompatibleAudioOutputConfigurations(ctx context.Context, pro
 }
 
 // GetCompatibleAudioDecoderConfigurations retrieves compatible audio decoder configurations for a profile.
-func (c *Client) GetCompatibleAudioDecoderConfigurations(ctx context.Context, profileToken string) ([]*AudioDecoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetCompatibleAudioDecoderConfigurations(ctx context.Context, profileToken string) ([]*AudioDecoderConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleAudioDecoderConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleAudioDecoderConfigurations"`
@@ -3254,8 +3254,8 @@ func (c *Client) GetCompatibleAudioDecoderConfigurations(ctx context.Context, pr
 
 	var resp GetCompatibleAudioDecoderConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioDecoderConfigurations failed: %w", err)
@@ -3274,8 +3274,8 @@ func (c *Client) GetCompatibleAudioDecoderConfigurations(ctx context.Context, pr
 }
 
 // GetMetadataConfigurations retrieves all metadata configurations.
-func (c *Client) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetMetadataConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetMetadataConfigurations"`
@@ -3298,8 +3298,8 @@ func (c *Client) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConf
 
 	var resp GetMetadataConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurations failed: %w", err)
@@ -3319,8 +3319,8 @@ func (c *Client) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConf
 }
 
 // GetAudioOutputConfigurations retrieves all audio output configurations.
-func (c *Client) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutputConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutputConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioOutputConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetAudioOutputConfigurations"`
@@ -3343,8 +3343,8 @@ func (c *Client) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutp
 
 	var resp GetAudioOutputConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurations failed: %w", err)
@@ -3364,8 +3364,8 @@ func (c *Client) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutp
 }
 
 // GetAudioDecoderConfigurations retrieves all audio decoder configurations.
-func (c *Client) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDecoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDecoderConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioDecoderConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetAudioDecoderConfigurations"`
@@ -3387,8 +3387,8 @@ func (c *Client) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDec
 
 	var resp GetAudioDecoderConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurations failed: %w", err)
@@ -3407,11 +3407,11 @@ func (c *Client) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDec
 }
 
 // GetAudioDecoderConfiguration retrieves a specific audio decoder configuration.
-func (c *Client) GetAudioDecoderConfiguration(
+func (s *MediaService) GetAudioDecoderConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioDecoderConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetAudioDecoderConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetAudioDecoderConfiguration"`
@@ -3435,8 +3435,8 @@ func (c *Client) GetAudioDecoderConfiguration(
 
 	var resp GetAudioDecoderConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfiguration failed: %w", err)
@@ -3450,8 +3450,8 @@ func (c *Client) GetAudioDecoderConfiguration(
 }
 
 // SetAudioDecoderConfiguration sets audio decoder configuration.
-func (c *Client) SetAudioDecoderConfiguration(ctx context.Context, config *AudioDecoderConfiguration, forcePersistence bool) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetAudioDecoderConfiguration(ctx context.Context, config *AudioDecoderConfiguration, forcePersistence bool) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetAudioDecoderConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetAudioDecoderConfiguration"`
@@ -3475,8 +3475,8 @@ func (c *Client) SetAudioDecoderConfiguration(ctx context.Context, config *Audio
 	req.Configuration.Name = config.Name
 	req.Configuration.UseCount = config.UseCount
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioDecoderConfiguration failed: %w", err)
@@ -3486,8 +3486,8 @@ func (c *Client) SetAudioDecoderConfiguration(ctx context.Context, config *Audio
 }
 
 // GetVideoAnalyticsConfigurations retrieves all video analytics configurations.
-func (c *Client) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoAnalyticsConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoAnalyticsConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoAnalyticsConfigurations struct {
 		XMLName xml.Name `xml:"trt:GetVideoAnalyticsConfigurations"`
@@ -3509,8 +3509,8 @@ func (c *Client) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoA
 
 	var resp GetVideoAnalyticsConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurations failed: %w", err)
@@ -3529,11 +3529,11 @@ func (c *Client) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoA
 }
 
 // GetVideoAnalyticsConfiguration retrieves a specific video analytics configuration.
-func (c *Client) GetVideoAnalyticsConfiguration(
+func (s *MediaService) GetVideoAnalyticsConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*VideoAnalyticsConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoAnalyticsConfiguration struct {
 		XMLName            xml.Name `xml:"trt:GetVideoAnalyticsConfiguration"`
@@ -3557,8 +3557,8 @@ func (c *Client) GetVideoAnalyticsConfiguration(
 
 	var resp GetVideoAnalyticsConfigurationResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfiguration failed: %w", err)
@@ -3572,8 +3572,8 @@ func (c *Client) GetVideoAnalyticsConfiguration(
 }
 
 // GetCompatibleVideoAnalyticsConfigurations retrieves compatible video analytics configurations for a profile.
-func (c *Client) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, profileToken string) ([]*VideoAnalyticsConfiguration, error) {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, profileToken string) ([]*VideoAnalyticsConfiguration, error) {
+	endpoint := s.getMediaEndpoint()
 
 	type GetCompatibleVideoAnalyticsConfigurations struct {
 		XMLName      xml.Name `xml:"trt:GetCompatibleVideoAnalyticsConfigurations"`
@@ -3597,8 +3597,8 @@ func (c *Client) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, 
 
 	var resp GetCompatibleVideoAnalyticsConfigurationsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoAnalyticsConfigurations failed: %w", err)
@@ -3617,8 +3617,8 @@ func (c *Client) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, 
 }
 
 // SetVideoAnalyticsConfiguration sets video analytics configuration.
-func (c *Client) SetVideoAnalyticsConfiguration(ctx context.Context, config *VideoAnalyticsConfiguration, forcePersistence bool) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) SetVideoAnalyticsConfiguration(ctx context.Context, config *VideoAnalyticsConfiguration, forcePersistence bool) error {
+	endpoint := s.getMediaEndpoint()
 
 	type SetVideoAnalyticsConfiguration struct {
 		XMLName       xml.Name `xml:"trt:SetVideoAnalyticsConfiguration"`
@@ -3642,8 +3642,8 @@ func (c *Client) SetVideoAnalyticsConfiguration(ctx context.Context, config *Vid
 	req.Configuration.Name = config.Name
 	req.Configuration.UseCount = config.UseCount
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoAnalyticsConfiguration failed: %w", err)
@@ -3653,11 +3653,11 @@ func (c *Client) SetVideoAnalyticsConfiguration(ctx context.Context, config *Vid
 }
 
 // GetVideoAnalyticsConfigurationOptions retrieves available options for video analytics configuration.
-func (c *Client) GetVideoAnalyticsConfigurationOptions(
+func (s *MediaService) GetVideoAnalyticsConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*VideoAnalyticsConfigurationOptions, error) {
-	endpoint := c.getMediaEndpoint()
+	endpoint := s.getMediaEndpoint()
 
 	type GetVideoAnalyticsConfigurationOptions struct {
 		XMLName            xml.Name `xml:"trt:GetVideoAnalyticsConfigurationOptions"`
@@ -3683,8 +3683,8 @@ func (c *Client) GetVideoAnalyticsConfigurationOptions(
 
 	var resp GetVideoAnalyticsConfigurationOptionsResponse
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurationOptions failed: %w", err)
@@ -3694,8 +3694,8 @@ func (c *Client) GetVideoAnalyticsConfigurationOptions(
 }
 
 // AddVideoAnalyticsConfiguration adds a video analytics configuration to a profile.
-func (c *Client) AddVideoAnalyticsConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddVideoAnalyticsConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddVideoAnalyticsConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddVideoAnalyticsConfiguration"`
@@ -3710,8 +3710,8 @@ func (c *Client) AddVideoAnalyticsConfiguration(ctx context.Context, profileToke
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoAnalyticsConfiguration failed: %w", err)
@@ -3721,8 +3721,8 @@ func (c *Client) AddVideoAnalyticsConfiguration(ctx context.Context, profileToke
 }
 
 // RemoveVideoAnalyticsConfiguration removes a video analytics configuration from a profile.
-func (c *Client) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveVideoAnalyticsConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveVideoAnalyticsConfiguration"`
@@ -3735,8 +3735,8 @@ func (c *Client) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileT
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoAnalyticsConfiguration failed: %w", err)
@@ -3746,8 +3746,8 @@ func (c *Client) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileT
 }
 
 // AddAudioOutputConfiguration adds an audio output configuration to a profile.
-func (c *Client) AddAudioOutputConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddAudioOutputConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddAudioOutputConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddAudioOutputConfiguration"`
@@ -3762,8 +3762,8 @@ func (c *Client) AddAudioOutputConfiguration(ctx context.Context, profileToken, 
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioOutputConfiguration failed: %w", err)
@@ -3773,8 +3773,8 @@ func (c *Client) AddAudioOutputConfiguration(ctx context.Context, profileToken, 
 }
 
 // RemoveAudioOutputConfiguration removes an audio output configuration from a profile.
-func (c *Client) RemoveAudioOutputConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveAudioOutputConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveAudioOutputConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveAudioOutputConfiguration"`
@@ -3787,8 +3787,8 @@ func (c *Client) RemoveAudioOutputConfiguration(ctx context.Context, profileToke
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioOutputConfiguration failed: %w", err)
@@ -3798,8 +3798,8 @@ func (c *Client) RemoveAudioOutputConfiguration(ctx context.Context, profileToke
 }
 
 // AddAudioDecoderConfiguration adds an audio decoder configuration to a profile.
-func (c *Client) AddAudioDecoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) AddAudioDecoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type AddAudioDecoderConfiguration struct {
 		XMLName            xml.Name `xml:"trt:AddAudioDecoderConfiguration"`
@@ -3814,8 +3814,8 @@ func (c *Client) AddAudioDecoderConfiguration(ctx context.Context, profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioDecoderConfiguration failed: %w", err)
@@ -3825,8 +3825,8 @@ func (c *Client) AddAudioDecoderConfiguration(ctx context.Context, profileToken,
 }
 
 // RemoveAudioDecoderConfiguration removes an audio decoder configuration from a profile.
-func (c *Client) RemoveAudioDecoderConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := c.getMediaEndpoint()
+func (s *MediaService) RemoveAudioDecoderConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.getMediaEndpoint()
 
 	type RemoveAudioDecoderConfiguration struct {
 		XMLName      xml.Name `xml:"trt:RemoveAudioDecoderConfiguration"`
@@ -3839,8 +3839,8 @@ func (c *Client) RemoveAudioDecoderConfiguration(ctx context.Context, profileTok
 		ProfileToken: profileToken,
 	}
 
-	username, password := c.GetCredentials()
-	soapClient := c.newSoapClient(username, password)
+	username, password := s.client.GetCredentials()
+	soapClient := s.client.newSoapClient(username, password)
 
 	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioDecoderConfiguration failed: %w", err)
