@@ -85,7 +85,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Find and execute handler
 	handler, ok := h.handlers[action]
 	if !ok {
-		h.sendFault(w, "Receiver", "Action not supported", fmt.Sprintf("No handler for action: %s", action))
+		h.sendFault(w, "Receiver", "Action not supported", "No handler for action: "+action)
 
 		return
 	}
@@ -186,7 +186,7 @@ func (h *Handler) sendResponse(w http.ResponseWriter, response interface{}) {
 	// Send response
 	w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	//nolint:errcheck // Write error is not critical after WriteHeader
+
 	_, _ = w.Write(xmlBody)
 }
 
@@ -222,7 +222,7 @@ func (h *Handler) sendFault(w http.ResponseWriter, code, reason, detail string) 
 		statusCode = http.StatusBadRequest
 	}
 	w.WriteHeader(statusCode)
-	//nolint:errcheck // Write error is not critical after WriteHeader
+
 	_, _ = w.Write(xmlBody)
 }
 

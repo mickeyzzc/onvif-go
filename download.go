@@ -9,6 +9,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -64,7 +65,7 @@ func (c *Client) downloadWithBasicAuth(ctx context.Context, downloadURL string) 
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyPreview, _ := io.ReadAll(resp.Body) //nolint:errcheck // Error preview - ignore read errors
+		bodyPreview, _ := io.ReadAll(resp.Body)
 		bodyStr := string(bodyPreview)
 		const maxBodyPreview = 200
 		if len(bodyStr) > maxBodyPreview {
@@ -85,7 +86,7 @@ func (c *Client) downloadWithBasicAuth(ctx context.Context, downloadURL string) 
 		}
 
 		if bodyStr != "" {
-			errorMsg += fmt.Sprintf("; response: %s", bodyStr)
+			errorMsg += "; response: " + bodyStr
 		}
 
 		return nil, fmt.Errorf("%w: %s", ErrDownloadFailed, errorMsg)
@@ -142,7 +143,7 @@ func (c *Client) downloadWithDigestAuth(ctx context.Context, downloadURL string)
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		bodyPreview, _ := io.ReadAll(resp.Body) //nolint:errcheck // Error preview - ignore read errors
+		bodyPreview, _ := io.ReadAll(resp.Body)
 		bodyStr := string(bodyPreview)
 		const maxBodyPreview = 200
 		if len(bodyStr) > maxBodyPreview {
@@ -161,7 +162,7 @@ func (c *Client) downloadWithDigestAuth(ctx context.Context, downloadURL string)
 		}
 
 		if bodyStr != "" {
-			errorMsg += fmt.Sprintf("; response: %s", bodyStr)
+			errorMsg += "; response: " + bodyStr
 		}
 
 		return nil, fmt.Errorf("%w: %s", ErrDownloadFailed, errorMsg)
@@ -293,7 +294,7 @@ func generateNonce() string {
 	bytes := make([]byte, NonceSize)
 	if _, err := rand.Read(bytes); err != nil {
 		// Fallback to time-based nonce if crypto/rand fails (shouldn't happen)
-		return fmt.Sprintf("%d", time.Now().UnixNano())
+		return strconv.FormatInt(time.Now().UnixNano(), 10)
 	}
 
 	return hex.EncodeToString(bytes)

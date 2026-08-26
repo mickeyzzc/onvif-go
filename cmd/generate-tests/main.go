@@ -244,7 +244,7 @@ func generateTests() string {
 		log.Fatalf("Failed to parse template: %v", err)
 	}
 
-	outputFile := filepath.Join(*outputDir, fmt.Sprintf("%s_test.go", strings.ToLower(cameraID)))
+	outputFile := filepath.Join(*outputDir, strings.ToLower(cameraID+"_test.go"))
 	f, err := os.Create(outputFile) //nolint:gosec // Filename is generated from test data, safe
 	if err != nil {
 		log.Fatalf("Failed to create output file: %v", err)
@@ -489,7 +489,7 @@ func generateProfileDependentTests(ops []operationInfo) []GeneratedTest {
 		for _, op := range opList {
 			switch op.OperationName {
 			case "GetStreamURI":
-				testName := fmt.Sprintf("GetStreamURI_%s", sanitizeToken(token))
+				testName := "GetStreamURI_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`uri, err := client.Media().GetStreamURI(ctx, "%s")
@@ -504,7 +504,7 @@ func generateProfileDependentTests(ops []operationInfo) []GeneratedTest {
 				})
 
 			case "GetSnapshotURI":
-				testName := fmt.Sprintf("GetSnapshotURI_%s", sanitizeToken(token))
+				testName := "GetSnapshotURI_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`uri, err := client.Media().GetSnapshotURI(ctx, "%s")
@@ -519,7 +519,7 @@ func generateProfileDependentTests(ops []operationInfo) []GeneratedTest {
 				})
 
 			case "GetProfile":
-				testName := fmt.Sprintf("GetProfile_%s", sanitizeToken(token))
+				testName := "GetProfile_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`profile, err := client.Media().GetProfile(ctx, "%s")
@@ -597,7 +597,7 @@ func generatePTZTests(ops []operationInfo) []GeneratedTest {
 		for _, op := range opList {
 			switch op.OperationName {
 			case "GetStatus":
-				testName := fmt.Sprintf("PTZ_GetStatus_%s", sanitizeToken(token))
+				testName := "PTZ_GetStatus_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`status, err := client.PTZ().GetStatus(ctx, "%s")
@@ -610,7 +610,7 @@ func generatePTZTests(ops []operationInfo) []GeneratedTest {
 				})
 
 			case "GetPresets":
-				testName := fmt.Sprintf("PTZ_GetPresets_%s", sanitizeToken(token))
+				testName := "PTZ_GetPresets_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`presets, err := client.PTZ().GetPresets(ctx, "%s")
@@ -659,7 +659,7 @@ func generateImagingTests(ops []operationInfo) []GeneratedTest {
 		for _, op := range opList {
 			switch op.OperationName {
 			case "GetImagingSettings":
-				testName := fmt.Sprintf("GetImagingSettings_%s", sanitizeToken(token))
+				testName := "GetImagingSettings_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`settings, err := client.Imaging().GetImagingSettings(ctx, "%s")
@@ -672,7 +672,7 @@ func generateImagingTests(ops []operationInfo) []GeneratedTest {
 				})
 
 			case "GetOptions":
-				testName := fmt.Sprintf("GetImagingOptions_%s", sanitizeToken(token))
+				testName := "GetImagingOptions_" + sanitizeToken(token)
 				tests = append(tests, GeneratedTest{
 					Name: testName,
 					Code: fmt.Sprintf(`options, err := client.Imaging().GetOptions(ctx, "%s")
@@ -868,7 +868,7 @@ func generateCoverageReport(regPath string) {
 
 	// Output to file or stdout
 	if *coverageOutput != "" {
-		if err := os.WriteFile(*coverageOutput, []byte(report), 0o600); err != nil { //nolint:mnd
+		if err := os.WriteFile(*coverageOutput, []byte(report), 0o600); err != nil { //nolint:mnd // deliberate, see surrounding code
 			log.Fatalf("Failed to write coverage report: %v", err)
 		}
 		fmt.Printf("✓ Coverage report written to: %s\n", *coverageOutput)

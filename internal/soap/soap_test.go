@@ -263,7 +263,7 @@ func TestSecurityHeaderCreation(t *testing.T) {
 func BenchmarkNewClient(b *testing.B) {
 	httpClient := &http.Client{Timeout: 10 * time.Second}
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = NewClient(httpClient, "admin", "password")
 	}
 }
@@ -275,7 +275,7 @@ func BenchmarkBuildEnvelope(b *testing.B) {
 	req := &testRequest{Value: "test"}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = BuildEnvelope(req, "admin", "password")
 	}
 }
@@ -285,7 +285,7 @@ func BenchmarkCreateSecurityHeader(b *testing.B) {
 	client := NewClient(httpClient, "admin", "password")
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.createSecurityHeader()
 	}
 }

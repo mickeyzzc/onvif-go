@@ -88,7 +88,7 @@ func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error
 	}
 
 	if resp.RemoteUser == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil // nil result = device has no remote user configured
 	}
 
 	return &RemoteUser{

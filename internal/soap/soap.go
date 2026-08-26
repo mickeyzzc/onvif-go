@@ -147,7 +147,7 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 	c.logDebugf("=== SOAP Request ===\nEndpoint: %s\nAction: %s\n%s\n", endpoint, action, string(xmlBody))
 
 	// Create HTTP request
-	req, err := http.NewRequestWithContext(ctx, "POST", endpoint, bytes.NewReader(xmlBody))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(xmlBody))
 	if err != nil {
 		return fmt.Errorf("failed to create HTTP request: %w", err)
 	}
@@ -213,7 +213,7 @@ func (c *Client) createSecurityHeader() *Security {
 	// Generate nonce
 	const nonceSize = 16
 	nonceBytes := make([]byte, nonceSize)
-	//nolint:errcheck // rand.Read always returns len(nonceBytes), nil for sufficient entropy
+
 	_, _ = rand.Read(nonceBytes)
 	nonce := base64.StdEncoding.EncodeToString(nonceBytes)
 

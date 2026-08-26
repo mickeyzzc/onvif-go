@@ -174,7 +174,6 @@ type VideoSource struct {
 func (s *Server) HandleGetProfiles(body interface{}) (interface{}, error) {
 	profiles := make([]MediaProfile, len(s.config.Profiles))
 
-	//nolint:gocritic // Range value copy is acceptable for small structs
 	for i, profileCfg := range s.config.Profiles {
 		profile := MediaProfile{
 			Token: profileCfg.Token,
@@ -348,7 +347,7 @@ func (s *Server) HandleGetVideoSources(body interface{}) (interface{}, error) {
 
 	// Collect unique video sources from profiles
 	seenSources := make(map[string]bool)
-	//nolint:gocritic // Range value copy is acceptable for small structs
+
 	for _, profileCfg := range s.config.Profiles {
 		if !seenSources[profileCfg.VideoSource.Token] {
 			sources = append(sources, VideoSource{

@@ -600,7 +600,7 @@ func TestONVIFError(t *testing.T) {
 func BenchmarkNewClient(b *testing.B) {
 	endpoint := testEndpoint
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := NewClient(endpoint)
 		if err != nil {
 			b.Fatal(err)
@@ -623,7 +623,7 @@ func BenchmarkGetDeviceInformation(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, err := client.Device().GetDeviceInformation(ctx)
 		if err != nil {
 			b.Fatalf("GetDeviceInformation() failed: %v", err)
@@ -1022,7 +1022,7 @@ func TestDigestAuthTransport(t *testing.T) {
 		Timeout: DefaultTimeout,
 	}
 
-	req, err := http.NewRequestWithContext(context.Background(), "GET", server.URL, http.NoBody)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, http.NoBody)
 	if err != nil {
 		t.Fatalf("NewRequest() failed: %v", err)
 	}
@@ -1092,7 +1092,7 @@ func TestExtractParam(t *testing.T) {
 func TestGenerateNonce(t *testing.T) {
 	// Generate multiple nonces and verify they're different and valid hex
 	nonces := make(map[string]bool)
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		nonce := generateNonce()
 		if len(nonce) != NonceSize*2 { // hex encoding doubles the length
 			t.Errorf("generateNonce() length = %d, want %d", len(nonce), NonceSize*2)
@@ -1174,7 +1174,7 @@ func TestClientConcurrency(t *testing.T) {
 
 	// Test concurrent credential access
 	done := make(chan bool)
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		go func(id int) {
 			client.SetCredentials(fmt.Sprintf("user%d", id), "pass")
 			user, pass := client.GetCredentials()
@@ -1186,7 +1186,7 @@ func TestClientConcurrency(t *testing.T) {
 	}
 
 	// Wait for all goroutines
-	for i := 0; i < 10; i++ {
+	for range 10 {
 		<-done
 	}
 }
@@ -1365,9 +1365,9 @@ func TestDigestAuthTransportConcurrency(t *testing.T) {
 	done := make(chan bool, numRequests)
 	errors := make(chan error, numRequests)
 
-	for i := 0; i < numRequests; i++ {
+	for i := range numRequests {
 		go func(id int) {
-			req, err := http.NewRequestWithContext(context.Background(), "GET", server.URL, http.NoBody)
+			req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, server.URL, http.NoBody)
 			if err != nil {
 				errors <- fmt.Errorf("request %d: %w", id, fmt.Errorf("%w", ErrTestRequestNewFailed))
 				done <- true
@@ -1392,7 +1392,7 @@ func TestDigestAuthTransportConcurrency(t *testing.T) {
 	}
 
 	// Wait for all requests to complete
-	for i := 0; i < numRequests; i++ {
+	for range numRequests {
 		<-done
 	}
 

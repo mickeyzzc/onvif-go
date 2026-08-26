@@ -331,7 +331,7 @@ func (s *DeviceService) LoadCertificateWithPrivateKey(
 	}
 
 	// Build certificate with private key array
-	for i := 0; i < len(certificates); i++ {
+	for i := range certificates {
 		item := struct {
 			CertificateID string       `xml:"CertificateID"`
 			Certificate   *Certificate `xml:"Certificate"`

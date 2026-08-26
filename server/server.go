@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/mickeyzzc/onvif-go/server/soap"
@@ -140,7 +141,7 @@ func (s *Server) Start(ctx context.Context) error {
 			fmt.Printf("📷 Imaging Service: http://%s%s/imaging_service\n", addr, s.config.BasePath)
 		}
 		fmt.Printf("\n🌐 Virtual Camera Profiles:\n")
-		//nolint:gocritic // Range value copy is acceptable for small structs
+
 		for i, profile := range s.config.Profiles {
 			stream := s.streams[profile.Token]
 			fmt.Printf("   [%d] %s - %s (%dx%d @ %dfps)\n",
@@ -164,7 +165,7 @@ func (s *Server) Start(ctx context.Context) error {
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout*time.Second)
 		defer cancel()
 
-		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		if err := httpServer.Shutdown(shutdownCtx); err != nil { //nolint:contextcheck // shutdown context must outlive the cancelled parent
 			return fmt.Errorf("server shutdown failed: %w", err)
 		}
 
@@ -328,19 +329,21 @@ func (s *Server) ServerInfo() string {
 	info += fmt.Sprintf("\nServer Address: %s:%d\n", s.config.Host, s.config.Port)
 	info += fmt.Sprintf("Base Path: %s\n", s.config.BasePath)
 	info += fmt.Sprintf("\nProfiles (%d):\n", len(s.config.Profiles))
-	//nolint:gocritic // Range value copy is acceptable for small structs
+
 	for i, profile := range s.config.Profiles {
-		info += fmt.Sprintf("  [%d] %s (%s)\n", i+1, profile.Name, profile.Token)
-		info += fmt.Sprintf("      Video: %dx%d @ %dfps (%s)\n",
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "  [%d] %s (%s)\n", i+1, profile.Name, profile.Token)
+		fmt.Fprintf(&sb, "      Video: %dx%d @ %dfps (%s)\n",
 			profile.VideoEncoder.Resolution.Width,
 			profile.VideoEncoder.Resolution.Height,
 			profile.VideoEncoder.Framerate,
 			profile.VideoEncoder.Encoding)
 		if stream, ok := s.streams[profile.Token]; ok {
-			info += fmt.Sprintf("      RTSP: %s\n", stream.StreamURI)
+			fmt.Fprintf(&sb, "      RTSP: %s\n", stream.StreamURI)
 		}
 		if profile.PTZ != nil {
-			info += "      PTZ: Enabled\n"
+			sb.WriteString("      PTZ: Enabled\n")
+			info += sb.String() //nolint:perfsprint // bounded loop over configured profiles
 		}
 	}
 	info += "\nCapabilities:\n"

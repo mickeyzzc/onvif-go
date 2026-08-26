@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -108,14 +109,20 @@ func LoadGoldenFiles(goldenDir string) (*GoldenFileSet, error) {
 
 // buildGoldenKey creates a unique key for a golden file.
 func buildGoldenKey(g *GoldenFile) string {
-	key := g.Operation
+	var sb strings.Builder
+	sb.WriteString(g.Operation)
 	if g.Parameters != nil {
 		// Sort parameters for consistent keys
-		for k, v := range g.Parameters {
-			key += "_" + k + "_" + v
+		keys := make([]string, 0, len(g.Parameters))
+		for k := range g.Parameters {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			sb.WriteString("_" + k + "_" + g.Parameters[k])
 		}
 	}
-	return key
+	return sb.String()
 }
 
 // GetGoldenFile retrieves a golden file by operation name and parameters.
@@ -170,7 +177,7 @@ func ValidateResponse(response interface{}, golden *GoldenFile) []string {
 	for field, expected := range golden.ExpectedFields {
 		actual, ok := responseData[field]
 		if !ok {
-			errors = append(errors, fmt.Sprintf("missing field: %s", field))
+			errors = append(errors, "missing field: "+field)
 
 			continue
 		}
@@ -243,11 +250,11 @@ func SaveGoldenFile(golden *GoldenFile, outputPath string) error {
 
 	// Create directory if needed
 	dir := filepath.Dir(outputPath)
-	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:mnd
+	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:mnd // deliberate, see surrounding code
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	if err := os.WriteFile(outputPath, data, 0o600); err != nil { //nolint:mnd
+	if err := os.WriteFile(outputPath, data, 0o600); err != nil { //nolint:mnd // deliberate, see surrounding code
 		return fmt.Errorf("failed to write file: %w", err)
 	}
 
@@ -261,7 +268,7 @@ func SaveGoldenManifest(manifest *GoldenManifest, outputPath string) error {
 		return fmt.Errorf("failed to marshal manifest: %w", err)
 	}
 
-	if err := os.WriteFile(outputPath, data, 0o600); err != nil { //nolint:mnd
+	if err := os.WriteFile(outputPath, data, 0o600); err != nil { //nolint:mnd // deliberate, see surrounding code
 		return fmt.Errorf("failed to write manifest: %w", err)
 	}
 
@@ -271,11 +278,16 @@ func SaveGoldenManifest(manifest *GoldenManifest, outputPath string) error {
 // GenerateGoldenFileName generates a filename for a golden file.
 func GenerateGoldenFileName(operation string, params map[string]string) string {
 	name := operation
-	for k, v := range params {
+	keys := make([]string, 0, len(params))
+	for k := range params {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
 		// Sanitize parameter value for filename
-		v = strings.ReplaceAll(v, "/", "_")
+		v := strings.ReplaceAll(params[k], "/", "_")
 		v = strings.ReplaceAll(v, "\\", "_")
-		name += "_" + k + "_" + v
+		name += "_" + k + "_" + v //nolint:perfsprint // bounded, sanitized token list
 	}
 	return name + ".json"
 }
@@ -319,7 +331,7 @@ func NewGoldenTestRunner(goldenDir string) (*GoldenTestRunner, error) {
 func (r *GoldenTestRunner) ValidateOperation(operation string, params map[string]string, response interface{}) []string {
 	golden := r.GoldenSet.GetGoldenFile(operation, params)
 	if golden == nil {
-		return []string{fmt.Sprintf("no golden file found for operation: %s", operation)}
+		return []string{"no golden file found for operation: " + operation}
 	}
 
 	return ValidateResponse(response, golden)

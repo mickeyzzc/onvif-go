@@ -10,21 +10,25 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatalf("Discovery failed: %v", err)
+	}
+}
+
+func run() error {
 	fmt.Println("Discovering ONVIF devices on the network...")
 
-	// Create a context with timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Discover devices
 	devices, err := discovery.Discover(ctx, 5*time.Second)
 	if err != nil {
-		log.Fatalf("Discovery failed: %v", err)
+		return fmt.Errorf("discover: %w", err)
 	}
 
 	if len(devices) == 0 {
 		fmt.Println("No ONVIF devices found on the network")
-		return
+		return nil
 	}
 
 	fmt.Printf("\nFound %d device(s):\n\n", len(devices))
@@ -39,4 +43,6 @@ func main() {
 		fmt.Printf("  XAddrs: %v\n", device.XAddrs)
 		fmt.Println()
 	}
+
+	return nil
 }

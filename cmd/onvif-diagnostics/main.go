@@ -998,9 +998,9 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetHostname", func() error { _, err := client.Device().GetHostname(ctx); return fmt.Errorf("GetHostname: %w", err) }}, //nolint:nlreturn
-		{"GetDNS", func() error { _, err := client.Device().GetDNS(ctx); return fmt.Errorf("GetDNS: %w", err) }},                //nolint:nlreturn
-		{"GetNTP", func() error { _, err := client.Device().GetNTP(ctx); return fmt.Errorf("GetNTP: %w", err) }},                //nolint:nlreturn
+		{"GetHostname", func() error { _, err := client.Device().GetHostname(ctx); return fmt.Errorf("GetHostname: %w", err) }}, //nolint:nlreturn // deliberate, see surrounding code
+		{"GetDNS", func() error { _, err := client.Device().GetDNS(ctx); return fmt.Errorf("GetDNS: %w", err) }},                //nolint:nlreturn // deliberate, see surrounding code
+		{"GetNTP", func() error { _, err := client.Device().GetNTP(ctx); return fmt.Errorf("GetNTP: %w", err) }},                //nolint:nlreturn // deliberate, see surrounding code
 		{"GetNetworkInterfaces", func() error {
 			_, err := client.Device().GetNetworkInterfaces(ctx)
 

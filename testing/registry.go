@@ -82,11 +82,11 @@ func SaveRegistry(registry *Registry, path string) error {
 
 	// Ensure directory exists
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:mnd
+	if err := os.MkdirAll(dir, 0o750); err != nil { //nolint:mnd // deliberate, see surrounding code
 		return fmt.Errorf("failed to create directory: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0o600); err != nil { //nolint:mnd
+	if err := os.WriteFile(path, data, 0o600); err != nil { //nolint:mnd // deliberate, see surrounding code
 		return fmt.Errorf("failed to write registry: %w", err)
 	}
 
@@ -188,7 +188,7 @@ func GenerateCameraID(manufacturer, model, firmware string) string {
 // sanitizeID removes or replaces invalid characters in an ID.
 func sanitizeID(s string) string {
 	result := make([]byte, 0, len(s))
-	for i := 0; i < len(s); i++ {
+	for i := range len(s) {
 		c := s[i]
 		switch {
 		case c >= 'a' && c <= 'z':

@@ -532,7 +532,7 @@ func BenchmarkGetRemoteUser(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = client.Security().GetRemoteUser(ctx)
 	}
 }
@@ -550,7 +550,7 @@ func BenchmarkSetRemoteUser(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetRemoteUser(ctx, remoteUser)
 	}
 }
@@ -563,7 +563,7 @@ func BenchmarkGetIPAddressFilter(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = client.Security().GetIPAddressFilter(ctx)
 	}
 }
@@ -586,7 +586,7 @@ func BenchmarkSetIPAddressFilter(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetIPAddressFilter(ctx, filter)
 	}
 }
@@ -605,7 +605,7 @@ func BenchmarkAddIPAddressFilter(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().AddIPAddressFilter(ctx, filter)
 	}
 }
@@ -624,7 +624,7 @@ func BenchmarkRemoveIPAddressFilter(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().RemoveIPAddressFilter(ctx, filter)
 	}
 }
@@ -637,7 +637,7 @@ func BenchmarkGetZeroConfiguration(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = client.Security().GetZeroConfiguration(ctx)
 	}
 }
@@ -650,7 +650,7 @@ func BenchmarkSetZeroConfiguration(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetZeroConfiguration(ctx, "eth0", true)
 	}
 }
@@ -663,7 +663,7 @@ func BenchmarkGetPasswordComplexityConfiguration(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = client.Security().GetPasswordComplexityConfiguration(ctx)
 	}
 }
@@ -684,7 +684,7 @@ func BenchmarkSetPasswordComplexityConfiguration(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetPasswordComplexityConfiguration(ctx, config)
 	}
 }
@@ -697,7 +697,7 @@ func BenchmarkGetPasswordHistoryConfiguration(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = client.Security().GetPasswordHistoryConfiguration(ctx)
 	}
 }
@@ -714,7 +714,7 @@ func BenchmarkSetPasswordHistoryConfiguration(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetPasswordHistoryConfiguration(ctx, config)
 	}
 }
@@ -727,7 +727,7 @@ func BenchmarkGetAuthFailureWarningConfiguration(b *testing.B) {
 	ctx := context.Background()
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = client.Security().GetAuthFailureWarningConfiguration(ctx)
 	}
 }
@@ -745,7 +745,7 @@ func BenchmarkSetAuthFailureWarningConfiguration(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetAuthFailureWarningConfiguration(ctx, config)
 	}
 }
@@ -765,14 +765,14 @@ func BenchmarkIPAddressFilterWithManyAddresses(b *testing.B) {
 		IPv6Address: make([]PrefixedIPv6Address, 50),
 	}
 
-	for i := 0; i < 100; i++ {
+	for i := range 100 {
 		filter.IPv4Address[i] = PrefixedIPv4Address{
 			Address:      "192.168.1.0",
 			PrefixLength: 24,
 		}
 	}
 
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		filter.IPv6Address[i] = PrefixedIPv6Address{
 			Address:      "fe80::",
 			PrefixLength: 64,
@@ -780,7 +780,7 @@ func BenchmarkIPAddressFilterWithManyAddresses(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = client.Security().SetIPAddressFilter(ctx, filter)
 	}
 }

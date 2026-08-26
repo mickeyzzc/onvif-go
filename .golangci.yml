@@ -32,66 +32,64 @@ linters:
     - wastedassign
     - fatcontext
     - perfsprint
+  settings:
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+    staticcheck:
+      checks:
+        - all
+        - -QF*
+        - -ST*
+        - -SA1019  # Deprecated API usage (tracked for future migration)
+    gocritic:
+      disabled-checks:
+        - ifElseChain
+    perfsprint:
+      errorf: false      # suppress fmt.Errorf -> errors.New (behavior change)
+      err-error: false   # suppress fmt.Sprintf(err) -> err.Error() (panic risk)
+      integer-format: true
+      hex-format: true
+      string-format: true
+      bool-format: true
+      int-conversion: true
+  exclusions:
+    presets:
+      - common-false-positives
+    warn-unused: true
+    paths:
+      - testdata/
+    rules:
+      # Test files: loose checking (matches MiBeeNvr policy)
+      - path: _test\.go
+        linters: [errcheck, noctx, gocritic, contextcheck, nilnil, bodyclose]
+      # CLI entry points: context not needed at startup
+      - path: cmd/
+        linters: [noctx, contextcheck]
+      # Test-support package: non-blocking I/O by design
+      - path: testing/
+        linters: [noctx, contextcheck]
+      # errcheck: legitimate cleanup/write patterns
+      - source: 'defer .+\.Close\(\)'
+        linters: [errcheck]
+      - source: '\.Write\('
+        linters: [errcheck]
+      - source: '\.WriteString\('
+        linters: [errcheck]
+      - source: '\.Flush\('
+        linters: [errcheck]
+      - source: '\.Encode\('
+        linters: [errcheck]
+      - source: 'MkdirAll\('
+        linters: [errcheck]
+      - source: 'os\.(Remove|RemoveAll)\('
+        linters: [errcheck]
+      - source: 'filepath\.Walk(Dir)?\('
+        linters: [errcheck]
+      - source: 'fmt\.Fprintf\('
+        linters: [errcheck]
 
 formatters:
   enable:
     - gofumpt
     - goimports
-
-settings:
-  nolintlint:
-    require-explanation: true
-    require-specific: true
-  staticcheck:
-    checks:
-      - all
-      - -QF*
-      - -ST*
-      - -SA1019  # Deprecated API usage (tracked for future migration)
-  gocritic:
-    disabled-checks:
-      - ifElseChain
-  perfsprint:
-    errorf: false      # suppress fmt.Errorf -> errors.New (behavior change)
-    err-error: false   # suppress fmt.Sprintf(err) -> err.Error() (panic risk)
-    integer-format: true
-    hex-format: true
-    string-format: true
-    bool-format: true
-    int-conversion: true
-
-exclusions:
-  presets:
-    - common-false-positives
-  warn-unused: true
-  paths:
-    - testdata/
-  rules:
-    # Test files: loose checking (matches MiBeeNvr policy)
-    - path: _test\.go
-      linters: [errcheck, noctx, gocritic, contextcheck, nilnil, bodyclose]
-    # CLI entry points: context not needed at startup
-    - path: cmd/
-      linters: [noctx, contextcheck]
-    # Test-support package: non-blocking I/O by design
-    - path: testing/
-      linters: [noctx, contextcheck]
-    # errcheck: legitimate cleanup/write patterns
-    - source: 'defer .+\.Close\(\)'
-      linters: [errcheck]
-    - source: '\.Write\('
-      linters: [errcheck]
-    - source: '\.WriteString\('
-      linters: [errcheck]
-    - source: '\.Flush\('
-      linters: [errcheck]
-    - source: '\.Encode\('
-      linters: [errcheck]
-    - source: 'MkdirAll\('
-      linters: [errcheck]
-    - source: 'os\.(Remove|RemoveAll)\('
-      linters: [errcheck]
-    - source: 'filepath\.Walk(Dir)?\('
-      linters: [errcheck]
-    - source: 'fmt\.Fprintf\('
-      linters: [errcheck]

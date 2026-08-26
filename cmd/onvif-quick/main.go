@@ -39,7 +39,6 @@ func main() {
 		fmt.Println("0. Exit")
 		fmt.Print("\nChoice: ")
 
-		//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
 		input, _ := reader.ReadString('\n')
 		choice := strings.TrimSpace(input)
 
@@ -72,7 +71,7 @@ func discoverCameras() {
 
 	// Ask if user wants to use a specific interface
 	fmt.Print("Use specific network interface? (y/n) [n]: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	useInterface, _ := reader.ReadString('\n')
 	useInterface = strings.ToLower(strings.TrimSpace(useInterface))
 
@@ -92,7 +91,7 @@ func discoverCameras() {
 		}
 
 		fmt.Print("\nEnter interface name or IP: ")
-		//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 		ifaceInput, _ := reader.ReadString('\n')
 		ifaceInput = strings.TrimSpace(ifaceInput)
 
@@ -173,12 +172,12 @@ func connectAndShowInfo() {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Camera IP: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	ip, _ := reader.ReadString('\n')
 	ip = strings.TrimSpace(ip)
 
 	fmt.Print("Username [admin]: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	username, _ := reader.ReadString('\n')
 	username = strings.TrimSpace(username)
 	if username == "" {
@@ -186,7 +185,7 @@ func connectAndShowInfo() {
 	}
 
 	fmt.Print("Password: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	password, _ := reader.ReadString('\n')
 	password = strings.TrimSpace(password)
 
@@ -219,7 +218,7 @@ func connectAndShowInfo() {
 	fmt.Printf("🔧 Firmware: %s\n", info.FirmwareVersion)
 
 	// Initialize and get profiles
-	//nolint:errcheck // Ignore initialization errors, we'll catch them on GetProfiles
+
 	_ = client.Initialize(ctx)
 	profiles, err := client.Media().GetProfiles(ctx)
 	if err == nil && len(profiles) > 0 {
@@ -237,12 +236,12 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Camera IP: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	ip, _ := reader.ReadString('\n')
 	ip = strings.TrimSpace(ip)
 
 	fmt.Print("Username [admin]: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	username, _ := reader.ReadString('\n')
 	username = strings.TrimSpace(username)
 	if username == "" {
@@ -250,7 +249,7 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 	}
 
 	fmt.Print("Password: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	password, _ := reader.ReadString('\n')
 	password = strings.TrimSpace(password)
 
@@ -267,7 +266,7 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 	}
 
 	ctx := context.Background()
-	//nolint:errcheck // Ignore initialization errors, we'll catch them on GetProfiles
+
 	_ = client.Initialize(ctx)
 
 	profiles, err := client.Media().GetProfiles(ctx)
@@ -301,7 +300,6 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 	fmt.Println("5. Go to center")
 	fmt.Print("Choice: ")
 
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
 	choice, _ := reader.ReadString('\n')
 	choice = strings.TrimSpace(choice)
 
@@ -335,7 +333,7 @@ func ptzDemo() { //nolint:funlen,gocyclo // Many statements and high complexity 
 		}
 		fmt.Println("✅ Moving for 2 seconds...")
 		time.Sleep(ptzStepSize * time.Second)
-		//nolint:errcheck // Stop error is not critical for demo
+
 		_ = client.PTZ().Stop(ctx, profileToken, true, false)
 	} else if position != nil {
 		err = client.PTZ().AbsoluteMove(ctx, profileToken, position, nil)
@@ -354,12 +352,12 @@ func getStreamURLs() {
 	reader := bufio.NewReader(os.Stdin)
 
 	fmt.Print("Camera IP: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	ip, _ := reader.ReadString('\n')
 	ip = strings.TrimSpace(ip)
 
 	fmt.Print("Username [admin]: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	username, _ := reader.ReadString('\n')
 	username = strings.TrimSpace(username)
 	if username == "" {
@@ -367,7 +365,7 @@ func getStreamURLs() {
 	}
 
 	fmt.Print("Password: ")
-	//nolint:errcheck // ReadString error on stdin is rare and not critical for CLI
+
 	password, _ := reader.ReadString('\n')
 	password = strings.TrimSpace(password)
 
@@ -384,7 +382,7 @@ func getStreamURLs() {
 	}
 
 	ctx := context.Background()
-	//nolint:errcheck // Ignore initialization errors, we'll catch them on GetProfiles
+
 	_ = client.Initialize(ctx)
 
 	profiles, err := client.Media().GetProfiles(ctx)

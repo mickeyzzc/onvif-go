@@ -153,7 +153,7 @@ func (m *MockSOAPServer) handleRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if exchange == nil {
-		http.Error(w, fmt.Sprintf("No matching capture found for operation: %s", operationName), http.StatusNotFound)
+		http.Error(w, "No matching capture found for operation: "+operationName, http.StatusNotFound)
 
 		return
 	}
@@ -161,7 +161,7 @@ func (m *MockSOAPServer) handleRequest(w http.ResponseWriter, r *http.Request) {
 	// Return the captured response
 	w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
 	w.WriteHeader(exchange.StatusCode)
-	//nolint:errcheck // Write error is not critical after WriteHeader
+
 	_, _ = w.Write([]byte(exchange.ResponseBody))
 }
 
@@ -277,7 +277,7 @@ func processArchiveEntry(header *tar.Header, data []byte, capture *CameraCapture
 
 	// Skip files that look like request/response XML stored as JSON
 	if strings.Contains(header.Name, "_request") || strings.Contains(header.Name, "_response") {
-		return nil, nil
+		return nil, nil //nolint:nilnil // walk callback: skip non-exchange members
 	}
 
 	// Parse exchange from JSON
@@ -289,7 +289,7 @@ func processArchiveEntry(header *tar.Header, data []byte, capture *CameraCapture
 		capture.Exchanges = append(capture.Exchanges, *exchange)
 	}
 
-	return nil, nil
+	return nil, nil //nolint:nilnil // walk callback: member processed or skipped
 }
 
 // parseExchange parses a JSON exchange entry, supporting both V1 and V2 formats.
@@ -391,7 +391,7 @@ func (m *MockSOAPServerV2) handleRequest(w http.ResponseWriter, r *http.Request)
 	// Get all exchanges for this operation
 	exchanges, ok := m.exchangeMap[operationName]
 	if !ok || len(exchanges) == 0 {
-		http.Error(w, fmt.Sprintf("No capture found for operation: %s", operationName), http.StatusNotFound)
+		http.Error(w, "No capture found for operation: "+operationName, http.StatusNotFound)
 		return
 	}
 
@@ -420,7 +420,7 @@ func (m *MockSOAPServerV2) handleRequest(w http.ResponseWriter, r *http.Request)
 	// Return the captured response
 	w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
 	w.WriteHeader(bestMatch.StatusCode)
-	//nolint:errcheck // Write error is not critical after WriteHeader
+
 	_, _ = w.Write([]byte(bestMatch.ResponseBody))
 }
 

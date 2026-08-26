@@ -166,7 +166,7 @@ func buildConfig(host string, port int, username, password, manufacturer, model,
 	}
 
 	// Generate profiles
-	for i := 0; i < numProfiles; i++ {
+	for i := range numProfiles {
 		template := templates[i%len(templates)]
 
 		profile := server.ProfileConfig{

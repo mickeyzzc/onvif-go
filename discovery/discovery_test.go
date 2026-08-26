@@ -236,7 +236,7 @@ func BenchmarkDeviceGetName(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = device.GetName()
 	}
 }
@@ -250,7 +250,7 @@ func BenchmarkDeviceGetDeviceEndpoint(b *testing.B) {
 	}
 
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = device.GetDeviceEndpoint()
 	}
 }
@@ -459,14 +459,14 @@ func TestDiscover_BackwardCompatibility(t *testing.T) {
 
 func BenchmarkListNetworkInterfaces(b *testing.B) {
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = ListNetworkInterfaces()
 	}
 }
 
 func BenchmarkResolveNetworkInterface(b *testing.B) {
 	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_, _ = resolveNetworkInterface("127.0.0.1")
 	}
 }
