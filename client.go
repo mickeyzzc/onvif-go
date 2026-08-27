@@ -103,6 +103,15 @@ type Client struct {
 	// before its first authenticated call (WithAutoClockSkew).
 	autoClockSkew bool
 
+	// Capabilities cache (issue #11): the GetCapabilities response is
+	// constant for a device's runtime; capsReady single-flights concurrent
+	// first fetchers so weak devices are not hammered.
+	capsCache           *Capabilities
+	capsCached          bool
+	capsFetching        bool
+	capsReady           chan struct{}
+	minimalCapsFallback bool
+
 	// clockSkew is the offset (deviceTime - localTime) applied to WS-Security
 	// digest timestamps. Set via SetClockSkew after measuring the device's clock
 	// via GetSystemDateAndTime. Fixes Hikvision time-skew auth rejections.
