@@ -332,7 +332,7 @@ func TestGetServiceCapabilities_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	caps, err := client.Device().GetServiceCapabilities(ctx)
+	caps, err := client.Device().GetDeviceServiceCapabilities(ctx)
 	if err != nil {
 		t.Fatalf("GetServiceCapabilities() failed: %v", err)
 	}
@@ -579,7 +579,7 @@ func TestGetUsers_Bosch(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	users, err := client.Device().GetUsers(ctx)
+	users, err := client.Security().GetUsers(ctx)
 	if err != nil {
 		t.Fatalf("GetUsers() failed: %v", err)
 	}

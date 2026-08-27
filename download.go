@@ -8,7 +8,7 @@ import (
 	"net"
 	"net/http"
 
-	"github.com/mickeyzzc/onvif-go/internal/httpdigest"
+	"github.com/mickeyzzc/onvif-go/v2/internal/httpdigest"
 )
 
 // downloadStatusError marks a download failure caused by a specific HTTP

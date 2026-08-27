@@ -1,4 +1,4 @@
-package onvif
+package media
 
 import (
 	"context"
@@ -6,6 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // ErrEmptyMediaURI is returned when a GetStreamUri/GetSnapshotUri response
@@ -36,7 +39,7 @@ func (setup *StreamSetup) validate() error {
 	case StreamRTPUnicast, StreamRTPMulticast:
 	default:
 		return fmt.Errorf("%w: stream %q (want %q or %q)",
-			ErrInvalidParameter, setup.Stream, StreamRTPUnicast, StreamRTPMulticast)
+			types.ErrInvalidParameter, setup.Stream, StreamRTPUnicast, StreamRTPMulticast)
 	}
 
 	if setup.Transport == nil || setup.Transport.Protocol == "" {
@@ -51,7 +54,7 @@ func (setup *StreamSetup) validate() error {
 	case ProtocolRTSP, ProtocolHTTP, ProtocolUDP, "TCP":
 	default:
 		return fmt.Errorf("%w: protocol %q (want %q, %q, %q, or %q)",
-			ErrInvalidParameter, setup.Transport.Protocol,
+			types.ErrInvalidParameter, setup.Transport.Protocol,
 			ProtocolRTSP, ProtocolHTTP, ProtocolUDP, "TCP")
 	}
 
@@ -132,7 +135,7 @@ const maxMediaURIErrBody = 512
 // GetStreamURI returns the stream URI for a profile using the default
 // RTP-Unicast/RTSP transport. Use GetStreamURIWithOptions to select another
 // stream type or transport protocol.
-func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*MediaURI, error) {
+func (s *Service) GetStreamURI(ctx context.Context, profileToken string) (*MediaURI, error) {
 	return s.GetStreamURIWithOptions(ctx, profileToken, StreamSetup{
 		Stream:    StreamRTPUnicast,
 		Transport: &Transport{Protocol: ProtocolRTSP},
@@ -144,7 +147,7 @@ func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*
 // identical to GetStreamURI for RTP-Unicast/RTSP. Some devices — e.g.
 // ESP32-based firmwares — return different stream shapes (RTSP with audio
 // versus HTTP video-only) depending on the requested protocol.
-func (s *MediaService) GetStreamURIWithOptions(
+func (s *Service) GetStreamURIWithOptions(
 	ctx context.Context,
 	profileToken string,
 	setup StreamSetup,
@@ -153,10 +156,10 @@ func (s *MediaService) GetStreamURIWithOptions(
 		return nil, fmt.Errorf("GetStreamURIWithOptions: %w", err)
 	}
 
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetStreamURI{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		Xmlnst:       "http://www.onvif.org/ver10/schema",
 		ProfileToken: profileToken,
 	}
@@ -165,7 +168,7 @@ func (s *MediaService) GetStreamURIWithOptions(
 
 	var resp GetStreamURIResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStreamURI failed: %w", err)
 	}
 
@@ -186,17 +189,17 @@ func (s *MediaService) GetStreamURIWithOptions(
 	}, nil
 }
 
-func (s *MediaService) GetSnapshotURI(ctx context.Context, profileToken string) (*MediaURI, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetSnapshotURI(ctx context.Context, profileToken string) (*MediaURI, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetSnapshotURI{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetSnapshotURIResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSnapshotURI failed: %w", err)
 	}
 
@@ -219,45 +222,45 @@ func (s *MediaService) GetSnapshotURI(ctx context.Context, profileToken string) 
 	}, nil
 }
 
-func (s *MediaService) SetSynchronizationPoint(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetSynchronizationPoint(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetSynchronizationPoint{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) StartMulticastStreaming(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) StartMulticastStreaming(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := StartMulticastStreaming{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StartMulticastStreaming failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) StopMulticastStreaming(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) StopMulticastStreaming(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := StopMulticastStreaming{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StopMulticastStreaming failed: %w", err)
 	}
 

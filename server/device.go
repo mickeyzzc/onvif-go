@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/server/soap"
+	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
 const (

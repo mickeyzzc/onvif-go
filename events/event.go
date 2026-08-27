@@ -1,7 +1,7 @@
 // Events service: raw pull-point primitives and the managed
 // subscription loop.
 
-package onvif
+package events
 
 import (
 	"context"
@@ -12,11 +12,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
 )
 
 // Event service namespace.
-const eventNamespace = "http://www.onvif.org/ver10/events/wsdl"
+const Namespace = "http://www.onvif.org/ver10/events/wsdl"
 
 // Event service errors.
 var (
@@ -69,13 +72,13 @@ type NotificationMessage struct {
 type EventMessage struct {
 	PropertyOperation string
 	UtcTime           time.Time
-	Source            []SimpleItem
-	Key               []SimpleItem
-	Data              []SimpleItem
+	Source            []types.SimpleItem
+	Key               []types.SimpleItem
+	Data              []types.SimpleItem
 }
 
 // EventSimpleItem represents a simple name-value pair in an event message.
-// Note: Uses SimpleItem from types.go which has the same structure.
+// Note: Uses types.SimpleItem from types.go which has the same structure.
 
 // TopicSet represents the set of topics supported by the device.
 type TopicSet struct {
@@ -114,28 +117,9 @@ type EventProperties struct {
 	MessageContentSchemaLocation     []string
 }
 
-// getEventEndpoint returns the event endpoint, falling back to the default endpoint if not set.
-func (s *EventService) getEventEndpoint() string {
-	s.client.mu.RLock()
-	defer s.client.mu.RUnlock()
-
-	if s.client.eventEndpoint != "" {
-		return s.client.eventEndpoint
-	}
-
-	return s.client.endpoint
-}
-
-// SetEventEndpoint sets the event service endpoint.
-func (s *EventService) SetEventEndpoint(endpoint string) {
-	s.client.mu.Lock()
-	defer s.client.mu.Unlock()
-	s.client.eventEndpoint = endpoint
-}
-
 // GetEventServiceCapabilities retrieves the capabilities of the event service.
-func (s *EventService) GetEventServiceCapabilities(ctx context.Context) (*EventServiceCapabilities, error) {
-	endpoint := s.getEventEndpoint()
+func (s *Service) GetEventServiceCapabilities(ctx context.Context) (*EventServiceCapabilities, error) {
+	endpoint := s.c.EndpointFor(api.ServiceEvents)
 
 	type GetServiceCapabilities struct {
 		XMLName xml.Name `xml:"tev:GetServiceCapabilities"`
@@ -157,12 +141,12 @@ func (s *EventService) GetEventServiceCapabilities(ctx context.Context) (*EventS
 	}
 
 	req := GetServiceCapabilities{
-		Xmlns: eventNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetServiceCapabilitiesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventServiceCapabilities failed: %w", err)
 	}
 
@@ -185,13 +169,13 @@ func (s *EventService) GetEventServiceCapabilities(ctx context.Context) (*EventS
 }
 
 // CreatePullPointSubscription creates a new pull point subscription.
-func (s *EventService) CreatePullPointSubscription(
+func (s *Service) CreatePullPointSubscription(
 	ctx context.Context,
 	filter string,
 	initialTerminationTime *time.Duration,
 	subscriptionPolicy string,
 ) (*PullPointSubscription, error) {
-	endpoint := s.getEventEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceEvents)
 
 	type Filter struct {
 		TopicExpression string `xml:"wsnt:TopicExpression,omitempty"`
@@ -216,7 +200,7 @@ func (s *EventService) CreatePullPointSubscription(
 	}
 
 	req := CreatePullPointSubscription{
-		XmlnsTev:  eventNamespace,
+		XmlnsTev:  Namespace,
 		XmlnsWsnt: "http://docs.oasis-open.org/wsn/b-2",
 	}
 
@@ -239,7 +223,7 @@ func (s *EventService) CreatePullPointSubscription(
 
 	var resp CreatePullPointSubscriptionResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreatePullPointSubscription failed: %w", err)
 	}
 
@@ -263,7 +247,7 @@ func (s *EventService) CreatePullPointSubscription(
 }
 
 // PullMessages pulls notification messages from a pull point subscription.
-func (s *EventService) PullMessages(
+func (s *Service) PullMessages(
 	ctx context.Context,
 	subscriptionReference string,
 	timeout time.Duration,
@@ -321,14 +305,14 @@ func (s *EventService) PullMessages(
 	}
 
 	req := PullMessages{
-		Xmlns:        eventNamespace,
+		Xmlns:        Namespace,
 		Timeout:      formatDuration(timeout),
 		MessageLimit: messageLimit,
 	}
 
 	var resp PullMessagesResponse
 
-	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("PullMessages failed: %w", err)
 	}
 
@@ -349,21 +333,21 @@ func (s *EventService) PullMessages(
 		}
 
 		// Convert source items.
-		msg.Message.Source = make([]SimpleItem, len(nm.Message.Source.SimpleItems))
+		msg.Message.Source = make([]types.SimpleItem, len(nm.Message.Source.SimpleItems))
 		for j, item := range nm.Message.Source.SimpleItems {
-			msg.Message.Source[j] = SimpleItem(item)
+			msg.Message.Source[j] = types.SimpleItem(item)
 		}
 
 		// Convert key items.
-		msg.Message.Key = make([]SimpleItem, len(nm.Message.Key.SimpleItems))
+		msg.Message.Key = make([]types.SimpleItem, len(nm.Message.Key.SimpleItems))
 		for j, item := range nm.Message.Key.SimpleItems {
-			msg.Message.Key[j] = SimpleItem(item)
+			msg.Message.Key[j] = types.SimpleItem(item)
 		}
 
 		// Convert data items.
-		msg.Message.Data = make([]SimpleItem, len(nm.Message.Data.SimpleItems))
+		msg.Message.Data = make([]types.SimpleItem, len(nm.Message.Data.SimpleItems))
 		for j, item := range nm.Message.Data.SimpleItems {
-			msg.Message.Data[j] = SimpleItem(item)
+			msg.Message.Data[j] = types.SimpleItem(item)
 		}
 
 		messages[i] = msg
@@ -373,7 +357,7 @@ func (s *EventService) PullMessages(
 }
 
 // Seek seeks to a specific position in the event stream.
-func (s *EventService) Seek(ctx context.Context, subscriptionReference string, utcTime time.Time, reverse bool) error {
+func (s *Service) Seek(ctx context.Context, subscriptionReference string, utcTime time.Time, reverse bool) error {
 	if subscriptionReference == "" {
 		return ErrInvalidSubscriptionReference
 	}
@@ -390,14 +374,14 @@ func (s *EventService) Seek(ctx context.Context, subscriptionReference string, u
 	}
 
 	req := Seek{
-		Xmlns:   eventNamespace,
+		Xmlns:   Namespace,
 		UtcTime: utcTime.Format(time.RFC3339),
 		Reverse: reverse,
 	}
 
 	var resp SeekResponse
 
-	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("Seek failed: %w", err)
 	}
 
@@ -405,7 +389,7 @@ func (s *EventService) Seek(ctx context.Context, subscriptionReference string, u
 }
 
 // SetEventSynchronizationPoint instructs the device to send a synchronization point for events.
-func (s *EventService) SetEventSynchronizationPoint(ctx context.Context, subscriptionReference string) error {
+func (s *Service) SetEventSynchronizationPoint(ctx context.Context, subscriptionReference string) error {
 	if subscriptionReference == "" {
 		return ErrInvalidSubscriptionReference
 	}
@@ -420,12 +404,12 @@ func (s *EventService) SetEventSynchronizationPoint(ctx context.Context, subscri
 	}
 
 	req := SetSynchronizationPoint{
-		Xmlns: eventNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp SetSynchronizationPointResponse
 
-	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
 	}
 
@@ -433,7 +417,7 @@ func (s *EventService) SetEventSynchronizationPoint(ctx context.Context, subscri
 }
 
 // Unsubscribe terminates a subscription.
-func (s *EventService) Unsubscribe(ctx context.Context, subscriptionReference string) error {
+func (s *Service) Unsubscribe(ctx context.Context, subscriptionReference string) error {
 	if subscriptionReference == "" {
 		return ErrInvalidSubscriptionReference
 	}
@@ -453,7 +437,7 @@ func (s *EventService) Unsubscribe(ctx context.Context, subscriptionReference st
 
 	var resp UnsubscribeResponse
 
-	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("Unsubscribe failed: %w", err)
 	}
 
@@ -461,7 +445,7 @@ func (s *EventService) Unsubscribe(ctx context.Context, subscriptionReference st
 }
 
 // RenewSubscription renews a subscription with a new termination time.
-func (s *EventService) RenewSubscription(
+func (s *Service) RenewSubscription(
 	ctx context.Context,
 	subscriptionReference string,
 	terminationTime time.Duration,
@@ -493,7 +477,7 @@ func (s *EventService) RenewSubscription(
 
 	var resp RenewResponse
 
-	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return time.Time{}, time.Time{}, fmt.Errorf("RenewSubscription failed: %w", err)
 	}
 
@@ -515,8 +499,8 @@ func (s *EventService) RenewSubscription(
 }
 
 // GetEventProperties retrieves the event properties of the device.
-func (s *EventService) GetEventProperties(ctx context.Context) (*EventProperties, error) {
-	endpoint := s.getEventEndpoint()
+func (s *Service) GetEventProperties(ctx context.Context) (*EventProperties, error) {
+	endpoint := s.c.EndpointFor(api.ServiceEvents)
 
 	type GetEventProperties struct {
 		XMLName xml.Name `xml:"tev:GetEventProperties"`
@@ -534,12 +518,12 @@ func (s *EventService) GetEventProperties(ctx context.Context) (*EventProperties
 	}
 
 	req := GetEventProperties{
-		Xmlns: eventNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetEventPropertiesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventProperties failed: %w", err)
 	}
 
@@ -556,7 +540,7 @@ func (s *EventService) GetEventProperties(ctx context.Context) (*EventProperties
 }
 
 // AddEventBroker adds an event broker configuration.
-func (s *EventService) AddEventBroker(ctx context.Context, config *EventBrokerConfig) error {
+func (s *Service) AddEventBroker(ctx context.Context, config *EventBrokerConfig) error {
 	if config == nil {
 		return ErrEventBrokerConfigNil
 	}
@@ -565,7 +549,7 @@ func (s *EventService) AddEventBroker(ctx context.Context, config *EventBrokerCo
 		return ErrInvalidEventBrokerAddress
 	}
 
-	endpoint := s.getEventEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceEvents)
 
 	type EventBrokerConfigXML struct {
 		Address            string `xml:"tev:Address"`
@@ -590,7 +574,7 @@ func (s *EventService) AddEventBroker(ctx context.Context, config *EventBrokerCo
 	}
 
 	req := AddEventBroker{
-		Xmlns: eventNamespace,
+		Xmlns: Namespace,
 		EventBrokerConfig: EventBrokerConfigXML{
 			Address:            config.Address,
 			TopicPrefix:        config.TopicPrefix,
@@ -606,7 +590,7 @@ func (s *EventService) AddEventBroker(ctx context.Context, config *EventBrokerCo
 
 	var resp AddEventBrokerResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("AddEventBroker failed: %w", err)
 	}
 
@@ -614,12 +598,12 @@ func (s *EventService) AddEventBroker(ctx context.Context, config *EventBrokerCo
 }
 
 // DeleteEventBroker deletes an event broker configuration.
-func (s *EventService) DeleteEventBroker(ctx context.Context, address string) error {
+func (s *Service) DeleteEventBroker(ctx context.Context, address string) error {
 	if address == "" {
 		return ErrInvalidEventBrokerAddress
 	}
 
-	endpoint := s.getEventEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceEvents)
 
 	type DeleteEventBroker struct {
 		XMLName xml.Name `xml:"tev:DeleteEventBroker"`
@@ -632,13 +616,13 @@ func (s *EventService) DeleteEventBroker(ctx context.Context, address string) er
 	}
 
 	req := DeleteEventBroker{
-		Xmlns:   eventNamespace,
+		Xmlns:   Namespace,
 		Address: address,
 	}
 
 	var resp DeleteEventBrokerResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("DeleteEventBroker failed: %w", err)
 	}
 
@@ -646,8 +630,8 @@ func (s *EventService) DeleteEventBroker(ctx context.Context, address string) er
 }
 
 // GetEventBrokers retrieves all event broker configurations.
-func (s *EventService) GetEventBrokers(ctx context.Context) ([]*EventBrokerConfig, error) {
-	endpoint := s.getEventEndpoint()
+func (s *Service) GetEventBrokers(ctx context.Context) ([]*EventBrokerConfig, error) {
+	endpoint := s.c.EndpointFor(api.ServiceEvents)
 
 	type GetEventBrokers struct {
 		XMLName xml.Name `xml:"tev:GetEventBrokers"`
@@ -671,12 +655,12 @@ func (s *EventService) GetEventBrokers(ctx context.Context) ([]*EventBrokerConfi
 	}
 
 	req := GetEventBrokers{
-		Xmlns: eventNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetEventBrokersResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventBrokers failed: %w", err)
 	}
 
@@ -767,7 +751,7 @@ type SubscribeEventsOptions struct {
 // handler, renews the subscription before it expires, and stops cleanly on
 // Unsubscribe or context cancellation.
 type EventStream struct {
-	client  *Client
+	svc     *Service
 	handler func(NotificationMessage)
 	opts    SubscribeEventsOptions
 
@@ -789,13 +773,13 @@ type EventStream struct {
 //
 // Devices that do not implement the events service yield an error matching
 // errors.Is(err, ErrEventsNotSupported).
-func (s *EventService) SubscribeEvents(
+func (s *Service) SubscribeEvents(
 	ctx context.Context,
 	handler func(NotificationMessage),
 	opts *SubscribeEventsOptions,
 ) (*EventStream, error) {
 	if handler == nil {
-		return nil, fmt.Errorf("SubscribeEvents: %w: handler is nil", ErrInvalidParameter)
+		return nil, fmt.Errorf("SubscribeEvents: %w: handler is nil", types.ErrInvalidParameter)
 	}
 
 	effective := SubscribeEventsOptions{
@@ -839,7 +823,7 @@ func (s *EventService) SubscribeEvents(
 	loopCtx, cancel := context.WithCancel(context.WithoutCancel(ctx))
 
 	es := &EventStream{
-		client:  s.client,
+		svc:     s,
 		handler: handler,
 		opts:    effective,
 		ref:     sub.SubscriptionReference,
@@ -882,7 +866,7 @@ func (es *EventStream) Unsubscribe(ctx context.Context) error {
 	es.mu.Unlock()
 	es.stopLoop()
 
-	err := es.client.Events().Unsubscribe(ctx, es.ref)
+	err := es.svc.Unsubscribe(ctx, es.ref)
 	if err != nil {
 		return fmt.Errorf("Unsubscribe: device unsubscribe failed (loop stopped anyway): %w", err)
 	}
@@ -921,7 +905,7 @@ func (es *EventStream) run(ctx context.Context) {
 			return
 		}
 
-		messages, err := es.client.Events().PullMessages(ctx, es.ref, es.opts.PullTimeout, es.opts.MessageLimit)
+		messages, err := es.svc.PullMessages(ctx, es.ref, es.opts.PullTimeout, es.opts.MessageLimit)
 		if err != nil {
 			if ctx.Err() != nil {
 				es.cleanupUnlessExplicit(ctx)
@@ -962,7 +946,7 @@ const eventIdleGap = 100 * time.Millisecond
 
 // renew extends the subscription; reports success.
 func (es *EventStream) renew(ctx context.Context) bool {
-	_, termination, err := es.client.Events().RenewSubscription(ctx, es.ref, es.opts.SubscriptionDuration)
+	_, termination, err := es.svc.RenewSubscription(ctx, es.ref, es.opts.SubscriptionDuration)
 	if err != nil {
 		return false
 	}
@@ -1010,7 +994,7 @@ func (es *EventStream) cleanupUnlessExplicit(parent context.Context) {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(parent), es.opts.PullTimeout)
 	defer cancel()
 
-	_ = es.client.Events().Unsubscribe(ctx, es.ref)
+	_ = es.svc.Unsubscribe(ctx, es.ref)
 }
 
 // safeHandle invokes the handler with panic isolation: a panicking handler

@@ -39,32 +39,56 @@ flowchart TD
     sim --> soap
 ```
 
-## File map
+## Package layout (v2)
 
-The root package is deliberately a single Go package — the facade API
-(`client.Media().GetProfiles(ctx)`) only works when the service types and
-their methods share one package — so the architecture is expressed in the
-file layout instead:
+The v1 single-package facade made the root directory flat. v2 (issue #20)
+splits by domain — the `internal/api.Caller` interface breaks the import
+cycle that previously made a split impossible:
 
-| File | Domain |
+| Package | Domain |
 |---|---|
-| `client.go` | `Client`, functional options, the single call dispatcher, endpoint/XAddr repair |
-| `auth.go` | auth strategy (modes, ladder stickiness), clock-skew measurement, `DiagnoseAuth` |
-| `capabilities.go` | capabilities cache with single-flight and minimal-device fallback |
-| `services.go` | the seven service facade types and their accessors |
-| `errors.go` | package sentinels and `ONVIFError` |
-| `types.go` | shared ONVIF data types |
-| `device.go` | device identity, capabilities, scopes, users, misc `tds` operations |
-| `device_mgmt.go` | system date/time, DNS/NTP, network interfaces & gateway |
-| `device_security.go` | users/remote user, access policy, certificates |
-| `device_storage.go`, `device_wifi.go` | storage and WiFi subsystems |
-| `deviceio.go` | relay outputs, digital I/O |
-| `media_profiles.go` | profile listing/parsing + main/sub stream selection |
-| `media_stream.go` | stream & snapshot URIs, `StreamSetup` transport selection |
-| `media_encoder.go`, `media_audio.go`, `media_osd.go` | encoder, audio, and OSD configuration |
-| `ptz.go`, `imaging.go` | PTZ and imaging services |
-| `event.go` | raw pull-point primitives + the managed subscription loop |
-| `download.go` | snapshot/media file download (basic + digest) |
+| root (`onvif`) | `Client` (implements `api.Caller`), auth strategy/ladder/diagnostics, download, v1 compatibility aliases |
+| `types/` | shared data-model leaf (IPAddress, IntRectangle, ranges, SimpleItem, shared sentinels) |
+| `device/` | tds: identity, capabilities (+cache), system, network, DNS/NTP, storage, WiFi |
+| `security/` | users, access policy, certificates, IP filter |
+| `deviceio/` | tmd: relays, digital I/O, serial ports |
+| `media/` | trt: profiles, main/sub selection, StreamSetup, encoder/audio/OSD |
+| `ptz/`, `imaging/` | tptz / timg domains |
+| `events/` | tev: pull-point primitives + managed subscriptions |
+| `discovery/` | client-side discovery (probe / listener / directed / post-processing) |
+| `server/` | device-side framework (transport, handlers, simulator) |
+| `internal/api` | the `Caller` interface between Client and services |
+| `internal/soap`, `internal/httpdigest` | SOAP transport + WS-Security; HTTP Digest round-tripper |
+
+```mermaid
+flowchart TD
+    subgraph rootpkg["root package — Client implements api.Caller"]
+        client["NewClient + auth ladder + clock skew"]
+    end
+    subgraph svcs["service packages"]
+        device["device"]
+        media["media"]
+        others["ptz · imaging · events · deviceio · security"]
+    end
+    apileaf["internal/api — Caller interface"]
+    subgraph leaves["shared leaves"]
+        types["types/"]
+        soap["internal/soap · internal/httpdigest"]
+    end
+    client --> apileaf
+    device --> apileaf
+    media --> apileaf
+    others --> apileaf
+    device --> types
+    media --> types
+    client --> soap
+    media --> ptz
+```
+
+The v1-style surface keeps compiling through root-package aliases
+(`type Profile = media.Profile`, facade accessors unchanged); see
+[v2-architecture.md](v2-architecture.md) for the migration map.
+
 
 ## The service-facade model
 

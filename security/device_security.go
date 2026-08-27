@@ -1,11 +1,15 @@
 // Device security: users, remote user, access policy, certificates.
 
-package onvif
+package security
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/device"
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // Common XML request/response types for device security operations.
@@ -58,7 +62,7 @@ func buildIPAddressFilterRequest(filter *IPAddressFilter) ipAddressFilterRequest
 }
 
 // GetRemoteUser returns the configured remote user.
-func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
+func (s *Service) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
 	type getRemoteUserRequest struct {
 		XMLName xml.Name `xml:"tds:GetRemoteUser"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -74,11 +78,11 @@ func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error
 	}
 
 	req := getRemoteUserRequest{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	var resp getRemoteUserResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRemoteUser failed: %w", err)
 	}
 
@@ -94,7 +98,7 @@ func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error
 }
 
 // SetRemoteUser sets the remote user.
-func (s *SecurityService) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) error {
+func (s *Service) SetRemoteUser(ctx context.Context, remoteUser *RemoteUser) error {
 	type remoteUserXML struct {
 		Username           string `xml:"tds:Username"`
 		Password           string `xml:"tds:Password,omitempty"`
@@ -108,7 +112,7 @@ func (s *SecurityService) SetRemoteUser(ctx context.Context, remoteUser *RemoteU
 	}
 
 	req := setRemoteUserRequest{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	if remoteUser != nil {
@@ -119,7 +123,7 @@ func (s *SecurityService) SetRemoteUser(ctx context.Context, remoteUser *RemoteU
 		}
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteUser failed: %w", err)
 	}
 
@@ -127,7 +131,7 @@ func (s *SecurityService) SetRemoteUser(ctx context.Context, remoteUser *RemoteU
 }
 
 // GetIPAddressFilter gets the IP address filter settings from a device.
-func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, error) {
+func (s *Service) GetIPAddressFilter(ctx context.Context) (*IPAddressFilter, error) {
 	type getIPAddressFilterRequest struct {
 		XMLName xml.Name `xml:"tds:GetIPAddressFilter"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -148,11 +152,11 @@ func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFil
 	}
 
 	req := getIPAddressFilterRequest{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	var resp getIPAddressFilterResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetIPAddressFilter failed: %w", err)
 	}
 
@@ -162,19 +166,19 @@ func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFil
 
 	// Pre-allocate slices with known capacity
 	if len(resp.IPAddressFilter.IPv4Address) > 0 {
-		filter.IPv4Address = make([]PrefixedIPv4Address, 0, len(resp.IPAddressFilter.IPv4Address))
+		filter.IPv4Address = make([]types.PrefixedIPv4Address, 0, len(resp.IPAddressFilter.IPv4Address))
 		for _, addr := range resp.IPAddressFilter.IPv4Address {
-			filter.IPv4Address = append(filter.IPv4Address, PrefixedIPv4Address{
+			filter.IPv4Address = append(filter.IPv4Address, types.PrefixedIPv4Address{
 				Address: addr.Address, PrefixLength: addr.PrefixLength,
-				Netmask: NetmaskFromPrefixLength(addr.PrefixLength),
+				Netmask: device.NetmaskFromPrefixLength(addr.PrefixLength),
 			})
 		}
 	}
 
 	if len(resp.IPAddressFilter.IPv6Address) > 0 {
-		filter.IPv6Address = make([]PrefixedIPv6Address, 0, len(resp.IPAddressFilter.IPv6Address))
+		filter.IPv6Address = make([]types.PrefixedIPv6Address, 0, len(resp.IPAddressFilter.IPv6Address))
 		for _, addr := range resp.IPAddressFilter.IPv6Address {
-			filter.IPv6Address = append(filter.IPv6Address, PrefixedIPv6Address(addr))
+			filter.IPv6Address = append(filter.IPv6Address, types.PrefixedIPv6Address(addr))
 		}
 	}
 
@@ -182,7 +186,7 @@ func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFil
 }
 
 // SetIPAddressFilter sets the IP address filter settings on a device.
-func (s *SecurityService) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+func (s *Service) SetIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
 	type setIPAddressFilterRequest struct {
 		XMLName         xml.Name               `xml:"tds:SetIPAddressFilter"`
 		Xmlns           string                 `xml:"xmlns:tds,attr"`
@@ -190,11 +194,11 @@ func (s *SecurityService) SetIPAddressFilter(ctx context.Context, filter *IPAddr
 	}
 
 	req := setIPAddressFilterRequest{
-		Xmlns:           deviceNamespace,
+		Xmlns:           device.Namespace,
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetIPAddressFilter failed: %w", err)
 	}
 
@@ -202,7 +206,7 @@ func (s *SecurityService) SetIPAddressFilter(ctx context.Context, filter *IPAddr
 }
 
 // AddIPAddressFilter adds an IP filter address to a device.
-func (s *SecurityService) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+func (s *Service) AddIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
 	type addIPAddressFilterRequest struct {
 		XMLName         xml.Name               `xml:"tds:AddIPAddressFilter"`
 		Xmlns           string                 `xml:"xmlns:tds,attr"`
@@ -210,11 +214,11 @@ func (s *SecurityService) AddIPAddressFilter(ctx context.Context, filter *IPAddr
 	}
 
 	req := addIPAddressFilterRequest{
-		Xmlns:           deviceNamespace,
+		Xmlns:           device.Namespace,
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("AddIPAddressFilter failed: %w", err)
 	}
 
@@ -222,7 +226,7 @@ func (s *SecurityService) AddIPAddressFilter(ctx context.Context, filter *IPAddr
 }
 
 // RemoveIPAddressFilter deletes an IP filter address from a device.
-func (s *SecurityService) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
+func (s *Service) RemoveIPAddressFilter(ctx context.Context, filter *IPAddressFilter) error {
 	type removeIPAddressFilterRequest struct {
 		XMLName         xml.Name               `xml:"tds:RemoveIPAddressFilter"`
 		Xmlns           string                 `xml:"xmlns:tds,attr"`
@@ -230,127 +234,18 @@ func (s *SecurityService) RemoveIPAddressFilter(ctx context.Context, filter *IPA
 	}
 
 	req := removeIPAddressFilterRequest{
-		Xmlns:           deviceNamespace,
+		Xmlns:           device.Namespace,
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("RemoveIPAddressFilter failed: %w", err)
 	}
 
 	return nil
 }
 
-// GetZeroConfiguration gets the zero-configuration from a device.
-func (s *SecurityService) GetZeroConfiguration(ctx context.Context) (*NetworkZeroConfiguration, error) {
-	type getZeroConfigurationRequest struct {
-		XMLName xml.Name `xml:"tds:GetZeroConfiguration"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-	}
-
-	type getZeroConfigurationResponse struct {
-		XMLName           xml.Name `xml:"GetZeroConfigurationResponse"`
-		ZeroConfiguration struct {
-			InterfaceToken string   `xml:"InterfaceToken"`
-			Enabled        bool     `xml:"Enabled"`
-			Addresses      []string `xml:"Addresses"`
-		} `xml:"ZeroConfiguration"`
-	}
-
-	req := getZeroConfigurationRequest{
-		Xmlns: deviceNamespace,
-	}
-
-	var resp getZeroConfigurationResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
-		return nil, fmt.Errorf("GetZeroConfiguration failed: %w", err)
-	}
-
-	return &NetworkZeroConfiguration{
-		InterfaceToken: resp.ZeroConfiguration.InterfaceToken,
-		Enabled:        resp.ZeroConfiguration.Enabled,
-		Addresses:      resp.ZeroConfiguration.Addresses,
-	}, nil
-}
-
-// SetZeroConfiguration sets the zero-configuration.
-func (s *SecurityService) SetZeroConfiguration(ctx context.Context, interfaceToken string, enabled bool) error {
-	type setZeroConfigurationRequest struct {
-		XMLName        xml.Name `xml:"tds:SetZeroConfiguration"`
-		Xmlns          string   `xml:"xmlns:tds,attr"`
-		InterfaceToken string   `xml:"tds:InterfaceToken"`
-		Enabled        bool     `xml:"tds:Enabled"`
-	}
-
-	req := setZeroConfigurationRequest{
-		Xmlns:          deviceNamespace,
-		InterfaceToken: interfaceToken,
-		Enabled:        enabled,
-	}
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("SetZeroConfiguration failed: %w", err)
-	}
-
-	return nil
-}
-
-// GetDynamicDNS gets the dynamic DNS settings from a device.
-func (s *SecurityService) GetDynamicDNS(ctx context.Context) (*DynamicDNSInformation, error) {
-	type getDynamicDNSRequest struct {
-		XMLName xml.Name `xml:"tds:GetDynamicDNS"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-	}
-
-	type getDynamicDNSResponse struct {
-		XMLName               xml.Name `xml:"GetDynamicDNSResponse"`
-		DynamicDNSInformation struct {
-			Type string `xml:"Type"`
-			Name string `xml:"Name"`
-			TTL  string `xml:"TTL"`
-		} `xml:"DynamicDNSInformation"`
-	}
-
-	req := getDynamicDNSRequest{
-		Xmlns: deviceNamespace,
-	}
-
-	var resp getDynamicDNSResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
-		return nil, fmt.Errorf("GetDynamicDNS failed: %w", err)
-	}
-
-	return &DynamicDNSInformation{
-		Type: DynamicDNSType(resp.DynamicDNSInformation.Type),
-		Name: resp.DynamicDNSInformation.Name,
-		// TTL would need duration parsing
-	}, nil
-}
-
-// SetDynamicDNS sets the dynamic DNS settings on a device.
-func (s *SecurityService) SetDynamicDNS(ctx context.Context, dnsType DynamicDNSType, name string) error {
-	type setDynamicDNSRequest struct {
-		XMLName xml.Name       `xml:"tds:SetDynamicDNS"`
-		Xmlns   string         `xml:"xmlns:tds,attr"`
-		Type    DynamicDNSType `xml:"tds:Type"`
-		Name    string         `xml:"tds:Name,omitempty"`
-	}
-
-	req := setDynamicDNSRequest{
-		Xmlns: deviceNamespace,
-		Type:  dnsType,
-		Name:  name,
-	}
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("SetDynamicDNS failed: %w", err)
-	}
-
-	return nil
-}
-
-// GetPasswordComplexityConfiguration retrieves the current password complexity configuration settings.
-func (s *SecurityService) GetPasswordComplexityConfiguration(ctx context.Context) (*PasswordComplexityConfiguration, error) {
+func (s *Service) GetPasswordComplexityConfiguration(ctx context.Context) (*PasswordComplexityConfiguration, error) {
 	type getPasswordComplexityConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetPasswordComplexityConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -367,11 +262,11 @@ func (s *SecurityService) GetPasswordComplexityConfiguration(ctx context.Context
 	}
 
 	req := getPasswordComplexityConfigurationRequest{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	var resp getPasswordComplexityConfigurationResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPasswordComplexityConfiguration failed: %w", err)
 	}
 
@@ -386,7 +281,7 @@ func (s *SecurityService) GetPasswordComplexityConfiguration(ctx context.Context
 }
 
 // SetPasswordComplexityConfiguration allows setting of the password complexity configuration.
-func (s *SecurityService) SetPasswordComplexityConfiguration(
+func (s *Service) SetPasswordComplexityConfiguration(
 	ctx context.Context,
 	config *PasswordComplexityConfiguration,
 ) error {
@@ -402,7 +297,7 @@ func (s *SecurityService) SetPasswordComplexityConfiguration(
 	}
 
 	req := setPasswordComplexityConfigurationRequest{
-		Xmlns:                     deviceNamespace,
+		Xmlns:                     device.Namespace,
 		MinLen:                    config.MinLen,
 		Uppercase:                 config.Uppercase,
 		Number:                    config.Number,
@@ -411,7 +306,7 @@ func (s *SecurityService) SetPasswordComplexityConfiguration(
 		PolicyConfigurationLocked: config.PolicyConfigurationLocked,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetPasswordComplexityConfiguration failed: %w", err)
 	}
 
@@ -419,7 +314,7 @@ func (s *SecurityService) SetPasswordComplexityConfiguration(
 }
 
 // GetPasswordHistoryConfiguration retrieves the current password history configuration settings.
-func (s *SecurityService) GetPasswordHistoryConfiguration(ctx context.Context) (*PasswordHistoryConfiguration, error) {
+func (s *Service) GetPasswordHistoryConfiguration(ctx context.Context) (*PasswordHistoryConfiguration, error) {
 	type getPasswordHistoryConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetPasswordHistoryConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -432,11 +327,11 @@ func (s *SecurityService) GetPasswordHistoryConfiguration(ctx context.Context) (
 	}
 
 	req := getPasswordHistoryConfigurationRequest{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	var resp getPasswordHistoryConfigurationResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPasswordHistoryConfiguration failed: %w", err)
 	}
 
@@ -447,7 +342,7 @@ func (s *SecurityService) GetPasswordHistoryConfiguration(ctx context.Context) (
 }
 
 // SetPasswordHistoryConfiguration allows setting of the password history configuration.
-func (s *SecurityService) SetPasswordHistoryConfiguration(ctx context.Context, config *PasswordHistoryConfiguration) error {
+func (s *Service) SetPasswordHistoryConfiguration(ctx context.Context, config *PasswordHistoryConfiguration) error {
 	type setPasswordHistoryConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:SetPasswordHistoryConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -456,12 +351,12 @@ func (s *SecurityService) SetPasswordHistoryConfiguration(ctx context.Context, c
 	}
 
 	req := setPasswordHistoryConfigurationRequest{
-		Xmlns:   deviceNamespace,
+		Xmlns:   device.Namespace,
 		Enabled: config.Enabled,
 		Length:  config.Length,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetPasswordHistoryConfiguration failed: %w", err)
 	}
 
@@ -469,7 +364,7 @@ func (s *SecurityService) SetPasswordHistoryConfiguration(ctx context.Context, c
 }
 
 // GetAuthFailureWarningConfiguration retrieves the current authentication failure warning configuration.
-func (s *SecurityService) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthFailureWarningConfiguration, error) {
+func (s *Service) GetAuthFailureWarningConfiguration(ctx context.Context) (*AuthFailureWarningConfiguration, error) {
 	type getAuthFailureWarningConfigurationRequest struct {
 		XMLName xml.Name `xml:"tds:GetAuthFailureWarningConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -483,11 +378,11 @@ func (s *SecurityService) GetAuthFailureWarningConfiguration(ctx context.Context
 	}
 
 	req := getAuthFailureWarningConfigurationRequest{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	var resp getAuthFailureWarningConfigurationResponse
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAuthFailureWarningConfiguration failed: %w", err)
 	}
 
@@ -499,7 +394,7 @@ func (s *SecurityService) GetAuthFailureWarningConfiguration(ctx context.Context
 }
 
 // SetAuthFailureWarningConfiguration allows setting of the authentication failure warning configuration.
-func (s *SecurityService) SetAuthFailureWarningConfiguration(
+func (s *Service) SetAuthFailureWarningConfiguration(
 	ctx context.Context,
 	config *AuthFailureWarningConfiguration,
 ) error {
@@ -512,13 +407,13 @@ func (s *SecurityService) SetAuthFailureWarningConfiguration(
 	}
 
 	req := setAuthFailureWarningConfigurationRequest{
-		Xmlns:           deviceNamespace,
+		Xmlns:           device.Namespace,
 		Enabled:         config.Enabled,
 		MonitorPeriod:   config.MonitorPeriod,
 		MaxAuthFailures: config.MaxAuthFailures,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetAuthFailureWarningConfiguration failed: %w", err)
 	}
 
@@ -526,7 +421,7 @@ func (s *SecurityService) SetAuthFailureWarningConfiguration(
 }
 
 // GetCertificates retrieves certificates. ONVIF Specification: GetCertificates operation.
-func (s *DeviceService) GetCertificates(ctx context.Context) ([]*Certificate, error) {
+func (s *Service) GetCertificates(ctx context.Context) ([]*Certificate, error) {
 	type GetCertificatesBody struct {
 		XMLName xml.Name `xml:"tds:GetCertificates"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -538,11 +433,11 @@ func (s *DeviceService) GetCertificates(ctx context.Context) ([]*Certificate, er
 	}
 
 	request := GetCertificatesBody{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 	var response GetCertificatesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificates failed: %w", err)
 	}
 
@@ -550,7 +445,7 @@ func (s *DeviceService) GetCertificates(ctx context.Context) ([]*Certificate, er
 }
 
 // GetCACertificates retrieves CA certificates. ONVIF Specification: GetCACertificates operation.
-func (s *DeviceService) GetCACertificates(ctx context.Context) ([]*Certificate, error) {
+func (s *Service) GetCACertificates(ctx context.Context) ([]*Certificate, error) {
 	type GetCACertificatesBody struct {
 		XMLName xml.Name `xml:"tds:GetCACertificates"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -562,11 +457,11 @@ func (s *DeviceService) GetCACertificates(ctx context.Context) ([]*Certificate, 
 	}
 
 	request := GetCACertificatesBody{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 	var response GetCACertificatesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCACertificates failed: %w", err)
 	}
 
@@ -574,7 +469,7 @@ func (s *DeviceService) GetCACertificates(ctx context.Context) ([]*Certificate, 
 }
 
 // LoadCertificates loads certificates. ONVIF Specification: LoadCertificates operation.
-func (s *DeviceService) LoadCertificates(ctx context.Context, certificates []*Certificate) error {
+func (s *Service) LoadCertificates(ctx context.Context, certificates []*Certificate) error {
 	type LoadCertificatesBody struct {
 		XMLName     xml.Name       `xml:"tds:LoadCertificates"`
 		Xmlns       string         `xml:"xmlns:tds,attr"`
@@ -586,12 +481,12 @@ func (s *DeviceService) LoadCertificates(ctx context.Context, certificates []*Ce
 	}
 
 	request := LoadCertificatesBody{
-		Xmlns:       deviceNamespace,
+		Xmlns:       device.Namespace,
 		Certificate: certificates,
 	}
 	var response LoadCertificatesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificates failed: %w", err)
 	}
 
@@ -599,7 +494,7 @@ func (s *DeviceService) LoadCertificates(ctx context.Context, certificates []*Ce
 }
 
 // LoadCACertificates loads CA certificates. ONVIF Specification: LoadCACertificates operation.
-func (s *DeviceService) LoadCACertificates(ctx context.Context, certificates []*Certificate) error {
+func (s *Service) LoadCACertificates(ctx context.Context, certificates []*Certificate) error {
 	type LoadCACertificatesBody struct {
 		XMLName     xml.Name       `xml:"tds:LoadCACertificates"`
 		Xmlns       string         `xml:"xmlns:tds,attr"`
@@ -611,12 +506,12 @@ func (s *DeviceService) LoadCACertificates(ctx context.Context, certificates []*
 	}
 
 	request := LoadCACertificatesBody{
-		Xmlns:       deviceNamespace,
+		Xmlns:       device.Namespace,
 		Certificate: certificates,
 	}
 	var response LoadCACertificatesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("LoadCACertificates failed: %w", err)
 	}
 
@@ -624,7 +519,7 @@ func (s *DeviceService) LoadCACertificates(ctx context.Context, certificates []*
 }
 
 // CreateCertificate creates a certificate. ONVIF Specification: CreateCertificate operation.
-func (s *DeviceService) CreateCertificate(
+func (s *Service) CreateCertificate(
 	ctx context.Context,
 	certificateID, subject, validNotBefore, validNotAfter string,
 ) (*Certificate, error) {
@@ -643,7 +538,7 @@ func (s *DeviceService) CreateCertificate(
 	}
 
 	request := CreateCertificateBody{
-		Xmlns:          deviceNamespace,
+		Xmlns:          device.Namespace,
 		CertificateID:  certificateID,
 		Subject:        subject,
 		ValidNotBefore: validNotBefore,
@@ -651,7 +546,7 @@ func (s *DeviceService) CreateCertificate(
 	}
 	var response CreateCertificateResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("CreateCertificate failed: %w", err)
 	}
 
@@ -659,7 +554,7 @@ func (s *DeviceService) CreateCertificate(
 }
 
 // DeleteCertificates deletes certificates. ONVIF Specification: DeleteCertificates operation.
-func (s *DeviceService) DeleteCertificates(ctx context.Context, certificateIDs []string) error {
+func (s *Service) DeleteCertificates(ctx context.Context, certificateIDs []string) error {
 	type DeleteCertificatesBody struct {
 		XMLName       xml.Name `xml:"tds:DeleteCertificates"`
 		Xmlns         string   `xml:"xmlns:tds,attr"`
@@ -671,12 +566,12 @@ func (s *DeviceService) DeleteCertificates(ctx context.Context, certificateIDs [
 	}
 
 	request := DeleteCertificatesBody{
-		Xmlns:         deviceNamespace,
+		Xmlns:         device.Namespace,
 		CertificateID: certificateIDs,
 	}
 	var response DeleteCertificatesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("DeleteCertificates failed: %w", err)
 	}
 
@@ -685,7 +580,7 @@ func (s *DeviceService) DeleteCertificates(ctx context.Context, certificateIDs [
 
 // GetCertificateInformation retrieves certificate information.
 // ONVIF Specification: GetCertificateInformation operation.
-func (s *DeviceService) GetCertificateInformation(ctx context.Context, certificateID string) (*CertificateInformation, error) {
+func (s *Service) GetCertificateInformation(ctx context.Context, certificateID string) (*CertificateInformation, error) {
 	type GetCertificateInformationBody struct {
 		XMLName       xml.Name `xml:"tds:GetCertificateInformation"`
 		Xmlns         string   `xml:"xmlns:tds,attr"`
@@ -698,12 +593,12 @@ func (s *DeviceService) GetCertificateInformation(ctx context.Context, certifica
 	}
 
 	request := GetCertificateInformationBody{
-		Xmlns:         deviceNamespace,
+		Xmlns:         device.Namespace,
 		CertificateID: certificateID,
 	}
 	var response GetCertificateInformationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificateInformation failed: %w", err)
 	}
 
@@ -711,7 +606,7 @@ func (s *DeviceService) GetCertificateInformation(ctx context.Context, certifica
 }
 
 // GetCertificatesStatus retrieves certificate status. ONVIF Specification: GetCertificatesStatus operation.
-func (s *DeviceService) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatus, error) {
+func (s *Service) GetCertificatesStatus(ctx context.Context) ([]*CertificateStatus, error) {
 	type GetCertificatesStatusBody struct {
 		XMLName xml.Name `xml:"tds:GetCertificatesStatus"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -723,11 +618,11 @@ func (s *DeviceService) GetCertificatesStatus(ctx context.Context) ([]*Certifica
 	}
 
 	request := GetCertificatesStatusBody{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 	var response GetCertificatesStatusResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificatesStatus failed: %w", err)
 	}
 
@@ -735,7 +630,7 @@ func (s *DeviceService) GetCertificatesStatus(ctx context.Context) ([]*Certifica
 }
 
 // SetCertificatesStatus sets certificate status. ONVIF Specification: SetCertificatesStatus operation.
-func (s *DeviceService) SetCertificatesStatus(ctx context.Context, statuses []*CertificateStatus) error {
+func (s *Service) SetCertificatesStatus(ctx context.Context, statuses []*CertificateStatus) error {
 	type SetCertificatesStatusBody struct {
 		XMLName           xml.Name             `xml:"tds:SetCertificatesStatus"`
 		Xmlns             string               `xml:"xmlns:tds,attr"`
@@ -747,12 +642,12 @@ func (s *DeviceService) SetCertificatesStatus(ctx context.Context, statuses []*C
 	}
 
 	request := SetCertificatesStatusBody{
-		Xmlns:             deviceNamespace,
+		Xmlns:             device.Namespace,
 		CertificateStatus: statuses,
 	}
 	var response SetCertificatesStatusResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetCertificatesStatus failed: %w", err)
 	}
 
@@ -760,7 +655,7 @@ func (s *DeviceService) SetCertificatesStatus(ctx context.Context, statuses []*C
 }
 
 // GetPkcs10Request retrieves a PKCS10 certificate request. ONVIF Specification: GetPkcs10Request operation.
-func (s *DeviceService) GetPkcs10Request(
+func (s *Service) GetPkcs10Request(
 	ctx context.Context,
 	certificateID, subject string,
 	attributes *BinaryData,
@@ -779,14 +674,14 @@ func (s *DeviceService) GetPkcs10Request(
 	}
 
 	request := GetPkcs10RequestBody{
-		Xmlns:         deviceNamespace,
+		Xmlns:         device.Namespace,
 		CertificateID: certificateID,
 		Subject:       subject,
 		Attributes:    attributes,
 	}
 	var response GetPkcs10RequestResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetPkcs10Request failed: %w", err)
 	}
 
@@ -795,7 +690,7 @@ func (s *DeviceService) GetPkcs10Request(
 
 // LoadCertificateWithPrivateKey loads a certificate with its private key.
 // ONVIF Specification: LoadCertificateWithPrivateKey operation.
-func (s *DeviceService) LoadCertificateWithPrivateKey(
+func (s *Service) LoadCertificateWithPrivateKey(
 	ctx context.Context,
 	certificates []*Certificate,
 	privateKey []*BinaryData,
@@ -816,7 +711,7 @@ func (s *DeviceService) LoadCertificateWithPrivateKey(
 	}
 
 	request := LoadCertificateWithPrivateKeyBody{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 
 	// Build certificate with private key array
@@ -837,7 +732,7 @@ func (s *DeviceService) LoadCertificateWithPrivateKey(
 
 	var response LoadCertificateWithPrivateKeyResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificateWithPrivateKey failed: %w", err)
 	}
 
@@ -846,7 +741,7 @@ func (s *DeviceService) LoadCertificateWithPrivateKey(
 
 // GetClientCertificateMode retrieves the client certificate mode.
 // ONVIF Specification: GetClientCertificateMode operation.
-func (s *DeviceService) GetClientCertificateMode(ctx context.Context) (bool, error) {
+func (s *Service) GetClientCertificateMode(ctx context.Context) (bool, error) {
 	type GetClientCertificateModeBody struct {
 		XMLName xml.Name `xml:"tds:GetClientCertificateMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -858,11 +753,11 @@ func (s *DeviceService) GetClientCertificateMode(ctx context.Context) (bool, err
 	}
 
 	request := GetClientCertificateModeBody{
-		Xmlns: deviceNamespace,
+		Xmlns: device.Namespace,
 	}
 	var response GetClientCertificateModeResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return false, fmt.Errorf("GetClientCertificateMode failed: %w", err)
 	}
 
@@ -870,7 +765,7 @@ func (s *DeviceService) GetClientCertificateMode(ctx context.Context) (bool, err
 }
 
 // SetClientCertificateMode sets the client certificate mode. ONVIF Specification: SetClientCertificateMode operation.
-func (s *DeviceService) SetClientCertificateMode(ctx context.Context, enabled bool) error {
+func (s *Service) SetClientCertificateMode(ctx context.Context, enabled bool) error {
 	type SetClientCertificateModeBody struct {
 		XMLName xml.Name `xml:"tds:SetClientCertificateMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -882,12 +777,12 @@ func (s *DeviceService) SetClientCertificateMode(ctx context.Context, enabled bo
 	}
 
 	request := SetClientCertificateModeBody{
-		Xmlns:   deviceNamespace,
+		Xmlns:   device.Namespace,
 		Enabled: enabled,
 	}
 	var response SetClientCertificateModeResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetClientCertificateMode failed: %w", err)
 	}
 

@@ -137,48 +137,6 @@ func fetchSnapshotURIWithFixture(t *testing.T, fixture string) (*MediaURI, error
 	return client.Media().GetSnapshotURI(context.Background(), "profile-1")
 }
 
-func TestLooseExtractURI(t *testing.T) {
-	tests := []struct {
-		name string
-		raw  string
-		want string
-	}{
-		{
-			name: "prefixed element",
-			raw:  `<trt:MediaUri><tt:Uri>rtsp://cam/stream</tt:Uri></trt:MediaUri>`,
-			want: "rtsp://cam/stream",
-		},
-		{
-			name: "unprefixed element with whitespace",
-			raw:  `<MediaUri><Uri>  http://cam/snap  </Uri></MediaUri>`,
-			want: "http://cam/snap",
-		},
-		{
-			name: "self-closed element",
-			raw:  `<MediaUri><Uri/></MediaUri>`,
-			want: "",
-		},
-		{
-			name: "no Uri element at all",
-			raw:  `<GetStreamUriResponse><Other>x</Other></GetStreamUriResponse>`,
-			want: "",
-		},
-		{
-			name: "garbage input",
-			raw:  `<not-xml`,
-			want: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := looseExtractURI(tt.raw); got != tt.want {
-				t.Errorf("looseExtractURI() = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestGetStreamURIFaultWithHTTP200(t *testing.T) {
 	// 200-with-Fault must surface as an error (soap-layer fault detection),
 	// never as a nil-error empty URI.

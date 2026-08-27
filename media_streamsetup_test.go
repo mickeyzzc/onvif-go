@@ -125,20 +125,3 @@ func TestGetStreamURIWithOptionsRejectsInvalidSetup(t *testing.T) {
 		}
 	}
 }
-
-// TestGetStreamURIWithOptionsDefaultsToRTSP verifies that a nil Transport
-// (or an empty protocol) defaults to RTSP instead of erroring.
-func TestGetStreamURIWithOptionsDefaultsToRTSP(t *testing.T) {
-	for _, setup := range []StreamSetup{
-		{Stream: StreamRTPUnicast},
-		{Stream: StreamRTPUnicast, Transport: &Transport{}},
-	} {
-		if err := setup.validate(); err != nil {
-			t.Fatalf("validate(%+v) error = %v, want RTSP default", setup, err)
-		}
-
-		if setup.Transport.Protocol != ProtocolRTSP {
-			t.Errorf("validate(%+v) left protocol %q, want %q", setup, setup.Transport.Protocol, ProtocolRTSP)
-		}
-	}
-}

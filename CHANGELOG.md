@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- **v2 module path and package split** (#20/#21): the module is now
+  `github.com/mickeyzzc/onvif-go/v2`. The client split into domain packages
+  (`device`, `security`, `deviceio`, `media`, `ptz`, `imaging`, `events`) +
+  a shared `types` leaf, unlocked by the new `internal/api.Caller`
+  interface; the root package keeps `Client`, auth strategy, download, and
+  v1-compatibility aliases so most v1 source compiles after the import-path
+  swap. Facade accessors are unchanged; services are long-lived instances
+  (the capabilities cache lives on `device.Service`); v1 per-service
+  endpoint setters collapse into `Client.SetServiceEndpoint`.
 - **Architecture-mapped file layout** (no API change — the root package
   stays one package, which is what the facade API requires): domain-sibling
   files merged into their leads (`device_additional`→`device`,

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/server/soap"
+	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
 // New creates a new ONVIF server with the given configuration.

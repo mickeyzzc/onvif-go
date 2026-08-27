@@ -1,13 +1,16 @@
-package onvif
+package ptz
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // PTZ service namespace.
-const ptzNamespace = "http://www.onvif.org/ver20/ptz/wsdl"
+const Namespace = "http://www.onvif.org/ver20/ptz/wsdl"
 
 // ptzPanTiltXML is a shared type for PTZ pan/tilt XML serialization.
 type ptzPanTiltXML struct {
@@ -66,26 +69,10 @@ func convertToPTZSpeedXML(s *PTZSpeed) *ptzSpeedXML {
 	return result
 }
 
-// ContinuousMove starts continuous PTZ movement.
-// getEndpoint returns the service endpoint, falling back to the device
-// endpoint when Initialize has not resolved (or the device does not
-// advertise) a service-specific address. The read is lock-guarded: the
-// client may be initialized concurrently with calls (issue #12).
-func (s *PTZService) getEndpoint() string {
-	s.client.mu.RLock()
-	defer s.client.mu.RUnlock()
-
-	if s.client.ptzEndpoint != "" {
-		return s.client.ptzEndpoint
-	}
-
-	return s.client.endpoint
-}
-
-func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, velocity *PTZSpeed, timeout *string) error {
-	endpoint := s.getEndpoint()
+func (s *Service) ContinuousMove(ctx context.Context, profileToken string, velocity *PTZSpeed, timeout *string) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type ContinuousMove struct {
@@ -97,13 +84,13 @@ func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, ve
 	}
 
 	req := ContinuousMove{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 		Velocity:     convertToPTZSpeedXML(velocity),
 		Timeout:      timeout,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("ContinuousMove failed: %w", err)
 	}
 
@@ -111,10 +98,10 @@ func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, ve
 }
 
 // AbsoluteMove moves PTZ to an absolute position.
-func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, position *PTZVector, speed *PTZSpeed) error {
-	endpoint := s.getEndpoint()
+func (s *Service) AbsoluteMove(ctx context.Context, profileToken string, position *PTZVector, speed *PTZSpeed) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type AbsoluteMove struct {
@@ -126,13 +113,13 @@ func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, posi
 	}
 
 	req := AbsoluteMove{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 		Position:     convertToPTZVectorXML(position),
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AbsoluteMove failed: %w", err)
 	}
 
@@ -140,10 +127,10 @@ func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, posi
 }
 
 // RelativeMove moves PTZ relative to current position.
-func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, translation *PTZVector, speed *PTZSpeed) error {
-	endpoint := s.getEndpoint()
+func (s *Service) RelativeMove(ctx context.Context, profileToken string, translation *PTZVector, speed *PTZSpeed) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type RelativeMove struct {
@@ -155,13 +142,13 @@ func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, tran
 	}
 
 	req := RelativeMove{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 		Translation:  convertToPTZVectorXML(translation),
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RelativeMove failed: %w", err)
 	}
 
@@ -169,10 +156,10 @@ func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, tran
 }
 
 // Stop stops PTZ movement.
-func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoom bool) error {
-	endpoint := s.getEndpoint()
+func (s *Service) Stop(ctx context.Context, profileToken string, panTilt, zoom bool) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type Stop struct {
@@ -184,7 +171,7 @@ func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoo
 	}
 
 	req := Stop{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
@@ -195,7 +182,7 @@ func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoo
 		req.Zoom = &zoom
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
 	}
 
@@ -203,10 +190,10 @@ func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoo
 }
 
 // GetStatus retrieves PTZ status.
-func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZStatus, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetStatus(ctx context.Context, profileToken string) (*PTZStatus, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetStatus struct {
@@ -239,13 +226,13 @@ func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZSt
 	}
 
 	req := GetStatus{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetStatusResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)
 	}
 
@@ -281,10 +268,10 @@ func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZSt
 }
 
 // GetPresets retrieves PTZ presets.
-func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PTZPreset, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetPresets(ctx context.Context, profileToken string) ([]*PTZPreset, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetPresets struct {
@@ -313,13 +300,13 @@ func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PT
 	}
 
 	req := GetPresets{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetPresetsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPresets failed: %w", err)
 	}
 
@@ -354,10 +341,10 @@ func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PT
 }
 
 // GotoPreset moves PTZ to a preset position.
-func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken string, speed *PTZSpeed) error {
-	endpoint := s.getEndpoint()
+func (s *Service) GotoPreset(ctx context.Context, profileToken, presetToken string, speed *PTZSpeed) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type GotoPreset struct {
@@ -369,13 +356,13 @@ func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken s
 	}
 
 	req := GotoPreset{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 		PresetToken:  presetToken,
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoPreset failed: %w", err)
 	}
 
@@ -383,10 +370,10 @@ func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken s
 }
 
 // SetPreset sets a preset position.
-func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, presetToken string) (string, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) SetPreset(ctx context.Context, profileToken, presetName, presetToken string) (string, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return "", ErrServiceNotSupported
+		return "", types.ErrServiceNotSupported
 	}
 
 	type SetPreset struct {
@@ -403,7 +390,7 @@ func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, pr
 	}
 
 	req := SetPreset{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
@@ -416,7 +403,7 @@ func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, pr
 
 	var resp SetPresetResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SetPreset failed: %w", err)
 	}
 
@@ -424,10 +411,10 @@ func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, pr
 }
 
 // RemovePreset removes a preset.
-func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken string) error {
-	endpoint := s.getEndpoint()
+func (s *Service) RemovePreset(ctx context.Context, profileToken, presetToken string) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type RemovePreset struct {
@@ -438,12 +425,12 @@ func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken
 	}
 
 	req := RemovePreset{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 		PresetToken:  presetToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePreset failed: %w", err)
 	}
 
@@ -451,10 +438,10 @@ func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken
 }
 
 // GotoHomePosition moves PTZ to home position.
-func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, speed *PTZSpeed) error {
-	endpoint := s.getEndpoint()
+func (s *Service) GotoHomePosition(ctx context.Context, profileToken string, speed *PTZSpeed) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type GotoHomePosition struct {
@@ -465,12 +452,12 @@ func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, 
 	}
 
 	req := GotoHomePosition{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoHomePosition failed: %w", err)
 	}
 
@@ -478,10 +465,10 @@ func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, 
 }
 
 // SetHomePosition sets the current position as home position.
-func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) error {
-	endpoint := s.getEndpoint()
+func (s *Service) SetHomePosition(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type SetHomePosition struct {
@@ -491,11 +478,11 @@ func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) e
 	}
 
 	req := SetHomePosition{
-		Xmlns:        ptzNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHomePosition failed: %w", err)
 	}
 
@@ -503,10 +490,10 @@ func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) e
 }
 
 // GetConfiguration retrieves PTZ configuration.
-func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken string) (*PTZConfiguration, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetConfiguration(ctx context.Context, configurationToken string) (*PTZConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetConfiguration struct {
@@ -526,13 +513,13 @@ func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken st
 	}
 
 	req := GetConfiguration{
-		Xmlns:                 ptzNamespace,
+		Xmlns:                 Namespace,
 		PTZConfigurationToken: configurationToken,
 	}
 
 	var resp GetConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfiguration failed: %w", err)
 	}
 
@@ -545,10 +532,10 @@ func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken st
 }
 
 // GetConfigurations retrieves all PTZ configurations.
-func (s *PTZService) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetConfigurations struct {
@@ -567,12 +554,12 @@ func (s *PTZService) GetConfigurations(ctx context.Context) ([]*PTZConfiguration
 	}
 
 	req := GetConfigurations{
-		Xmlns: ptzNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfigurations failed: %w", err)
 	}
 

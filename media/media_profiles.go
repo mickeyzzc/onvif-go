@@ -1,15 +1,19 @@
 // Media profiles: listing, parsing, and main/sub stream selection.
 
-package onvif
+package media
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
 	"strings"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/ptz"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
-const mediaNamespace = "http://www.onvif.org/ver10/media/wsdl"
+const Namespace = "http://www.onvif.org/ver10/media/wsdl"
 
 // Request/response types hoisted from method bodies.
 
@@ -131,6 +135,7 @@ type GetProfilesResponse struct {
 				BitrateLimit     int `xml:"BitrateLimit"`
 			} `xml:"RateControl"`
 		} `xml:"VideoEncoderConfiguration"`
+
 		PTZConfiguration *struct {
 			Token     string `xml:"token,attr"`
 			Name      string `xml:"Name"`
@@ -146,7 +151,8 @@ type GetServiceCapabilities struct {
 }
 
 type GetServiceCapabilitiesResponse struct {
-	XMLName      xml.Name `xml:"GetServiceCapabilitiesResponse"`
+	XMLName xml.Name `xml:"GetServiceCapabilitiesResponse"`
+
 	Capabilities struct {
 		SnapshotURI         bool `xml:"SnapshotUri,attr"`
 		Rotation            bool `xml:"Rotation,attr"`
@@ -157,6 +163,7 @@ type GetServiceCapabilitiesResponse struct {
 		ProfileCapabilities *struct {
 			MaximumNumberOfProfiles int `xml:"MaximumNumberOfProfiles,attr"`
 		} `xml:"ProfileCapabilities"`
+
 		StreamingCapabilities *struct {
 			RTPMulticast bool `xml:"RTPMulticast,attr"`
 			RTPTCP       bool `xml:"RTP_TCP,attr"`
@@ -240,27 +247,16 @@ type SetVideoAnalyticsConfiguration struct {
 	ForcePersistence bool `xml:"trt:ForcePersistence"`
 }
 
-func (s *MediaService) getMediaEndpoint() string {
-	s.client.mu.RLock()
-	defer s.client.mu.RUnlock()
-
-	if s.client.mediaEndpoint != "" {
-		return s.client.mediaEndpoint
-	}
-
-	return s.client.endpoint
-}
-
-func (s *MediaService) GetProfiles(ctx context.Context) ([]*Profile, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetProfiles(ctx context.Context) ([]*Profile, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetProfiles{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetProfilesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfiles failed: %w", err)
 	}
 
@@ -279,7 +275,7 @@ func (s *MediaService) GetProfiles(ctx context.Context) ([]*Profile, error) {
 				SourceToken: p.VideoSourceConfiguration.SourceToken,
 			}
 			if p.VideoSourceConfiguration.Bounds != nil {
-				profile.VideoSourceConfiguration.Bounds = &IntRectangle{
+				profile.VideoSourceConfiguration.Bounds = &types.IntRectangle{
 					X:      p.VideoSourceConfiguration.Bounds.X,
 					Y:      p.VideoSourceConfiguration.Bounds.Y,
 					Width:  p.VideoSourceConfiguration.Bounds.Width,
@@ -312,7 +308,7 @@ func (s *MediaService) GetProfiles(ctx context.Context) ([]*Profile, error) {
 		}
 
 		if p.PTZConfiguration != nil {
-			profile.PTZConfiguration = &PTZConfiguration{
+			profile.PTZConfiguration = &ptz.PTZConfiguration{
 				Token:     p.PTZConfiguration.Token,
 				Name:      p.PTZConfiguration.Name,
 				UseCount:  p.PTZConfiguration.UseCount,
@@ -326,11 +322,11 @@ func (s *MediaService) GetProfiles(ctx context.Context) ([]*Profile, error) {
 	return profiles, nil
 }
 
-func (s *MediaService) CreateProfile(ctx context.Context, name, token string) (*Profile, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) CreateProfile(ctx context.Context, name, token string) (*Profile, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := CreateProfile{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 		Name:  name,
 	}
 	if token != "" {
@@ -339,7 +335,7 @@ func (s *MediaService) CreateProfile(ctx context.Context, name, token string) (*
 
 	var resp CreateProfileResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateProfile failed: %w", err)
 	}
 
@@ -349,31 +345,31 @@ func (s *MediaService) CreateProfile(ctx context.Context, name, token string) (*
 	}, nil
 }
 
-func (s *MediaService) DeleteProfile(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) DeleteProfile(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := DeleteProfile{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteProfile failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetMediaServiceCapabilities(ctx context.Context) (*MediaServiceCapabilities, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetMediaServiceCapabilities(ctx context.Context) (*MediaServiceCapabilities, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetServiceCapabilities{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetServiceCapabilitiesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMediaServiceCapabilities failed: %w", err)
 	}
 
@@ -399,17 +395,17 @@ func (s *MediaService) GetMediaServiceCapabilities(ctx context.Context) (*MediaS
 	return caps, nil
 }
 
-func (s *MediaService) GetProfile(ctx context.Context, profileToken string) (*Profile, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetProfile(ctx context.Context, profileToken string) (*Profile, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetProfile{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetProfileResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfile failed: %w", err)
 	}
 
@@ -419,71 +415,71 @@ func (s *MediaService) GetProfile(ctx context.Context, profileToken string) (*Pr
 	}, nil
 }
 
-func (s *MediaService) SetProfile(ctx context.Context, profile *Profile) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetProfile(ctx context.Context, profile *Profile) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetProfile{
-		Xmlns:  mediaNamespace,
+		Xmlns:  Namespace,
 		Xmlnst: "http://www.onvif.org/ver10/schema",
 	}
 	req.Profile.Token = profile.Token
 	req.Profile.Name = profile.Name
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetProfile failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddPTZConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddPTZConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddPTZConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddPTZConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemovePTZConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemovePTZConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemovePTZConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePTZConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetCompatiblePTZConfigurations(ctx context.Context, profileToken string) ([]*PTZConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetCompatiblePTZConfigurations(ctx context.Context, profileToken string) ([]*ptz.PTZConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatiblePTZConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatiblePTZConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatiblePTZConfigurations failed: %w", err)
 	}
 
-	configs := make([]*PTZConfiguration, len(resp.Configurations))
+	configs := make([]*ptz.PTZConfiguration, len(resp.Configurations))
 	for i, cfg := range resp.Configurations {
-		configs[i] = &PTZConfiguration{
+		configs[i] = &ptz.PTZConfiguration{
 			Token:     cfg.Token,
 			Name:      cfg.Name,
 			UseCount:  cfg.UseCount,
@@ -494,16 +490,16 @@ func (s *MediaService) GetCompatiblePTZConfigurations(ctx context.Context, profi
 	return configs, nil
 }
 
-func (s *MediaService) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoAnalyticsConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*VideoAnalyticsConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoAnalyticsConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetVideoAnalyticsConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurations failed: %w", err)
 	}
 
@@ -519,20 +515,20 @@ func (s *MediaService) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*
 	return configs, nil
 }
 
-func (s *MediaService) GetVideoAnalyticsConfiguration(
+func (s *Service) GetVideoAnalyticsConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*VideoAnalyticsConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoAnalyticsConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetVideoAnalyticsConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfiguration failed: %w", err)
 	}
 
@@ -543,17 +539,17 @@ func (s *MediaService) GetVideoAnalyticsConfiguration(
 	}, nil
 }
 
-func (s *MediaService) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, profileToken string) ([]*VideoAnalyticsConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetCompatibleVideoAnalyticsConfigurations(ctx context.Context, profileToken string) ([]*VideoAnalyticsConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleVideoAnalyticsConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleVideoAnalyticsConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoAnalyticsConfigurations failed: %w", err)
 	}
 
@@ -569,11 +565,11 @@ func (s *MediaService) GetCompatibleVideoAnalyticsConfigurations(ctx context.Con
 	return configs, nil
 }
 
-func (s *MediaService) SetVideoAnalyticsConfiguration(ctx context.Context, config *VideoAnalyticsConfiguration, forcePersistence bool) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetVideoAnalyticsConfiguration(ctx context.Context, config *VideoAnalyticsConfiguration, forcePersistence bool) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetVideoAnalyticsConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -582,21 +578,21 @@ func (s *MediaService) SetVideoAnalyticsConfiguration(ctx context.Context, confi
 	req.Configuration.Name = config.Name
 	req.Configuration.UseCount = config.UseCount
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoAnalyticsConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetVideoAnalyticsConfigurationOptions(
+func (s *Service) GetVideoAnalyticsConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*VideoAnalyticsConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoAnalyticsConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -607,38 +603,38 @@ func (s *MediaService) GetVideoAnalyticsConfigurationOptions(
 
 	var resp GetVideoAnalyticsConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurationOptions failed: %w", err)
 	}
 
 	return &VideoAnalyticsConfigurationOptions{}, nil
 }
 
-func (s *MediaService) AddVideoAnalyticsConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddVideoAnalyticsConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddVideoAnalyticsConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoAnalyticsConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveVideoAnalyticsConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveVideoAnalyticsConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoAnalyticsConfiguration failed: %w", err)
 	}
 

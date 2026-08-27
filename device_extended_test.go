@@ -205,7 +205,7 @@ func TestGetRelayOutputs(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	relays, err := client.Device().GetRelayOutputs(ctx)
+	relays, err := client.DeviceIO().GetRelayOutputs(ctx)
 	if err != nil {
 		t.Fatalf("GetRelayOutputs failed: %v", err)
 	}
@@ -242,7 +242,7 @@ func TestSetRelayOutputSettings(t *testing.T) {
 		IdleState: RelayIdleStateClosed,
 	}
 
-	err = client.Device().SetRelayOutputSettings(ctx, "relay1", settings)
+	err = client.DeviceIO().SetRelayOutputSettings(ctx, "relay1", settings)
 	if err != nil {
 		t.Fatalf("SetRelayOutputSettings failed: %v", err)
 	}
@@ -260,13 +260,13 @@ func TestSetRelayOutputState(t *testing.T) {
 	ctx := context.Background()
 
 	// Test active state
-	err = client.Device().SetRelayOutputState(ctx, "relay1", RelayLogicalStateActive)
+	err = client.DeviceIO().SetRelayOutputState(ctx, "relay1", RelayLogicalStateActive)
 	if err != nil {
 		t.Fatalf("SetRelayOutputState (active) failed: %v", err)
 	}
 
 	// Test inactive state
-	err = client.Device().SetRelayOutputState(ctx, "relay1", RelayLogicalStateInactive)
+	err = client.DeviceIO().SetRelayOutputState(ctx, "relay1", RelayLogicalStateInactive)
 	if err != nil {
 		t.Fatalf("SetRelayOutputState (inactive) failed: %v", err)
 	}

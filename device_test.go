@@ -272,7 +272,7 @@ func TestGetUsers(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	users, err := client.Device().GetUsers(context.Background())
+	users, err := client.Security().GetUsers(context.Background())
 	if err != nil {
 		t.Fatalf("GetUsers() error = %v", err)
 	}
@@ -312,7 +312,7 @@ func TestCreateUsers(t *testing.T) {
 		},
 	}
 
-	err = client.Device().CreateUsers(context.Background(), users)
+	err = client.Security().CreateUsers(context.Background(), users)
 	if err != nil {
 		t.Fatalf("CreateUsers() error = %v", err)
 	}
@@ -336,7 +336,7 @@ func TestDeleteUsers(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	err = client.Device().DeleteUsers(context.Background(), []string{"testuser"})
+	err = client.Security().DeleteUsers(context.Background(), []string{"testuser"})
 	if err != nil {
 		t.Fatalf("DeleteUsers() error = %v", err)
 	}
@@ -458,7 +458,7 @@ func TestGetServiceCapabilities(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	caps, err := client.Device().GetServiceCapabilities(context.Background())
+	caps, err := client.Device().GetDeviceServiceCapabilities(context.Background())
 	if err != nil {
 		t.Fatalf("GetServiceCapabilities() error = %v", err)
 	}
@@ -980,7 +980,7 @@ func TestGetAccessPolicy(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	policy, err := client.Device().GetAccessPolicy(ctx)
+	policy, err := client.Security().GetAccessPolicy(ctx)
 	if err != nil {
 		t.Fatalf("GetAccessPolicy failed: %v", err)
 	}
@@ -1011,7 +1011,7 @@ func TestSetAccessPolicy(t *testing.T) {
 		},
 	}
 
-	err = client.Device().SetAccessPolicy(ctx, policy)
+	err = client.Security().SetAccessPolicy(ctx, policy)
 	if err != nil {
 		t.Fatalf("SetAccessPolicy failed: %v", err)
 	}

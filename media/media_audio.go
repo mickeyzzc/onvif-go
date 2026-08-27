@@ -1,9 +1,13 @@
-package onvif
+package media
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/ptz"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // Request/response types hoisted from method bodies.
@@ -389,9 +393,10 @@ type GetMetadataConfigurationOptionsResponse struct {
 type GetMetadataConfigurationResponse struct {
 	XMLName       xml.Name `xml:"GetMetadataConfigurationResponse"`
 	Configuration struct {
-		Token     string `xml:"token,attr"`
-		Name      string `xml:"Name"`
-		UseCount  int    `xml:"UseCount"`
+		Token    string `xml:"token,attr"`
+		Name     string `xml:"Name"`
+		UseCount int    `xml:"UseCount"`
+
 		PTZStatus *struct {
 			Status   bool `xml:"Status"`
 			Position bool `xml:"Position"`
@@ -526,9 +531,10 @@ type SetMetadataConfiguration struct {
 	Xmlns         string   `xml:"xmlns:trt,attr"`
 	Xmlnst        string   `xml:"xmlns:tt,attr"`
 	Configuration struct {
-		Token     string `xml:"token,attr"`
-		Name      string `xml:"tt:Name"`
-		UseCount  int    `xml:"tt:UseCount"`
+		Token    string `xml:"token,attr"`
+		Name     string `xml:"tt:Name"`
+		UseCount int    `xml:"tt:UseCount"`
+
 		PTZStatus *struct {
 			Status   bool `xml:"tt:Status"`
 			Position bool `xml:"tt:Position"`
@@ -550,16 +556,16 @@ type SetMetadataConfiguration struct {
 	ForcePersistence bool `xml:"trt:ForcePersistence"`
 }
 
-func (s *MediaService) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioSources(ctx context.Context) ([]*AudioSource, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioSources{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetAudioSourcesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSources failed: %w", err)
 	}
 
@@ -574,16 +580,16 @@ func (s *MediaService) GetAudioSources(ctx context.Context) ([]*AudioSource, err
 	return sources, nil
 }
 
-func (s *MediaService) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioOutputs{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetAudioOutputsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputs failed: %w", err)
 	}
 
@@ -597,20 +603,20 @@ func (s *MediaService) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, err
 	return outputs, nil
 }
 
-func (s *MediaService) GetAudioEncoderConfiguration(
+func (s *Service) GetAudioEncoderConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioEncoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioEncoderConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetAudioEncoderConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfiguration failed: %w", err)
 	}
 
@@ -630,7 +636,7 @@ func (s *MediaService) GetAudioEncoderConfiguration(
 			AutoStart: resp.Configuration.Multicast.AutoStart,
 		}
 		if resp.Configuration.Multicast.Address != nil {
-			config.Multicast.Address = &IPAddress{
+			config.Multicast.Address = &types.IPAddress{
 				Type:        resp.Configuration.Multicast.Address.Type,
 				IPv4Address: resp.Configuration.Multicast.Address.IPv4Address,
 				IPv6Address: resp.Configuration.Multicast.Address.IPv6Address,
@@ -641,15 +647,15 @@ func (s *MediaService) GetAudioEncoderConfiguration(
 	return config, nil
 }
 
-func (s *MediaService) SetAudioEncoderConfiguration(
+func (s *Service) SetAudioEncoderConfiguration(
 	ctx context.Context,
 	config *AudioEncoderConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetAudioEncoderConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -693,27 +699,27 @@ func (s *MediaService) SetAudioEncoderConfiguration(
 		}
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioEncoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetMetadataConfiguration(
+func (s *Service) GetMetadataConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*MetadataConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetMetadataConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetMetadataConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfiguration failed: %w", err)
 	}
 
@@ -725,7 +731,7 @@ func (s *MediaService) GetMetadataConfiguration(
 	}
 
 	if resp.Configuration.PTZStatus != nil {
-		config.PTZStatus = &PTZFilter{
+		config.PTZStatus = &ptz.PTZFilter{
 			Status:   resp.Configuration.PTZStatus.Status,
 			Position: resp.Configuration.PTZStatus.Position,
 		}
@@ -742,7 +748,7 @@ func (s *MediaService) GetMetadataConfiguration(
 			AutoStart: resp.Configuration.Multicast.AutoStart,
 		}
 		if resp.Configuration.Multicast.Address != nil {
-			config.Multicast.Address = &IPAddress{
+			config.Multicast.Address = &types.IPAddress{
 				Type:        resp.Configuration.Multicast.Address.Type,
 				IPv4Address: resp.Configuration.Multicast.Address.IPv4Address,
 				IPv6Address: resp.Configuration.Multicast.Address.IPv6Address,
@@ -753,15 +759,15 @@ func (s *MediaService) GetMetadataConfiguration(
 	return config, nil
 }
 
-func (s *MediaService) SetMetadataConfiguration(
+func (s *Service) SetMetadataConfiguration(
 	ctx context.Context,
 	config *MetadataConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetMetadataConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -813,114 +819,114 @@ func (s *MediaService) SetMetadataConfiguration(
 		}
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetMetadataConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddAudioEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddAudioEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddAudioEncoderConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioEncoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveAudioEncoderConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveAudioEncoderConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveAudioEncoderConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioEncoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddAudioSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddAudioSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddAudioSourceConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioSourceConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveAudioSourceConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveAudioSourceConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveAudioSourceConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioSourceConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddMetadataConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddMetadataConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddMetadataConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddMetadataConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveMetadataConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveMetadataConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveMetadataConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveMetadataConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetAudioEncoderConfigurationOptions(
+func (s *Service) GetAudioEncoderConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*AudioEncoderConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioEncoderConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -931,7 +937,7 @@ func (s *MediaService) GetAudioEncoderConfigurationOptions(
 
 	var resp GetAudioEncoderConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurationOptions failed: %w", err)
 	}
 
@@ -942,14 +948,14 @@ func (s *MediaService) GetAudioEncoderConfigurationOptions(
 	}, nil
 }
 
-func (s *MediaService) GetMetadataConfigurationOptions(
+func (s *Service) GetMetadataConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*MetadataConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetMetadataConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -960,13 +966,13 @@ func (s *MediaService) GetMetadataConfigurationOptions(
 
 	var resp GetMetadataConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurationOptions failed: %w", err)
 	}
 
 	options := &MetadataConfigurationOptions{}
 	if resp.Options.PTZStatusFilterOptions != nil {
-		options.PTZStatusFilterOptions = &PTZFilter{
+		options.PTZStatusFilterOptions = &ptz.PTZFilter{
 			Status:   resp.Options.PTZStatusFilterOptions.Status,
 			Position: resp.Options.PTZStatusFilterOptions.Position,
 		}
@@ -975,17 +981,17 @@ func (s *MediaService) GetMetadataConfigurationOptions(
 	return options, nil
 }
 
-func (s *MediaService) GetAudioOutputConfiguration(ctx context.Context, configurationToken string) (*AudioOutputConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioOutputConfiguration(ctx context.Context, configurationToken string) (*AudioOutputConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioOutputConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetAudioOutputConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfiguration failed: %w", err)
 	}
 
@@ -997,11 +1003,11 @@ func (s *MediaService) GetAudioOutputConfiguration(ctx context.Context, configur
 	}, nil
 }
 
-func (s *MediaService) SetAudioOutputConfiguration(ctx context.Context, config *AudioOutputConfiguration, forcePersistence bool) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetAudioOutputConfiguration(ctx context.Context, config *AudioOutputConfiguration, forcePersistence bool) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetAudioOutputConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -1011,21 +1017,21 @@ func (s *MediaService) SetAudioOutputConfiguration(ctx context.Context, config *
 	req.Configuration.UseCount = config.UseCount
 	req.Configuration.OutputToken = config.OutputToken
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioOutputConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetAudioOutputConfigurationOptions(
+func (s *Service) GetAudioOutputConfigurationOptions(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioOutputConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioOutputConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -1033,7 +1039,7 @@ func (s *MediaService) GetAudioOutputConfigurationOptions(
 
 	var resp GetAudioOutputConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurationOptions failed: %w", err)
 	}
 
@@ -1042,14 +1048,14 @@ func (s *MediaService) GetAudioOutputConfigurationOptions(
 	}, nil
 }
 
-func (s *MediaService) GetAudioDecoderConfigurationOptions(
+func (s *Service) GetAudioDecoderConfigurationOptions(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioDecoderConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioDecoderConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -1057,7 +1063,7 @@ func (s *MediaService) GetAudioDecoderConfigurationOptions(
 
 	var resp GetAudioDecoderConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurationOptions failed: %w", err)
 	}
 
@@ -1082,16 +1088,16 @@ func (s *MediaService) GetAudioDecoderConfigurationOptions(
 	return options, nil
 }
 
-func (s *MediaService) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSourceConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioSourceConfigurations(ctx context.Context) ([]*AudioSourceConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioSourceConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetAudioSourceConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurations failed: %w", err)
 	}
 
@@ -1108,16 +1114,16 @@ func (s *MediaService) GetAudioSourceConfigurations(ctx context.Context) ([]*Aud
 	return configs, nil
 }
 
-func (s *MediaService) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEncoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioEncoderConfigurations(ctx context.Context) ([]*AudioEncoderConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioEncoderConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetAudioEncoderConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurations failed: %w", err)
 	}
 
@@ -1139,7 +1145,7 @@ func (s *MediaService) GetAudioEncoderConfigurations(ctx context.Context) ([]*Au
 				AutoStart: cfg.Multicast.AutoStart,
 			}
 			if cfg.Multicast.Address != nil {
-				config.Multicast.Address = &IPAddress{
+				config.Multicast.Address = &types.IPAddress{
 					Type:        cfg.Multicast.Address.Type,
 					IPv4Address: cfg.Multicast.Address.IPv4Address,
 					IPv6Address: cfg.Multicast.Address.IPv6Address,
@@ -1153,17 +1159,17 @@ func (s *MediaService) GetAudioEncoderConfigurations(ctx context.Context) ([]*Au
 	return configs, nil
 }
 
-func (s *MediaService) GetAudioSourceConfiguration(ctx context.Context, configurationToken string) (*AudioSourceConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioSourceConfiguration(ctx context.Context, configurationToken string) (*AudioSourceConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioSourceConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetAudioSourceConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfiguration failed: %w", err)
 	}
 
@@ -1175,14 +1181,14 @@ func (s *MediaService) GetAudioSourceConfiguration(ctx context.Context, configur
 	}, nil
 }
 
-func (s *MediaService) GetAudioSourceConfigurationOptions(
+func (s *Service) GetAudioSourceConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*AudioSourceConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioSourceConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -1193,7 +1199,7 @@ func (s *MediaService) GetAudioSourceConfigurationOptions(
 
 	var resp GetAudioSourceConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurationOptions failed: %w", err)
 	}
 
@@ -1202,11 +1208,11 @@ func (s *MediaService) GetAudioSourceConfigurationOptions(
 	}, nil
 }
 
-func (s *MediaService) SetAudioSourceConfiguration(ctx context.Context, config *AudioSourceConfiguration, forcePersistence bool) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetAudioSourceConfiguration(ctx context.Context, config *AudioSourceConfiguration, forcePersistence bool) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetAudioSourceConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -1216,27 +1222,27 @@ func (s *MediaService) SetAudioSourceConfiguration(ctx context.Context, config *
 	req.Configuration.UseCount = config.UseCount
 	req.Configuration.SourceToken = config.SourceToken
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioSourceConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetCompatibleAudioEncoderConfigurations(
+func (s *Service) GetCompatibleAudioEncoderConfigurations(
 	ctx context.Context,
 	profileToken string,
 ) ([]*AudioEncoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleAudioEncoderConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleAudioEncoderConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioEncoderConfigurations failed: %w", err)
 	}
 
@@ -1255,17 +1261,17 @@ func (s *MediaService) GetCompatibleAudioEncoderConfigurations(
 	return configs, nil
 }
 
-func (s *MediaService) GetCompatibleAudioSourceConfigurations(ctx context.Context, profileToken string) ([]*AudioSourceConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetCompatibleAudioSourceConfigurations(ctx context.Context, profileToken string) ([]*AudioSourceConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleAudioSourceConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleAudioSourceConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioSourceConfigurations failed: %w", err)
 	}
 
@@ -1282,17 +1288,17 @@ func (s *MediaService) GetCompatibleAudioSourceConfigurations(ctx context.Contex
 	return configs, nil
 }
 
-func (s *MediaService) GetCompatibleMetadataConfigurations(ctx context.Context, profileToken string) ([]*MetadataConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetCompatibleMetadataConfigurations(ctx context.Context, profileToken string) ([]*MetadataConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleMetadataConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleMetadataConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleMetadataConfigurations failed: %w", err)
 	}
 
@@ -1309,17 +1315,17 @@ func (s *MediaService) GetCompatibleMetadataConfigurations(ctx context.Context, 
 	return configs, nil
 }
 
-func (s *MediaService) GetCompatibleAudioOutputConfigurations(ctx context.Context, profileToken string) ([]*AudioOutputConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetCompatibleAudioOutputConfigurations(ctx context.Context, profileToken string) ([]*AudioOutputConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleAudioOutputConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleAudioOutputConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioOutputConfigurations failed: %w", err)
 	}
 
@@ -1336,17 +1342,17 @@ func (s *MediaService) GetCompatibleAudioOutputConfigurations(ctx context.Contex
 	return configs, nil
 }
 
-func (s *MediaService) GetCompatibleAudioDecoderConfigurations(ctx context.Context, profileToken string) ([]*AudioDecoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetCompatibleAudioDecoderConfigurations(ctx context.Context, profileToken string) ([]*AudioDecoderConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleAudioDecoderConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleAudioDecoderConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioDecoderConfigurations failed: %w", err)
 	}
 
@@ -1362,16 +1368,16 @@ func (s *MediaService) GetCompatibleAudioDecoderConfigurations(ctx context.Conte
 	return configs, nil
 }
 
-func (s *MediaService) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetMetadataConfigurations(ctx context.Context) ([]*MetadataConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetMetadataConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetMetadataConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurations failed: %w", err)
 	}
 
@@ -1388,16 +1394,16 @@ func (s *MediaService) GetMetadataConfigurations(ctx context.Context) ([]*Metada
 	return configs, nil
 }
 
-func (s *MediaService) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutputConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioOutputConfigurations(ctx context.Context) ([]*AudioOutputConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioOutputConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetAudioOutputConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurations failed: %w", err)
 	}
 
@@ -1414,16 +1420,16 @@ func (s *MediaService) GetAudioOutputConfigurations(ctx context.Context) ([]*Aud
 	return configs, nil
 }
 
-func (s *MediaService) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDecoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetAudioDecoderConfigurations(ctx context.Context) ([]*AudioDecoderConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioDecoderConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetAudioDecoderConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurations failed: %w", err)
 	}
 
@@ -1439,20 +1445,20 @@ func (s *MediaService) GetAudioDecoderConfigurations(ctx context.Context) ([]*Au
 	return configs, nil
 }
 
-func (s *MediaService) GetAudioDecoderConfiguration(
+func (s *Service) GetAudioDecoderConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*AudioDecoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetAudioDecoderConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetAudioDecoderConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfiguration failed: %w", err)
 	}
 
@@ -1463,11 +1469,11 @@ func (s *MediaService) GetAudioDecoderConfiguration(
 	}, nil
 }
 
-func (s *MediaService) SetAudioDecoderConfiguration(ctx context.Context, config *AudioDecoderConfiguration, forcePersistence bool) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetAudioDecoderConfiguration(ctx context.Context, config *AudioDecoderConfiguration, forcePersistence bool) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetAudioDecoderConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -1476,69 +1482,69 @@ func (s *MediaService) SetAudioDecoderConfiguration(ctx context.Context, config 
 	req.Configuration.Name = config.Name
 	req.Configuration.UseCount = config.UseCount
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioDecoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddAudioOutputConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddAudioOutputConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddAudioOutputConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioOutputConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveAudioOutputConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveAudioOutputConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveAudioOutputConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioOutputConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddAudioDecoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddAudioDecoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddAudioDecoderConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioDecoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveAudioDecoderConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveAudioDecoderConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveAudioDecoderConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioDecoderConfiguration failed: %w", err)
 	}
 

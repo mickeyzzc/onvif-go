@@ -11,6 +11,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 )
 
 const testEventXMLHeader = `<?xml version="1.0" encoding="UTF-8"?>`
@@ -673,54 +675,6 @@ func TestGetEventBrokers(t *testing.T) {
 	}
 }
 
-func TestFormatDuration(t *testing.T) {
-	tests := []struct {
-		duration time.Duration
-		expected string
-	}{
-		{30 * time.Second, "PT30S"},
-		{60 * time.Second, "PT1M"},
-		{90 * time.Second, "PT1M30S"},
-		{5 * time.Minute, "PT5M"},
-		{65 * time.Second, "PT1M5S"},
-	}
-
-	for _, tt := range tests {
-		result := formatDuration(tt.duration)
-		if result != tt.expected {
-			t.Errorf("formatDuration(%v) = %s, expected %s", tt.duration, result, tt.expected)
-		}
-	}
-}
-
-func TestSplitSpaceSeparated(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected []string
-	}{
-		{"", nil},
-		{"mqtt", []string{"mqtt"}},
-		{"mqtt mqtts", []string{"mqtt", "mqtts"}},
-		{"  mqtt   mqtts  ", []string{"mqtt", "mqtts"}},
-		{"a b c", []string{"a", "b", "c"}},
-	}
-
-	for _, tt := range tests {
-		result := splitSpaceSeparated(tt.input)
-		if len(result) != len(tt.expected) {
-			t.Errorf("splitSpaceSeparated(%q) returned %d items, expected %d", tt.input, len(result), len(tt.expected))
-
-			continue
-		}
-
-		for i, v := range result {
-			if v != tt.expected[i] {
-				t.Errorf("splitSpaceSeparated(%q)[%d] = %q, expected %q", tt.input, i, v, tt.expected[i])
-			}
-		}
-	}
-}
-
 func TestSetEventEndpoint(t *testing.T) {
 	server := newMockEventServer()
 	defer server.Close()
@@ -731,10 +685,10 @@ func TestSetEventEndpoint(t *testing.T) {
 	}
 
 	newEndpoint := "http://192.168.1.100/onvif/events"
-	client.Events().SetEventEndpoint(newEndpoint)
+	client.SetServiceEndpoint(api.ServiceEvents, newEndpoint)
 
 	// Verify endpoint was set.
-	endpoint := client.Events().getEventEndpoint()
+	endpoint := client.EndpointFor(api.ServiceEvents)
 	if endpoint != newEndpoint {
 		t.Errorf("Expected event endpoint %s, got %s", newEndpoint, endpoint)
 	}
@@ -988,7 +942,7 @@ func TestSubscribeEventsTransientPullFailuresKeepLoopAlive(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SubscribeEvents() error = %v", err)
 	}
-	defer sub.stopLoop()
+	defer sub.Unsubscribe(context.Background())
 
 	// Two 500s then successes: the loop must survive and deliver.
 	waitFor(t, 10*time.Second, func() bool {
@@ -1044,7 +998,7 @@ func TestSubscribeEventsHandlerPanicIsolated(t *testing.T) {
 	if err != nil {
 		t.Fatalf("SubscribeEvents() error = %v", err)
 	}
-	defer sub.stopLoop()
+	defer sub.Unsubscribe(context.Background())
 
 	waitFor(t, 5*time.Second, func() bool {
 		mu.Lock()
