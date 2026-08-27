@@ -15,7 +15,7 @@ const Namespace = "http://www.onvif.org/ver20/imaging/wsdl"
 func (s *Service) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
 	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		endpoint = s.c.EndpointFor(api.ServiceImaging)
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetImagingSettings struct {
@@ -144,7 +144,7 @@ func (s *Service) SetImagingSettings(
 ) error {
 	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		endpoint = s.c.EndpointFor(api.ServiceImaging)
+		return types.ErrServiceNotSupported
 	}
 
 	type SetImagingSettings struct {
@@ -288,29 +288,38 @@ func (s *Service) SetImagingSettings(
 }
 
 // Move performs a focus move operation.
+// focusXML is the wire shape of the Move Focus element.
+type focusXML struct {
+	Absolute   *absoluteFocusXML   `xml:"Absolute,omitempty"`
+	Relative   *relativeFocusXML   `xml:"Relative,omitempty"`
+	Continuous *continuousFocusXML `xml:"Continuous,omitempty"`
+}
+
+type absoluteFocusXML struct {
+	Position float64  `xml:"Position"`
+	Speed    *float64 `xml:"Speed,omitempty"`
+}
+
+type relativeFocusXML struct {
+	Distance float64  `xml:"Distance"`
+	Speed    *float64 `xml:"Speed,omitempty"`
+}
+
+type continuousFocusXML struct {
+	Speed float64 `xml:"Speed"`
+}
+
 func (s *Service) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
 	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		endpoint = s.c.EndpointFor(api.ServiceImaging)
+		return types.ErrServiceNotSupported
 	}
 
 	type Move struct {
-		XMLName          xml.Name `xml:"timg:Move"`
-		Xmlns            string   `xml:"xmlns:timg,attr"`
-		VideoSourceToken string   `xml:"timg:VideoSourceToken"`
-		Focus            *struct {
-			Absolute *struct {
-				Position float64 `xml:"Position"`
-				Speed    float64 `xml:"Speed,omitempty"`
-			} `xml:"Absolute,omitempty"`
-			Relative *struct {
-				Distance float64 `xml:"Distance"`
-				Speed    float64 `xml:"Speed,omitempty"`
-			} `xml:"Relative,omitempty"`
-			Continuous *struct {
-				Speed float64 `xml:"Speed"`
-			} `xml:"Continuous,omitempty"`
-		} `xml:"timg:Focus"`
+		XMLName          xml.Name  `xml:"timg:Move"`
+		Xmlns            string    `xml:"xmlns:timg,attr"`
+		VideoSourceToken string    `xml:"timg:VideoSourceToken"`
+		Focus            *focusXML `xml:"timg:Focus"`
 	}
 
 	req := Move{
@@ -319,20 +328,27 @@ func (s *Service) Move(ctx context.Context, videoSourceToken string, focus *Focu
 	}
 
 	if focus != nil {
-		req.Focus = &struct {
-			Absolute *struct {
-				Position float64 `xml:"Position"`
-				Speed    float64 `xml:"Speed,omitempty"`
-			} `xml:"Absolute,omitempty"`
-			Relative *struct {
-				Distance float64 `xml:"Distance"`
-				Speed    float64 `xml:"Speed,omitempty"`
-			} `xml:"Relative,omitempty"`
-			Continuous *struct {
-				Speed float64 `xml:"Speed"`
-			} `xml:"Continuous,omitempty"`
-		}{}
-		// Implementation would add specific focus move types here
+		wire := &focusXML{}
+
+		if focus.Absolute != nil {
+			wire.Absolute = &absoluteFocusXML{Position: focus.Absolute.Position}
+			if focus.Absolute.Speed != nil {
+				wire.Absolute.Speed = focus.Absolute.Speed
+			}
+		}
+
+		if focus.Relative != nil {
+			wire.Relative = &relativeFocusXML{Distance: focus.Relative.Distance}
+			if focus.Relative.Speed != nil {
+				wire.Relative.Speed = focus.Relative.Speed
+			}
+		}
+
+		if focus.Continuous != nil {
+			wire.Continuous = &continuousFocusXML{Speed: focus.Continuous.Speed}
+		}
+
+		req.Focus = wire
 	}
 
 	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
@@ -342,9 +358,28 @@ func (s *Service) Move(ctx context.Context, videoSourceToken string, focus *Focu
 	return nil
 }
 
-// FocusMove represents a focus move operation (placeholder for focus move types).
+// FocusMove selects a focus move operation: exactly one variant is set.
 type FocusMove struct {
-	// Can be extended with Absolute, Relative, Continuous move types
+	Absolute   *AbsoluteFocus
+	Relative   *RelativeFocus
+	Continuous *ContinuousFocus
+}
+
+// AbsoluteFocus moves focus to an absolute position (0..1).
+type AbsoluteFocus struct {
+	Position float64
+	Speed    *float64
+}
+
+// RelativeFocus moves focus by a relative distance.
+type RelativeFocus struct {
+	Distance float64
+	Speed    *float64
+}
+
+// ContinuousFocus starts continuous focus at the given speed.
+type ContinuousFocus struct {
+	Speed float64
 }
 
 // GetOptions retrieves imaging options for a video source.
@@ -382,7 +417,12 @@ func (s *Service) GetOptions(ctx context.Context, videoSourceToken string) (*Ima
 				Min float64 `xml:"Min"`
 				Max float64 `xml:"Max"`
 			} `xml:"Contrast"`
-			Exposure *struct {
+			Sharpness *struct {
+				Min float64 `xml:"Min"`
+				Max float64 `xml:"Max"`
+			} `xml:"Sharpness"`
+			IrCutFilterModes []string `xml:"IrCutFilterModes"`
+			Exposure         *struct {
 				Mode            []string `xml:"Mode"`
 				Priority        []string `xml:"Priority"`
 				MinExposureTime struct {
@@ -401,6 +441,24 @@ func (s *Service) GetOptions(ctx context.Context, videoSourceToken string) (*Ima
 					Max float64 `xml:"Max"`
 				} `xml:"DefaultSpeed"`
 			} `xml:"Focus"`
+			WideDynamicRange *struct {
+				Mode  []string `xml:"Mode"`
+				Level struct {
+					Min float64 `xml:"Min"`
+					Max float64 `xml:"Max"`
+				} `xml:"Level"`
+			} `xml:"WideDynamicRange"`
+			WhiteBalance *struct {
+				Mode   []string `xml:"Mode"`
+				YrGain struct {
+					Min float64 `xml:"Min"`
+					Max float64 `xml:"Max"`
+				} `xml:"YrGain"`
+				YbGain struct {
+					Min float64 `xml:"Min"`
+					Max float64 `xml:"Max"`
+				} `xml:"YbGain"`
+			} `xml:"WhiteBalance"`
 		} `xml:"ImagingOptions"`
 	}
 
@@ -435,6 +493,58 @@ func (s *Service) GetOptions(ctx context.Context, videoSourceToken string) (*Ima
 		options.Contrast = &types.FloatRange{
 			Min: resp.ImagingOptions.Contrast.Min,
 			Max: resp.ImagingOptions.Contrast.Max,
+		}
+	}
+
+	if resp.ImagingOptions.Sharpness != nil {
+		options.Sharpness = &types.FloatRange{
+			Min: resp.ImagingOptions.Sharpness.Min,
+			Max: resp.ImagingOptions.Sharpness.Max,
+		}
+	}
+
+	options.IrCutFilterModes = resp.ImagingOptions.IrCutFilterModes
+
+	if resp.ImagingOptions.BacklightCompensation != nil {
+		options.BacklightCompensation = &BacklightCompensationOptions{
+			Mode: resp.ImagingOptions.BacklightCompensation.Mode,
+			Level: &types.FloatRange{
+				Min: resp.ImagingOptions.BacklightCompensation.Level.Min,
+				Max: resp.ImagingOptions.BacklightCompensation.Level.Max,
+			},
+		}
+	}
+
+	if resp.ImagingOptions.Exposure != nil {
+		options.Exposure = &ExposureOptions{
+			Mode:     resp.ImagingOptions.Exposure.Mode,
+			Priority: resp.ImagingOptions.Exposure.Priority,
+		}
+	}
+
+	if resp.ImagingOptions.Focus != nil {
+		options.Focus = &FocusOptions{
+			AutoFocusModes: resp.ImagingOptions.Focus.AutoFocusModes,
+			DefaultSpeed: &types.FloatRange{
+				Min: resp.ImagingOptions.Focus.DefaultSpeed.Min,
+				Max: resp.ImagingOptions.Focus.DefaultSpeed.Max,
+			},
+		}
+	}
+
+	if resp.ImagingOptions.WideDynamicRange != nil {
+		options.WideDynamicRange = &WideDynamicRangeOptions{
+			Mode: resp.ImagingOptions.WideDynamicRange.Mode,
+			Level: &types.FloatRange{
+				Min: resp.ImagingOptions.WideDynamicRange.Level.Min,
+				Max: resp.ImagingOptions.WideDynamicRange.Level.Max,
+			},
+		}
+	}
+
+	if resp.ImagingOptions.WhiteBalance != nil {
+		options.WhiteBalance = &WhiteBalanceOptions{
+			Mode: resp.ImagingOptions.WhiteBalance.Mode,
 		}
 	}
 

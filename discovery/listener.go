@@ -43,6 +43,11 @@ type Listener struct {
 
 	readTick time.Duration
 
+	// conn is the live multicast socket (nil before Start binds it);
+	// Stop closes it so a blocked ReadFromUDP wakes immediately
+	// instead of waiting out the read-deadline tick.
+	conn     *net.UDPConn
+	connMu   sync.Mutex
 	stopOnce sync.Once
 	stopped  chan struct{}
 	done     chan struct{}
@@ -96,6 +101,20 @@ func (l *Listener) Start(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("discovery listener: failed to listen on multicast address: %w", err)
 	}
+
+	l.connMu.Lock()
+	l.conn = conn
+	l.connMu.Unlock()
+
+	// Cover the Stop-before-bind race (Stop found no socket to close).
+	select {
+	case <-l.stopped:
+		_ = conn.Close()
+
+		return nil
+	default:
+	}
+
 	defer func() {
 		_ = conn.Close()
 	}()
@@ -164,11 +183,20 @@ func (l *Listener) dispatch(device *Device) {
 	l.handler(device)
 }
 
-// Stop stops the listener and unblocks Start. Idempotent; a stopped listener
-// cannot be restarted (create a new one).
+// Stop stops the listener and unblocks Start immediately (the multicast
+// socket is closed, interrupting any blocked read). Idempotent; a stopped
+// listener cannot be restarted (create a new one).
 func (l *Listener) Stop() {
 	l.stopOnce.Do(func() {
 		close(l.stopped)
+
+		l.connMu.Lock()
+		conn := l.conn
+		l.connMu.Unlock()
+
+		if conn != nil {
+			_ = conn.Close()
+		}
 	})
 }
 

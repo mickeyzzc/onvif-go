@@ -45,6 +45,32 @@ go test -v -run RealCamera ./...
 离场后依然存活。`cmd/onvif-diagnostics`（见 [CLI 工具](cli.md)）就是为产出
 这些抓包而生的。
 
+## 测试驱动开发
+
+本库以 TDD 方式开发：**先写失败的测试再写实现**——修 bug 先写复现
+用例，新服务操作先锁定线上契约（设备会分支判断的请求字段 + 需要
+解析的响应字段）再实现。本轮补测就挖出四个被"看起来能跑"的代码
+掩盖的真实缺陷（`imaging.Move` 从未编码焦点参数、`imaging.GetOptions`
+静默丢弃大部分选项组、死端点回落守卫、`Stop` 要等满一个读超时周期
+才能解除阻塞）。
+
+约定：
+
+- 服务操作测试统一走 `internal/testutil.FakeCaller`——与真实传输完全
+  相同的 `xml.Unmarshal` 解码路径、无套接字、微秒级延迟。只有 HTTP
+  行为本身是被测对象时才用 `httptest`。
+- **所有 channel 等待必须有界**：`waitFor`/`mustReceive` 辅助在 5 秒
+  内判失败——死锁必须表现为测试失败，绝不能变成 CI 超时。
+- 后台循环（`events.EventStream`、`discovery.Listener`、
+  `server/discovery.Responder`）必须**立即**感知取消，而不是等下一个
+  定时周期——Stop 路径关闭底层套接字打断阻塞读；测试断言 `Done()`
+  及时关闭。
+- 时间靠注入而不是睡眠：生命周期测试通过选项传入短时长；时间戳
+  断言用相对 `time.Now()` 渲染夹具（时区无关）。
+- 时长预算：一个表驱动用例微秒级；包级全套件保持个位数秒（`events`
+  里唯一的 1 秒退避恢复测试是刻意的例外）。CI 以 `-race` 跑同一套
+  件——注册表和共享状态必须加锁保护（`server/soap.Handler` 是范例）。
+
 ## 新测试的约定
 
 - 优先用 `httptest` server 而非手写 mock transport；按请求体内容分类请求，

@@ -40,9 +40,13 @@ Closes #123
   exemptions require a written rationale in `.golangci.yml`.
 - **Formatting** is gofumpt + goimports (enforced by `make fmt` and checked
   in CI).
-- **Tests**: behavioral tests run against `httptest` mock devices — see
-  [docs/en/testing.md](docs/en/testing.md) for the layers and conventions.
-  Real-camera tests are environment-gated and never run in CI.
+- **Tests are written first (TDD)**: a bug fix lands with the reproducing
+  test, a new service operation with the wire-contract test. Behavioral
+  tests run against `httptest` mock devices or the in-memory
+  `internal/testutil.FakeCaller` — see
+  [docs/en/testing.md](docs/en/testing.md) for the layers, conventions,
+  bounded-wait/deadlock rules, and CI timing budgets. Real-camera tests
+  are environment-gated and never run in CI.
 - **Zero third-party dependencies** in the library module (stdlib only).
   This is a deliberate constraint; propose changes accordingly.
 - Go 1.26; standard Go idioms, self-documenting names, comments where the

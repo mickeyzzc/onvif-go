@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Comprehensive TDD test backfill** (repo-wide): in-package suites for
+  the domain services (`device`, `media`, `ptz`, `imaging`, `security`)
+  through the new `internal/testutil.FakeCaller` (exact transport decode
+  path, no sockets); full `events` coverage (service ops + the managed
+  `EventStream` lifecycle: delivery, renewal, panic isolation,
+  cancellation, renewal-failure termination, idle throttling, transient
+  error recovery); `server/simulator` in-package suite (stream
+  lifecycle, JPEG snapshot caching, PTZ ops + completion timers,
+  imaging round-trip); `server/discovery` lifecycle edges;
+  `server/soap` message helpers; and the `testing` capture/golden
+  infrastructure. TDD conventions documented in
+  `docs/{en,zh}/testing.md`.
+
+### Fixed
+- `server/soap.Handler`: registering handlers while serving was an
+  unsynchronized map access (data race under `-race`) — the handler map
+  is now RWMutex-guarded.
+- `imaging.Move` never encoded its focus parameters (`FocusMove` was an
+  empty placeholder): `FocusMove`/`AbsoluteFocus`/`RelativeFocus`/
+  `ContinuousFocus` are real types now and reach the wire.
+- `imaging.GetOptions` silently dropped every option group except
+  Brightness/ColorSaturation/Contrast — full decode + mapping
+  (BacklightCompensation, Exposure, Focus, WDR, WhiteBalance,
+  IrCutFilterModes, Sharpness).
+- Imaging endpoint guards were a dead no-op retry; they now return
+  `types.ErrServiceNotSupported` like PTZ.
+- `discovery.Listener.Stop` and `server/discovery.Responder.Stop` took
+  up to one read-deadline tick (5s) to unblock the read loop — both now
+  close the multicast socket for immediate shutdown (with the
+  Stop-before-bind race covered), and `Responder.Start` validates its
+  interface synchronously instead of swallowing the error in the loop
+  goroutine.
+
 ## [v2.0.0-rc1] - 2026-08-27
 
 The v2 release candidate: module path `/v2`, client domain-package
