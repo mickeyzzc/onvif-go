@@ -677,10 +677,13 @@ type IPv6Configuration struct {
 	DHCP   bool
 }
 
-// PrefixedIPv4Address represents an IPv4 address with prefix.
+// PrefixedIPv4Address represents an IPv4 address with prefix. Netmask is a
+// dotted-decimal convenience derived from PrefixLength (e.g. "255.255.255.0"
+// for 24) so consumers do not each reimplement the conversion.
 type PrefixedIPv4Address struct {
 	Address      string
 	PrefixLength int
+	Netmask      string
 }
 
 // PrefixedIPv6Address represents an IPv6 address with prefix.

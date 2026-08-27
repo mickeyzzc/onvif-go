@@ -496,6 +496,7 @@ func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInt
 				ni.IPv4.Config.Manual = append(ni.IPv4.Config.Manual, PrefixedIPv4Address{
 					Address:      m.Address,
 					PrefixLength: m.PrefixLength,
+					Netmask:      NetmaskFromPrefixLength(m.PrefixLength),
 				})
 			}
 		}

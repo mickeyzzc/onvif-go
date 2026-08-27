@@ -39,7 +39,9 @@ func buildIPAddressFilterRequest(filter *IPAddressFilter) ipAddressFilterRequest
 	if len(filter.IPv4Address) > 0 {
 		req.IPv4Address = make([]prefixedIPv4AddressXML, 0, len(filter.IPv4Address))
 		for _, addr := range filter.IPv4Address {
-			req.IPv4Address = append(req.IPv4Address, prefixedIPv4AddressXML(addr))
+			req.IPv4Address = append(req.IPv4Address, prefixedIPv4AddressXML{
+				Address: addr.Address, PrefixLength: addr.PrefixLength,
+			})
 		}
 	}
 
@@ -160,7 +162,10 @@ func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFil
 	if len(resp.IPAddressFilter.IPv4Address) > 0 {
 		filter.IPv4Address = make([]PrefixedIPv4Address, 0, len(resp.IPAddressFilter.IPv4Address))
 		for _, addr := range resp.IPAddressFilter.IPv4Address {
-			filter.IPv4Address = append(filter.IPv4Address, PrefixedIPv4Address(addr))
+			filter.IPv4Address = append(filter.IPv4Address, PrefixedIPv4Address{
+				Address: addr.Address, PrefixLength: addr.PrefixLength,
+				Netmask: NetmaskFromPrefixLength(addr.PrefixLength),
+			})
 		}
 	}
 
