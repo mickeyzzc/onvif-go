@@ -1,19 +1,14 @@
 package onvif
 
 import (
-	"context"
-	"crypto/md5" //nolint:gosec // MD5 used for ONVIF digest authentication
-	"crypto/rand"
-	"encoding/hex"
+	"context" //nolint:gosec // MD5 used for ONVIF digest authentication
 	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
+
+	"github.com/mickeyzzc/onvif-go/internal/httpdigest"
 )
 
 // downloadStatusError marks a download failure caused by a specific HTTP
@@ -139,10 +134,10 @@ func (c *Client) downloadWithDigestAuth(ctx context.Context, downloadURL string)
 
 	// Create a custom HTTP client for digest auth
 	digestClient := &http.Client{
-		Transport: &digestAuthTransport{
-			transport: tr,
-			username:  username,
-			password:  password,
+		Transport: &httpdigest.Transport{
+			Transport: tr,
+			Username:  username,
+			Password:  password,
 		},
 		Timeout: DefaultTimeout,
 	}
@@ -196,128 +191,4 @@ func (c *Client) downloadWithDigestAuth(ctx context.Context, downloadURL string)
 	}
 
 	return data, nil
-}
-
-// digestAuthTransport implements digest authentication for HTTP transport.
-type digestAuthTransport struct {
-	transport *http.Transport
-	username  string
-	password  string
-	nc        int
-	ncMu      sync.Mutex // Protects nc field from concurrent access
-}
-
-// RoundTrip implements http.RoundTripper with digest auth support.
-func (d *digestAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	// First request without auth to get the challenge
-	resp, err := d.transport.RoundTrip(req)
-	if err != nil {
-		return resp, fmt.Errorf("transport round trip failed: %w", err)
-	}
-
-	// If we get 401, handle digest auth challenge
-	if resp.StatusCode == http.StatusUnauthorized {
-		// Read the WWW-Authenticate header
-		authHeader := resp.Header.Get("WWW-Authenticate")
-		if strings.Contains(authHeader, "Digest") {
-			// Parse digest challenge and create auth header
-			authHeaderValue := d.createDigestAuthHeader(req, authHeader)
-
-			// Create new request with auth header
-			newReq := req.Clone(req.Context())
-			newReq.Header.Set("Authorization", authHeaderValue)
-
-			// Retry with auth
-			resp, err = d.transport.RoundTrip(newReq)
-			if err != nil {
-				return resp, fmt.Errorf("transport round trip with auth failed: %w", err)
-			}
-
-			return resp, nil
-		}
-	}
-
-	return resp, nil
-}
-
-// createDigestAuthHeader creates a digest auth header from the challenge.
-func (d *digestAuthTransport) createDigestAuthHeader(req *http.Request, authHeader string) string {
-	// Simple digest auth implementation - parse challenge and create response
-	// This is a basic implementation that handles most ONVIF cameras
-
-	// Extract digest parameters from WWW-Authenticate header
-	realm := extractParam(authHeader, "realm")
-	nonce := extractParam(authHeader, "nonce")
-	qop := extractParam(authHeader, "qop")
-	uri := req.URL.Path
-	if req.URL.RawQuery != "" {
-		uri += "?" + req.URL.RawQuery
-	}
-
-	// Generate response hash
-	ha1 := md5Hash(d.username + ":" + realm + ":" + d.password)
-
-	method := req.Method
-	ha2 := md5Hash(method + ":" + uri)
-
-	// Increment nonce count atomically to prevent race conditions
-	// HTTP transports must be safe for concurrent use
-	d.ncMu.Lock()
-	d.nc++
-	nc := d.nc
-	d.ncMu.Unlock()
-	ncStr := fmt.Sprintf("%08x", nc)
-	cnonce := generateNonce()
-
-	var responseStr string
-	if qop == "auth" {
-		responseStr = md5Hash(ha1 + ":" + nonce + ":" + ncStr + ":" + cnonce + ":auth:" + ha2)
-	} else {
-		responseStr = md5Hash(ha1 + ":" + nonce + ":" + ha2)
-	}
-
-	// Build Authorization header
-	authHeaderValue := fmt.Sprintf(`Digest username=%q, realm=%q, nonce=%q, uri=%q, response=%q`,
-		d.username, realm, nonce, uri, responseStr)
-
-	if qop == "auth" {
-		authHeaderValue += fmt.Sprintf(`, opaque=%q, qop=%s, nc=%s, cnonce=%q`,
-			extractParam(authHeader, "opaque"), qop, ncStr, cnonce)
-	}
-
-	return authHeaderValue
-}
-
-// Helper functions for digest auth.
-func extractParam(authHeader, param string) string {
-	prefix := param + `="`
-	idx := strings.Index(authHeader, prefix)
-	if idx == -1 {
-		return ""
-	}
-	start := idx + len(prefix)
-	end := strings.Index(authHeader[start:], `"`)
-	if end == -1 {
-		return ""
-	}
-
-	return authHeader[start : start+end]
-}
-
-func md5Hash(s string) string {
-	h := md5.New() //nolint:gosec // MD5 required for ONVIF digest auth
-	h.Write([]byte(s))
-
-	return hex.EncodeToString(h.Sum(nil))
-}
-
-// generateNonce generates a cryptographically secure random nonce for digest authentication.
-func generateNonce() string {
-	bytes := make([]byte, NonceSize)
-	if _, err := rand.Read(bytes); err != nil {
-		// Fallback to time-based nonce if crypto/rand fails (shouldn't happen)
-		return strconv.FormatInt(time.Now().UnixNano(), 10)
-	}
-
-	return hex.EncodeToString(bytes)
 }

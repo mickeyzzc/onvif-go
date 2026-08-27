@@ -5,29 +5,63 @@ onvif-go 是一个零第三方依赖的 Go 库，用于与 ONVIF 设备通信，
 
 ## 分层
 
+```mermaid
+flowchart TD
+    subgraph tools["cmd/ · examples/"]
+        clis["辅助 CLI 与可运行示例"]
+    end
+
+    subgraph rootpkg["根包 — Client"]
+        facades["服务门面<br/>Device · Media · PTZ · Imaging<br/>Events · DeviceIO · Security"]
+        dispatcher["鉴权调度器 Client.call<br/>梯队 + sticky 记忆"]
+        state["共享状态（互斥锁保护）<br/>凭据 · 时钟偏差 ·<br/>能力缓存 · 服务端点"]
+    end
+
+    subgraph internals["internal/"]
+        soap["internal/soap<br/>信封构建/解析 · WS-Security ·<br/>Fault 检测 · 鉴权模式"]
+        digest["internal/httpdigest<br/>HTTP Digest RoundTripper<br/>（快照下载）"]
+    end
+
+    subgraph disc["discovery/ — 自包含，不依赖根包与 internal/"]
+        discbox["主动探测 · 被动监听 ·<br/>定向 HTTP 探测 · 后处理"]
+    end
+
+    subgraph testbed["server/ · testing/ · testdata/captures/"]
+        sim["虚拟相机 · mock server · 真机 fixture"]
+    end
+
+    clis --> facades
+    facades --> dispatcher
+    dispatcher --> state
+    dispatcher --> soap
+    dispatcher --> digest
+    sim --> soap
 ```
-┌────────────────────────────────────────────────────────────┐
-│  cmd/            辅助 CLI（discover、diagnostics 等）        │
-│  examples/       可运行示例                                  │
-├────────────────────────────────────────────────────────────┤
-│  Client（根包）                                              │
-│  ├─ 服务门面：Device() Media() PTZ() Imaging()              │
-│  │   Events() DeviceIO() Security()                        │
-│  ├─ 鉴权调度器：Client.call（梯队 + sticky 记忆）           │
-│  └─ 共享状态：凭据、时钟偏差、能力缓存、服务端点             │
-│     （全部由互斥锁保护，issue #12）                          │
-├──────────────────────┬─────────────────────────────────────┤
-│  internal/soap/      │  discovery/                          │
-│  传输层：信封构建/    │  主动探测、被动监听、定向 HTTP        │
-│  解析、WS-Security   │  探测、后处理（过滤/Scopes/补全）。   │
-│  头、Fault 检测、    │  自包含：不依赖根包。                 │
-│  鉴权模式            │                                      │
-├──────────────────────┴─────────────────────────────────────┤
-│  server/          虚拟 ONVIF 摄像头（模拟器）               │
-│  testing/         mock server、抓包回放、golden 文件        │
-│  testdata/captures/  真机 SOAP 报文回归 fixture            │
-└────────────────────────────────────────────────────────────┘
-```
+
+## 文件地图
+
+根包刻意保持为单一 Go 包——门面 API（`client.Media().GetProfiles(ctx)`）
+只有在服务类型与其方法同包时才成立——因此架构由文件布局来表达：
+
+| 文件 | 职责 |
+|---|---|
+| `client.go` | `Client`、函数式选项、单一调用调度器、端点/XAddr 修复 |
+| `auth.go` | 鉴权策略（模式、梯队记忆）、时钟偏差测量、`DiagnoseAuth` |
+| `capabilities.go` | 能力缓存（single-flight + 弱设备降级） |
+| `services.go` | 七个服务门面类型及其访问器 |
+| `errors.go` | 包级哨兵错误与 `ONVIFError` |
+| `types.go` | 共享 ONVIF 数据类型 |
+| `device.go` | 设备身份、能力、scope、用户、杂项 `tds` 操作 |
+| `device_mgmt.go` | 系统日期/时间、DNS/NTP、网络接口与网关 |
+| `device_security.go` | 用户/远程用户、访问策略、证书 |
+| `device_storage.go`、`device_wifi.go` | 存储与 WiFi 子系统 |
+| `deviceio.go` | 继电器输出、数字 I/O |
+| `media_profiles.go` | profile 列表/解析 + 主/子码流选择 |
+| `media_stream.go` | 流与快照 URI、`StreamSetup` 传输选择 |
+| `media_encoder.go`、`media_audio.go`、`media_osd.go` | 编码、音频、OSD 配置 |
+| `ptz.go`、`imaging.go` | PTZ 与成像服务 |
+| `event.go` | 原始 PullPoint 原语 + 托管订阅循环 |
+| `download.go` | 快照/媒体文件下载（basic + digest） |
 
 ## 服务门面模型
 

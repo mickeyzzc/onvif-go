@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Architecture-mapped file layout** (no API change — the root package
+  stays one package, which is what the facade API requires): domain-sibling
+  files merged into their leads (`device_additional`→`device`,
+  `device_network_config`→`device_mgmt` (from `device_extended`),
+  `device_certificates`→`device_security`, `media_profile_select`→
+  `media_profiles`, `event_managed`→`event`), diagnostics/cache files
+  renamed to `auth.go`/`capabilities.go`, and the HTTP Digest transport
+  extracted to `internal/httpdigest` (27 → 22 source files; test files
+  consolidated to match).
+- **Documentation diagrams are now mermaid** instead of ASCII box art, with
+  a root-package file map added to the architecture guide (en/zh).
+
 ### Added
 - **Bilingual documentation set**: topic guides under `docs/{en,zh}/`
   (architecture, authentication, discovery, media, events, concurrency,
