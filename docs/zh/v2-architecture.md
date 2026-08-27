@@ -10,7 +10,9 @@ v2 是一次刻意为之的破坏性版本，两大动因：
 ## 模块版本策略
 
 Go modules 强制 v2+ 使用 `/v2` 后缀：模块路径变为
-`github.com/mickeyzzc/onvif-go/v2`。v1 各 tag 原样保留给现有消费者。
+`github.com/mickeyzzc/onvif-go/v2`。客户端包位于 `onvif/` 子目录
+（import 路径 `github.com/mickeyzzc/onvif-go/v2/onvif`，包标识符不变），
+仓库根目录不再放置任何 Go 源码。v1 各 tag 原样保留给现有消费者。
 在 1.x 里做破坏会耗尽公开库的 semver 信用——不做。
 
 ## v2 解开的死结：Caller 接口
@@ -26,18 +28,20 @@ type Caller interface {
 }
 ```
 
-- `Client`（根包）实现 `Caller`——鉴权梯队、时钟偏差、能力缓存留在这一层
+- `Client`（`onvif` 包）实现 `Caller`——鉴权梯队、时钟偏差、能力缓存留在这一层
 - 每个服务包只依赖 `internal/api`
-- 根包 import 服务包并提供访问器——单向依赖，无环
+- `onvif` 包 import 服务包并提供访问器——单向依赖，无环
 - 服务为**长驻实例**：Client 构造时创建，访问器返回同一指针，服务因此可以持有自身状态（能力缓存随 `device.Service`）
 
 ## 目标布局
 
 ```
 github.com/mickeyzzc/onvif-go/v2
-├── client.go            NewClient + Client（实现 api.Caller）+ 选项
-├── auth.go              鉴权模式 / 梯队 / 时钟偏差 / DiagnoseAuth
-├── errors.go            跨域哨兵（自 leaf 包 alias）
+├── onvif/               客户端包（包标识符仍为 `onvif`）
+│   ├── client.go        NewClient + Client（实现 api.Caller）+ 选项
+│   ├── auth.go          鉴权模式 / 梯队 / 时钟偏差 / DiagnoseAuth
+│   ├── errors.go        跨域哨兵（自 leaf 包 alias）
+│   └── aliases.go       v1 兼容再导出
 ├── types/               共享数据模型 leaf（IPAddress、IntRectangle 等）
 ├── device/              tds：身份、能力、系统、网络、DNS/NTP、存储、WiFi
 │                        ——能力缓存随本包

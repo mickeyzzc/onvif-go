@@ -7,7 +7,7 @@ protocol sides. The v1 tags (`v1.0.0`–`v1.2.0`) stay available and
 untouched.
 
 Most v1 source compiles against v2 after the import-path swap — the
-root package re-exports the moved symbols as aliases. This guide maps
+client package re-exports the moved symbols as aliases. This guide maps
 everything that still needs attention.
 
 ## 1. Module path
@@ -18,8 +18,13 @@ go get github.com/mickeyzzc/onvif-go/v2@latest
 
 ```diff
 -import "github.com/mickeyzzc/onvif-go"
-+import "github.com/mickeyzzc/onvif-go/v2"
++import "github.com/mickeyzzc/onvif-go/v2/onvif"
 ```
+
+Since `v2.0.0-rc2` the client package lives in the `onvif/` subdirectory,
+so the repository root contains no Go source. The package identifier stays
+`onvif` — code that already used the rc1 root package only needs the
+import-path change.
 
 The client facade shape is unchanged:
 
@@ -31,7 +36,7 @@ client.PTZ().ContinuousMove(ctx, token, speed, timeout)
 
 ## 2. Client: what moved (and what didn't)
 
-| v1 | v2 home | Root alias keeps v1 spelling? |
+| v1 | v2 home | `onvif` package alias keeps v1 spelling? |
 |---|---|---|
 | `onvif.Profile`, media types | `media` package | ✅ yes |
 | Device-service ops (`GetCapabilities`, …) | `device` package | ✅ yes |
@@ -40,7 +45,7 @@ client.PTZ().ContinuousMove(ctx, token, speed, timeout)
 | Events (pull-point, managed subs) | `events` package | ✅ yes |
 | Imaging / PTZ ops | `imaging` / `ptz` | ✅ yes |
 | `IPAddress`, `IntRectangle`, … | `types` leaf | ✅ yes |
-| Error sentinels (`ErrUnauthorized`, …) | root + domain packages | ✅ yes |
+| Error sentinels (`ErrUnauthorized`, …) | `onvif` pkg + domain packages | ✅ yes |
 | Per-service endpoint setters | **`Client.SetServiceEndpoint(api.Service, endpoint)`** | ❌ replaced — one method, `api.ServiceDevice/Media/PTZ/Imaging/Events` constants |
 | capabilities cache invalidation | `client.InvalidateCapabilitiesCache()` | ✅ yes (passthrough) |
 

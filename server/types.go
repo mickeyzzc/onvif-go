@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/v2"
+	"github.com/mickeyzzc/onvif-go/v2/onvif"
 	"github.com/mickeyzzc/onvif-go/v2/server/provider"
 )
 

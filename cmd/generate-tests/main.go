@@ -36,7 +36,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/v2"
+	"github.com/mickeyzzc/onvif-go/v2/onvif"
 	onviftesting "github.com/mickeyzzc/onvif-go/v2/testing"
 )
 

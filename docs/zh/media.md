@@ -62,4 +62,4 @@ ONVIF 媒体响应比规范更多变：命名空间前缀（`trt:`/`tt:`/默认�
 除拉流外，门面还覆盖视频/音频编码配置（`Get/SetVideoEncoderConfiguration`
 系列）、OSD 管理、组播配置（`Start/StopMulticastStreaming`）与同步点。完整
 操作列表见
-[Go 参考文档](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
+[Go 参考文档](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif)。

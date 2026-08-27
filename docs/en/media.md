@@ -73,5 +73,5 @@ Beyond streaming, the facade covers video/audio encoder configuration
 (`Get/SetVideoEncoderConfiguration`, `SetVideoEncoderConfiguration` families),
 OSD management, multicast configuration (`Start/StopMulticastStreaming`), and
 synchronization points. See the
-[Go reference](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2) for the full
+[Go reference](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif) for the full
 operation list.

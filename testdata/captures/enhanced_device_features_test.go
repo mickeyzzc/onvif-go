@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/v2"
+	"github.com/mickeyzzc/onvif-go/v2/onvif"
 )
 
 // getTestCredentials returns ONVIF credentials from environment variables.
