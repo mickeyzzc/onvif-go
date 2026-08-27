@@ -5,6 +5,7 @@ import (
 	"crypto/md5" //nolint:gosec // MD5 used for ONVIF digest authentication
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -14,6 +15,19 @@ import (
 	"sync"
 	"time"
 )
+
+// downloadStatusError marks a download failure caused by a specific HTTP
+// status, so retry decisions are made on the typed status instead of string
+// matching — an error message embeds the request URL, and a random port
+// containing "401" once sent the logic down the digest path on a mere
+// timeout (a real CI flake).
+type downloadStatusError struct {
+	status int
+	err    error
+}
+
+func (e *downloadStatusError) Error() string { return e.err.Error() }
+func (e *downloadStatusError) Unwrap() error { return e.err }
 
 // DownloadFile downloads a file from the given URL with authentication.
 // Supports both Basic and Digest authentication (tries basic first, falls back to digest).
@@ -27,13 +41,15 @@ func (c *Client) DownloadFile(ctx context.Context, downloadURL string) ([]byte, 
 	}
 
 	// If basic auth fails with 401, try digest auth
-	if strings.Contains(err.Error(), "401") {
+	var basicStatus *downloadStatusError
+	if errors.As(err, &basicStatus) && basicStatus.status == http.StatusUnauthorized {
 		digestData, digestErr := c.downloadWithDigestAuth(ctx, downloadURL)
 		if digestErr == nil {
 			return digestData, nil
 		}
-		// If digest auth also fails, return the original error
-		if strings.Contains(digestErr.Error(), "401") {
+		// If digest auth also fails with 401, return the original error
+		var digestStatus *downloadStatusError
+		if errors.As(digestErr, &digestStatus) && digestStatus.status == http.StatusUnauthorized {
 			return nil, err // Return original error (both auth methods failed)
 		}
 
@@ -89,7 +105,10 @@ func (c *Client) downloadWithBasicAuth(ctx context.Context, downloadURL string) 
 			errorMsg += "; response: " + bodyStr
 		}
 
-		return nil, fmt.Errorf("%w: %s", ErrDownloadFailed, errorMsg)
+		return nil, &downloadStatusError{
+			status: resp.StatusCode,
+			err:    fmt.Errorf("%w: %s", ErrDownloadFailed, errorMsg),
+		}
 	}
 
 	data, err := io.ReadAll(resp.Body)
@@ -165,7 +184,10 @@ func (c *Client) downloadWithDigestAuth(ctx context.Context, downloadURL string)
 			errorMsg += "; response: " + bodyStr
 		}
 
-		return nil, fmt.Errorf("%w: %s", ErrDownloadFailed, errorMsg)
+		return nil, &downloadStatusError{
+			status: resp.StatusCode,
+			err:    fmt.Errorf("%w: %s", ErrDownloadFailed, errorMsg),
+		}
 	}
 
 	data, err := io.ReadAll(resp.Body)
