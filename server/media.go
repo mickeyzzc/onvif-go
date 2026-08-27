@@ -270,18 +270,16 @@ func (s *Server) HandleGetStreamUri(rc *soap.RequestContext, body []byte) (inter
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Find the stream configuration for this profile
-	streamCfg, ok := s.streams[req.ProfileToken]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrProfileNotFound, req.ProfileToken)
+	// Resolve the stream through the provider; a pinned override wins,
+	// otherwise the URI is derived from the advertised host.
+	streamInfo, err := s.stream.Stream(req.ProfileToken)
+	if err != nil {
+		return nil, err
 	}
 
-	// Build RTSP URI
-	uri := streamCfg.StreamURI
+	uri := streamInfo.OverrideURI
 	if uri == "" {
-		// Default URI construction
-		host := s.advertiseHost(rc)
-		uri = fmt.Sprintf("rtsp://%s:8554%s", host, streamCfg.RTSPPath)
+		uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(rc), streamInfo.RTSPPath)
 	}
 
 	return &GetStreamUriResponse{

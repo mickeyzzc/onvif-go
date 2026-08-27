@@ -94,12 +94,8 @@ func TestHandleGetOptions(t *testing.T) {
 	server, _ := New(config)
 	videoSourceToken := config.Profiles[0].VideoSource.Token
 
-	type getOptionsRequest struct {
-		VideoSourceToken string `xml:"VideoSourceToken"`
-	}
-
-	req := getOptionsRequest{VideoSourceToken: videoSourceToken}
-	reqData, _ := xml.Marshal(req)
+	reqData := []byte(`<GetOptions xmlns="http://www.onvif.org/ver20/imaging/wsdl"><VideoSourceToken>` +
+		videoSourceToken + `</VideoSourceToken></GetOptions>`)
 
 	resp, err := server.HandleGetOptions(nil, reqData)
 	if err != nil {
@@ -473,8 +469,12 @@ func TestGetImagingSettingsResponseXML(t *testing.T) {
 func TestHandleGetOptionsDetails(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
+	videoSourceToken := config.Profiles[0].VideoSource.Token
 
-	resp, err := server.HandleGetOptions(nil, nil)
+	reqData := []byte(`<GetOptions xmlns="http://www.onvif.org/ver20/imaging/wsdl"><VideoSourceToken>` +
+		videoSourceToken + `</VideoSourceToken></GetOptions>`)
+
+	resp, err := server.HandleGetOptions(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleGetOptions error: %v", err)
 	}

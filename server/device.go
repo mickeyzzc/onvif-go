@@ -153,12 +153,14 @@ type SystemRebootResponse struct {
 
 // HandleGetDeviceInformation handles GetDeviceInformation request.
 func (s *Server) HandleGetDeviceInformation(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	info := s.deviceInfo.DeviceInfo()
+
 	return &GetDeviceInformationResponse{
-		Manufacturer:    s.config.DeviceInfo.Manufacturer,
-		Model:           s.config.DeviceInfo.Model,
-		FirmwareVersion: s.config.DeviceInfo.FirmwareVersion,
-		SerialNumber:    s.config.DeviceInfo.SerialNumber,
-		HardwareID:      s.config.DeviceInfo.HardwareID,
+		Manufacturer:    info.Manufacturer,
+		Model:           info.Model,
+		FirmwareVersion: info.FirmwareVersion,
+		SerialNumber:    info.SerialNumber,
+		HardwareID:      info.HardwareID,
 	}, nil
 }
 

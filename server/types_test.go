@@ -668,7 +668,7 @@ func TestToONVIFProfile(t *testing.T) {
 		},
 	}
 
-	onvifProfile := profile.ToONVIFProfile()
+	onvifProfile := ProfileToONVIF(profile)
 
 	if onvifProfile.Token != "profile_1" {
 		t.Errorf("Profile token mismatch: got %s", onvifProfile.Token)

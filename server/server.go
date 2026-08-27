@@ -6,89 +6,88 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/server/provider"
+	"github.com/mickeyzzc/onvif-go/v2/server/simulator"
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
-// New creates a new ONVIF server with the given configuration.
-func New(config *Config) (*Server, error) {
+// Option customizes a Server's state sources. Without options the
+// in-memory simulator backs every provider; real devices inject their
+// own implementations (no fork of the SOAP layer needed).
+type Option func(*Server)
+
+// WithDeviceInfoProvider replaces the device identity source.
+func WithDeviceInfoProvider(p provider.DeviceInfoProvider) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.deviceInfo = p
+		}
+	}
+}
+
+// WithStreamURIProvider replaces the stream URI source.
+func WithStreamURIProvider(p provider.StreamURIProvider) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.stream = p
+		}
+	}
+}
+
+// WithSnapshotProvider replaces the snapshot JPEG source.
+func WithSnapshotProvider(p provider.SnapshotProvider) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.snapshot = p
+		}
+	}
+}
+
+// WithImagingProvider replaces the imaging settings backend.
+func WithImagingProvider(p provider.ImagingProvider) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.imaging = p
+		}
+	}
+}
+
+// WithPTZProvider replaces the PTZ backend.
+func WithPTZProvider(p provider.PTZProvider) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.ptz = p
+		}
+	}
+}
+
+// New creates a new ONVIF server with the given configuration. The
+// default state backend is the in-memory simulator built from the
+// profile configuration; options swap individual providers for
+// hardware-backed ones.
+func New(config *Config, opts ...Option) (*Server, error) {
 	if config == nil {
 		config = DefaultConfig()
 	}
 
+	sim := simulator.New(config.Profiles, config.DeviceInfo)
+
 	server := &Server{
-		config:       config,
-		streams:      make(map[string]*StreamConfig),
-		ptzState:     make(map[string]*PTZState),
-		imagingState: make(map[string]*ImagingState),
-		systemTime:   time.Now(),
+		config:     config,
+		deviceInfo: sim,
+		stream:     sim,
+		snapshot:   sim,
+		imaging:    sim,
+		ptz:        sim,
+		systemTime: time.Now(),
 	}
 
-	// Initialize streams for each profile. StreamURI stays empty so
-	// GetStreamUri derives it per request from the advertised host (the
-	// requesting client's IP by default); UpdateStreamURI pins an explicit
-	// override that then wins.
-	for i := range config.Profiles {
-		profile := &config.Profiles[i]
-		streamPath := fmt.Sprintf("/stream%d", i)
-
-		server.streams[profile.Token] = &StreamConfig{
-			ProfileToken: profile.Token,
-			RTSPPath:     streamPath,
-		}
-
-		// Initialize PTZ state if PTZ is supported
-		if profile.PTZ != nil {
-			server.ptzState[profile.Token] = &PTZState{
-				Position:   PTZPosition{Pan: 0, Tilt: 0, Zoom: 0},
-				Moving:     false,
-				PanMoving:  false,
-				TiltMoving: false,
-				ZoomMoving: false,
-				LastUpdate: time.Now(),
-			}
-		}
-
-		// Initialize imaging state
-		server.imagingState[profile.VideoSource.Token] = &ImagingState{
-			Brightness:  50.0, //nolint:mnd // Default imaging value
-			Contrast:    50.0, //nolint:mnd // Default imaging value
-			Saturation:  50.0, //nolint:mnd // Default imaging value
-			Sharpness:   50.0, //nolint:mnd // Default imaging value
-			IrCutFilter: "AUTO",
-			BacklightComp: BacklightCompensation{
-				Mode:  "OFF",
-				Level: 0,
-			},
-			Exposure: ExposureSettings{
-				Mode:         "AUTO",
-				Priority:     "FrameRate",
-				MinExposure:  1,
-				MaxExposure:  10000, //nolint:mnd // Exposure time in microseconds
-				MinGain:      0,
-				MaxGain:      100, //nolint:mnd // Gain value
-				ExposureTime: 100, //nolint:mnd // Exposure time
-				Gain:         50,  //nolint:mnd // Gain value
-			},
-			Focus: FocusSettings{
-				AutoFocusMode: "AUTO",
-				DefaultSpeed:  0.5, //nolint:mnd // Focus speed
-				NearLimit:     0,
-				FarLimit:      1,
-				CurrentPos:    0.5, //nolint:mnd // Focus position
-			},
-			WhiteBalance: WhiteBalanceSettings{
-				Mode:   "AUTO",
-				CrGain: 128, //nolint:mnd // White balance gain
-				CbGain: 128, //nolint:mnd // White balance gain
-			},
-			WideDynamicRange: WDRSettings{
-				Mode:  "OFF",
-				Level: 0,
-			},
-		}
+	for _, opt := range opts {
+		opt(server)
 	}
 
 	return server, nil
@@ -138,9 +137,16 @@ func (s *Server) Start(ctx context.Context) error {
 		fmt.Printf("\n🌐 Virtual Camera Profiles:\n")
 
 		for i, profile := range s.config.Profiles {
-			stream := s.streams[profile.Token]
+			uri := ""
+			if info, err := s.stream.Stream(profile.Token); err == nil {
+				uri = info.OverrideURI
+				if uri == "" {
+					uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(nil), info.RTSPPath)
+				}
+			}
+
 			fmt.Printf("   [%d] %s - %s (%dx%d @ %dfps)\n",
-				i+1, profile.Name, stream.StreamURI,
+				i+1, profile.Name, uri,
 				profile.VideoEncoder.Resolution.Width,
 				profile.VideoEncoder.Resolution.Height,
 				profile.VideoEncoder.Framerate)
@@ -262,7 +268,7 @@ func (s *Server) registerImagingService(mux *http.ServeMux) {
 	mux.Handle(s.config.BasePath+"/imaging_service", handler)
 }
 
-// handleSnapshot handles HTTP snapshot requests.
+// handleSnapshot handles HTTP snapshot requests through the SnapshotProvider.
 func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
 	// Get profile token from query parameter
 	profileToken := r.URL.Query().Get("profile")
@@ -272,35 +278,30 @@ func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Find the profile
-	var profileCfg *ProfileConfig
-	for i := range s.config.Profiles {
-		if s.config.Profiles[i].Token == profileToken {
-			profileCfg = &s.config.Profiles[i]
+	jpegData, err := s.snapshot.Snapshot(profileToken)
+	if err != nil {
+		if errors.Is(err, ErrProfileNotFound) {
+			http.Error(w, "Profile not found", http.StatusNotFound)
 
-			break
+			return
 		}
-	}
 
-	if profileCfg == nil {
-		http.Error(w, "Profile not found", http.StatusNotFound)
+		if errors.Is(err, ErrSnapshotNotSupported) {
+			http.Error(w, "Snapshot not supported", http.StatusNotImplemented)
 
-		return
-	}
+			return
+		}
 
-	if !profileCfg.Snapshot.Enabled {
-		http.Error(w, "Snapshot not supported", http.StatusNotImplemented)
+		http.Error(w, "Snapshot capture failed", http.StatusInternalServerError)
 
 		return
 	}
 
-	// In a real implementation, this would capture a frame from the video source
-	// For now, return a placeholder response
 	w.Header().Set("Content-Type", "image/jpeg")
-	w.Header().Set("Content-Length", "0")
+	w.Header().Set("Content-Length", strconv.Itoa(len(jpegData)))
 	w.WriteHeader(http.StatusOK)
 
-	// TODO: Generate or capture actual JPEG snapshot
+	_, _ = w.Write(jpegData)
 }
 
 // GetConfig returns the server configuration.
@@ -310,20 +311,28 @@ func (s *Server) GetConfig() *Config {
 
 // GetStreamConfig returns the stream configuration for a profile.
 func (s *Server) GetStreamConfig(profileToken string) (*StreamConfig, bool) {
-	stream, ok := s.streams[profileToken]
+	info, err := s.stream.Stream(profileToken)
+	if err != nil {
+		return nil, false
+	}
 
-	return stream, ok
+	return &StreamConfig{
+		ProfileToken: profileToken,
+		RTSPPath:     info.RTSPPath,
+		StreamURI:    info.OverrideURI,
+	}, true
 }
 
-// UpdateStreamURI updates the RTSP URI for a profile.
+// UpdateStreamURI updates the RTSP URI for a profile. It requires the
+// stream provider to implement provider.StreamURISetter (the simulator
+// does).
 func (s *Server) UpdateStreamURI(profileToken, uri string) error {
-	stream, ok := s.streams[profileToken]
+	setter, ok := s.stream.(provider.StreamURISetter)
 	if !ok {
-		return fmt.Errorf("%w: %s", ErrProfileNotFound, profileToken)
+		return errors.New("stream provider does not support runtime URI updates")
 	}
-	stream.StreamURI = uri
 
-	return nil
+	return setter.SetStreamURI(profileToken, uri)
 }
 
 // ListProfiles returns all configured profiles.
@@ -333,20 +342,35 @@ func (s *Server) ListProfiles() []ProfileConfig {
 
 // GetPTZState returns the current PTZ state for a profile.
 func (s *Server) GetPTZState(profileToken string) (*PTZState, bool) {
-	ptzMutex.RLock()
-	defer ptzMutex.RUnlock()
-	state, ok := s.ptzState[profileToken]
+	state, err := s.ptz.Status(profileToken)
+	if err != nil {
+		return nil, false
+	}
 
-	return state, ok
+	return &state, true
 }
 
 // GetImagingState returns the current imaging state for a video source.
+// It requires the imaging provider to expose raw state (the simulator
+// does).
 func (s *Server) GetImagingState(videoSourceToken string) (*ImagingState, bool) {
-	imagingMutex.RLock()
-	defer imagingMutex.RUnlock()
-	state, ok := s.imagingState[videoSourceToken]
+	reader, ok := s.imaging.(imagingStateReader)
+	if !ok {
+		return nil, false
+	}
 
-	return state, ok
+	state, ok := reader.ImagingStateOf(videoSourceToken)
+	if !ok {
+		return nil, false
+	}
+
+	return &state, true
+}
+
+// imagingStateReader is the optional raw-state view used by
+// GetImagingState (implemented by the simulator).
+type imagingStateReader interface {
+	ImagingStateOf(videoSourceToken string) (ImagingState, bool)
 }
 
 // ServerInfo returns human-readable server information.
@@ -369,17 +393,17 @@ func (s *Server) ServerInfo() string {
 			profile.VideoEncoder.Resolution.Height,
 			profile.VideoEncoder.Framerate,
 			profile.VideoEncoder.Encoding)
-		if stream, ok := s.streams[profile.Token]; ok {
-			uri := stream.StreamURI
+		if info, err := s.stream.Stream(profile.Token); err == nil {
+			uri := info.OverrideURI
 			if uri == "" {
-				uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(nil), stream.RTSPPath)
+				uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(nil), info.RTSPPath)
 			}
 
 			fmt.Fprintf(&sb, "      RTSP: %s\n", uri)
 		}
 		if profile.PTZ != nil {
 			sb.WriteString("      PTZ: Enabled\n")
-			info += sb.String() //nolint:perfsprint // bounded loop over configured profiles
+			info += sb.String()
 		}
 	}
 	info += "\nCapabilities:\n"
