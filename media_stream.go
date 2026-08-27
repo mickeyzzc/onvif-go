@@ -14,6 +14,50 @@ import (
 // failure mode to debug downstream (issue #3).
 var ErrEmptyMediaURI = errors.New("device returned an empty media URI")
 
+// Stream and transport protocol values for StreamSetup.
+const (
+	// StreamRTPUnicast requests a unicast stream (default).
+	StreamRTPUnicast = "RTP-Unicast"
+	// StreamRTPMulticast requests a multicast stream.
+	StreamRTPMulticast = "RTP-Multicast"
+
+	// ProtocolRTSP requests RTSP transport (default).
+	ProtocolRTSP = "RTSP"
+	// ProtocolHTTP requests RTSP-over-HTTP tunneling.
+	ProtocolHTTP = "HTTP"
+	// ProtocolUDP requests raw UDP/RTP transport.
+	ProtocolUDP = "UDP"
+)
+
+// validate checks the stream/protocol combination and fills defaults:
+// a nil Transport (or empty protocol) defaults to RTSP.
+func (setup *StreamSetup) validate() error {
+	switch setup.Stream {
+	case StreamRTPUnicast, StreamRTPMulticast:
+	default:
+		return fmt.Errorf("%w: stream %q (want %q or %q)",
+			ErrInvalidParameter, setup.Stream, StreamRTPUnicast, StreamRTPMulticast)
+	}
+
+	if setup.Transport == nil || setup.Transport.Protocol == "" {
+		if setup.Transport == nil {
+			setup.Transport = &Transport{}
+		}
+
+		setup.Transport.Protocol = ProtocolRTSP
+	}
+
+	switch setup.Transport.Protocol {
+	case ProtocolRTSP, ProtocolHTTP, ProtocolUDP, "TCP":
+	default:
+		return fmt.Errorf("%w: protocol %q (want %q, %q, %q, or %q)",
+			ErrInvalidParameter, setup.Transport.Protocol,
+			ProtocolRTSP, ProtocolHTTP, ProtocolUDP, "TCP")
+	}
+
+	return nil
+}
+
 // Request/response types hoisted from method bodies.
 
 type GetSnapshotURI struct {
@@ -85,7 +129,30 @@ type StopMulticastStreaming struct {
 // ErrEmptyMediaURI errors.
 const maxMediaURIErrBody = 512
 
+// GetStreamURI returns the stream URI for a profile using the default
+// RTP-Unicast/RTSP transport. Use GetStreamURIWithOptions to select another
+// stream type or transport protocol.
 func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*MediaURI, error) {
+	return s.GetStreamURIWithOptions(ctx, profileToken, StreamSetup{
+		Stream:    StreamRTPUnicast,
+		Transport: &Transport{Protocol: ProtocolRTSP},
+	})
+}
+
+// GetStreamURIWithOptions returns the stream URI for a profile with an
+// explicit StreamSetup (stream type × transport protocol). Behavior is
+// identical to GetStreamURI for RTP-Unicast/RTSP. Some devices — e.g.
+// ESP32-based firmwares — return different stream shapes (RTSP with audio
+// versus HTTP video-only) depending on the requested protocol.
+func (s *MediaService) GetStreamURIWithOptions(
+	ctx context.Context,
+	profileToken string,
+	setup StreamSetup,
+) (*MediaURI, error) {
+	if err := setup.validate(); err != nil {
+		return nil, fmt.Errorf("GetStreamURIWithOptions: %w", err)
+	}
+
 	endpoint := s.getMediaEndpoint()
 
 	req := GetStreamURI{
@@ -93,8 +160,8 @@ func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*
 		Xmlnst:       "http://www.onvif.org/ver10/schema",
 		ProfileToken: profileToken,
 	}
-	req.StreamSetup.Stream = "RTP-Unicast"
-	req.StreamSetup.Transport.Protocol = "RTSP"
+	req.StreamSetup.Stream = setup.Stream
+	req.StreamSetup.Transport.Protocol = setup.Transport.Protocol
 
 	var resp GetStreamURIResponse
 
