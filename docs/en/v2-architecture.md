@@ -10,7 +10,10 @@ v2 is a deliberately breaking release. Two forces drive it:
 ## Module versioning
 
 Go modules require the `/v2` suffix for v2+: the module path becomes
-`github.com/mickeyzzc/onvif-go/v2`. The v1 tags stay untouched for existing
+`github.com/mickeyzzc/onvif-go/v2`. The client package lives in the `onvif/`
+subdirectory (import `github.com/mickeyzzc/onvif-go/v2/onvif` — the package
+identifier is unchanged), keeping the repository root free of Go source. The
+v1 tags stay untouched for existing
 consumers. Breaking within 1.x would forfeit semver credibility for a public
 library — not an option.
 
@@ -28,10 +31,10 @@ type Caller interface {
 }
 ```
 
-- `Client` (root) implements `Caller` — the auth ladder, clock skew, and
-  capability caching stay there.
+- `Client` (the `onvif` package) implements `Caller` — the auth ladder, clock
+  skew, and capability caching stay there.
 - Each service package depends only on `internal/api`.
-- The root imports the service packages and provides the accessors —
+- The `onvif` package imports the service packages and provides the accessors —
   one-directional, cycle-free.
 - Services are **long-lived instances** created once by the client; accessors
   return the same pointer, so a service may hold its own state (the
@@ -41,9 +44,11 @@ type Caller interface {
 
 ```
 github.com/mickeyzzc/onvif-go/v2
-├── client.go            NewClient + Client (implements api.Caller) + options
-├── auth.go              auth modes / ladder / clock skew / DiagnoseAuth
-├── errors.go            cross-domain sentinels (aliased from leaves)
+├── onvif/               the client package (package identifier stays `onvif`)
+│   ├── client.go        NewClient + Client (implements api.Caller) + options
+│   ├── auth.go          auth modes / ladder / clock skew / DiagnoseAuth
+│   ├── errors.go        cross-domain sentinels (aliased from leaves)
+│   └── aliases.go       v1-compatibility re-exports
 ├── types/               shared data-model leaf (IPAddress, IntRectangle, ...)
 ├── device/              tds: identity, capabilities, system, network, DNS/NTP,
 │                        storage, WiFi — plus the capabilities cache

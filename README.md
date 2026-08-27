@@ -84,7 +84,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/mickeyzzc/onvif-go/v2"
+    "github.com/mickeyzzc/onvif-go/v2/onvif"
 )
 
 func main() {
@@ -195,7 +195,7 @@ Topic guides, English and Chinese:
 | Testing | [testing.md](docs/en/testing.md) | [测试](docs/zh/testing.md) |
 | CLI tools | [cli.md](docs/en/cli.md) | [CLI 工具](docs/zh/cli.md) |
 
-API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2).
+API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif).
 
 ## Development
 

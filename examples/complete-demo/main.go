@@ -6,8 +6,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/v2"
 	"github.com/mickeyzzc/onvif-go/v2/discovery"
+	"github.com/mickeyzzc/onvif-go/v2/onvif"
 )
 
 // This is a comprehensive demonstration of all onvif-go features

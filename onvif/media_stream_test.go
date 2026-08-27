@@ -94,7 +94,7 @@ func TestGetSnapshotURIResponseVariants(t *testing.T) {
 func fixtureServer(t *testing.T, fixture string) *httptest.Server {
 	t.Helper()
 
-	body, err := os.ReadFile(filepath.Join("testdata", "captures", fixture))
+	body, err := os.ReadFile(filepath.Join("..", "testdata", "captures", fixture))
 	if err != nil {
 		t.Fatalf("failed to read fixture %s: %v", fixture, err)
 	}

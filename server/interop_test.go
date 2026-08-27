@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	onvif "github.com/mickeyzzc/onvif-go/v2"
+	onvif "github.com/mickeyzzc/onvif-go/v2/onvif"
 )
 
 // TestClientServerInterop drives the library's own client against the

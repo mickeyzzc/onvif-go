@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0-rc2] - 2026-08-27
+
+### Changed (breaking vs rc1 — import path only)
+- **Client package moved to `onvif/`**: the repository root no longer
+  contains any Go source. Import
+  `github.com/mickeyzzc/onvif-go/v2/onvif` instead of
+  `github.com/mickeyzzc/onvif-go/v2`. The module path, package identifier
+  (`onvif`), and every exported symbol are unchanged — consumers only
+  adjust the import path. Rationale: the rc1 root directory still carried
+  23 Go files (client + auth + errors + v1 aliases + integration tests);
+  the subdirectory consolidates them while keeping the `onvif.` identifier
+  stable. Tagged during the rc window; v2.0.0 final ships this layout.
+
 ### Added
 - **Comprehensive TDD test backfill** (repo-wide): in-package suites for
   the domain services (`device`, `media`, `ptz`, `imaging`, `security`)
