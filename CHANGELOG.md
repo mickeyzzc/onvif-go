@@ -28,6 +28,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   consolidated to match).
 - **Documentation diagrams are now mermaid** instead of ASCII box art, with
   a root-package file map added to the architecture guide (en/zh).
+- **`server/soap` transport rebuilt for real-device embedding** (#22,
+  closes #16/#17/#18 — breaking):
+  - Handlers receive raw inner-XML request bytes (`[]byte`); the v1
+    transport handed them an `encoding/xml` value it could never populate,
+    so request parameters (e.g. `ProfileToken`) arrived silently empty.
+  - Authentication is per-action (#16): with credentials configured,
+    write-style actions (`Set*`/`Remove*`/`Create*`/`Go*` + `SystemReboot`)
+    require valid WS-Security; reads stay open (was: every action forced
+    digest auth). Both PasswordDigest and PasswordText are accepted;
+    `soap.AuthPolicy` configures prefixes/exact actions/strict mode.
+  - `soap.RequestContext` (#17): `RegisterContextHandler` exposes the
+    action name, client IP, and the request `context.Context`. Advertised
+    URLs (GetCapabilities/GetServices XAddrs, stream/snapshot URIs) echo
+    the requesting client's IP by default; `Config.AdvertiseHost` overrides.
+  - Byte-predictable responses (#18): canonical WSDL casing
+    (`GetStreamUriResponse`/`GetSnapshotUriResponse`, inner `MediaUri`/
+    `Uri`; legacy incoming spellings still dispatch), golden-locked
+    envelope layout, optional explicit prefixes
+    (`Config.ExplicitPrefixes` → `s:`/`tds:`/`trt:`/...), and a
+    `soap.RawXML` passthrough that embeds hand-built bodies verbatim.
+  - The server package's `Server.Handle*` methods take
+    `(*soap.RequestContext, []byte)`; simulator `StreamURI` values are
+    derived per request instead of pre-baked at `New()` (explicit
+    `UpdateStreamURI` pins still win).
+- **Fixed the WS-Security utility namespace typo** in the client's
+  `UsernameToken.Created` tag (`oasis-200401-wsssecurity-utility-1.0.xsd`
+  → the correct `oasis-200401-wss-utility-1.0.xsd`), so `Created` is now
+  emitted in (and matched from) the namespace strict devices expect.
 
 ### Added
 - **Bilingual documentation set**: topic guides under `docs/{en,zh}/`

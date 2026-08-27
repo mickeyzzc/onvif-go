@@ -4,6 +4,8 @@ import (
 	"encoding/xml"
 	"testing"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
 // These handlers are better tested through the SOAP handler in integration tests.
@@ -16,7 +18,7 @@ func _DisabledTestHandleGetPresets(t *testing.T) {
 	profileToken := config.Profiles[0].Token
 
 	reqXML := `<GetPresets><ProfileToken>` + profileToken + `</ProfileToken></GetPresets>`
-	resp, err := server.HandleGetPresets([]byte(reqXML))
+	resp, err := server.HandleGetPresets(nil, []byte(reqXML))
 	if err != nil {
 		t.Fatalf("HandleGetPresets() error = %v", err)
 	}
@@ -49,7 +51,7 @@ func TestHandleGotoPreset(t *testing.T) {
 
 	// First get available presets
 	reqXML := `<GetPresets><ProfileToken>` + profileToken + `</ProfileToken></GetPresets>`
-	presetsResp, _ := server.HandleGetPresets([]byte(reqXML))
+	presetsResp, _ := server.HandleGetPresets(nil, []byte(reqXML))
 	presetsResp2, ok := presetsResp.(*GetPresetsResponse)
 	if !ok || presetsResp2 == nil {
 		t.Skip("Could not get presets")
@@ -62,7 +64,7 @@ func TestHandleGotoPreset(t *testing.T) {
 
 	// Now go to preset
 	gotoXML := `<GotoPreset><ProfileToken>` + profileToken + `</ProfileToken><PresetToken>` + presetToken + `</PresetToken></GotoPreset>`
-	gotoResp, err := server.HandleGotoPreset([]byte(gotoXML))
+	gotoResp, err := server.HandleGotoPreset(nil, []byte(gotoXML))
 	if err != nil {
 		t.Fatalf("HandleGotoPreset() error = %v", err)
 	}
@@ -93,7 +95,7 @@ func _DisabledTestHandleGetStatus(t *testing.T) {
 	req := getStatusRequest{ProfileToken: profileToken}
 	reqData, _ := xml.Marshal(req)
 
-	resp, err := server.HandleGetStatus(reqData)
+	resp, err := server.HandleGetStatus(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleGetStatus() error = %v", err)
 	}
@@ -143,7 +145,7 @@ func _DisabledTestHandleAbsoluteMove(t *testing.T) {
 	req.Position.Zoom.X = 0
 	reqData, _ := xml.Marshal(req)
 
-	resp, err := server.HandleAbsoluteMove(reqData)
+	resp, err := server.HandleAbsoluteMove(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleAbsoluteMove() error = %v", err)
 	}
@@ -186,7 +188,7 @@ func _DisabledTestHandleRelativeMove(t *testing.T) {
 	req.Translation.Zoom.X = 0
 	reqData, _ := xml.Marshal(req)
 
-	resp, err := server.HandleRelativeMove(reqData)
+	resp, err := server.HandleRelativeMove(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleRelativeMove() error = %v", err)
 	}
@@ -229,7 +231,7 @@ func _DisabledTestHandleContinuousMove(t *testing.T) {
 	req.Velocity.Zoom.X = 0
 	reqData, _ := xml.Marshal(req)
 
-	resp, err := server.HandleContinuousMove(reqData)
+	resp, err := server.HandleContinuousMove(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleContinuousMove() error = %v", err)
 	}
@@ -266,7 +268,7 @@ func _DisabledTestHandleStop(t *testing.T) {
 	}
 	reqData, _ := xml.Marshal(req)
 
-	resp, err := server.HandleStop(reqData)
+	resp, err := server.HandleStop(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleStop() error = %v", err)
 	}
@@ -435,7 +437,7 @@ func TestPTZMovementOperations(t *testing.T) {
 	tests := []struct {
 		name    string
 		reqXML  string
-		handler func(interface{}) (interface{}, error)
+		handler func(rc *soap.RequestContext, body []byte) (interface{}, error)
 	}{
 		{
 			name:    "ContinuousMove",
@@ -456,7 +458,7 @@ func TestPTZMovementOperations(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			resp, err := tt.handler([]byte(tt.reqXML))
+			resp, err := tt.handler(nil, []byte(tt.reqXML))
 
 			// These may fail due to XML namespace issues, but we're testing the handler exists
 			if resp == nil && err == nil {
@@ -482,7 +484,7 @@ func TestPTZPresetOperations(t *testing.T) {
 			testFunc: func() (interface{}, error) {
 				reqXML := `<GetStatus><ProfileToken>` + config.Profiles[0].Token + `</ProfileToken></GetStatus>`
 
-				return server.HandleGetStatus([]byte(reqXML))
+				return server.HandleGetStatus(nil, []byte(reqXML))
 			},
 		},
 	}

@@ -100,8 +100,8 @@ Breaking is allowed, but wasteful breaking is not:
 
 | Stage | Issue | Scope |
 |---|---|---|
-| M1 | #21 | client package split, `/v2` path, aliases — zero behavior change |
-| M2 | #22 | `server/soap` transport: context, auth policy, XML writer (#17 #16 #18) |
+| M1 | #21 | ✅ done — client package split, `/v2` path, aliases, zero behavior change |
+| M2 | #22 | ✅ done — `server/soap` transport: context, auth policy, XML writer (#17 #16 #18) |
 | M3 | #23 | provider interfaces + simulator extraction (#19) |
 | M4 | #24 | device-side discovery responder + shared codec (#15) |
 | M5 | #25 | docs, migration guide, CHANGELOG, `v2.0.0-rc1`, MiBeeNvr reference migration |

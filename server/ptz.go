@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
 // PTZ service SOAP message types
@@ -201,7 +203,7 @@ type FloatRange struct {
 var ptzMutex sync.RWMutex
 
 // HandleContinuousMove handles ContinuousMove request.
-func (s *Server) HandleContinuousMove(body interface{}) (interface{}, error) {
+func (s *Server) HandleContinuousMove(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req ContinuousMoveRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -234,7 +236,7 @@ func (s *Server) HandleContinuousMove(body interface{}) (interface{}, error) {
 }
 
 // HandleAbsoluteMove handles AbsoluteMove request.
-func (s *Server) HandleAbsoluteMove(body interface{}) (interface{}, error) {
+func (s *Server) HandleAbsoluteMove(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req AbsoluteMoveRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -281,7 +283,7 @@ func (s *Server) HandleAbsoluteMove(body interface{}) (interface{}, error) {
 }
 
 // HandleRelativeMove handles RelativeMove request.
-func (s *Server) HandleRelativeMove(body interface{}) (interface{}, error) {
+func (s *Server) HandleRelativeMove(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req RelativeMoveRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -330,7 +332,7 @@ func (s *Server) HandleRelativeMove(body interface{}) (interface{}, error) {
 }
 
 // HandleStop handles Stop request.
-func (s *Server) HandleStop(body interface{}) (interface{}, error) {
+func (s *Server) HandleStop(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req StopRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -366,7 +368,7 @@ func (s *Server) HandleStop(body interface{}) (interface{}, error) {
 }
 
 // HandleGetStatus handles GetStatus request.
-func (s *Server) HandleGetStatus(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetStatus(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req GetStatusRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -407,7 +409,7 @@ func (s *Server) HandleGetStatus(body interface{}) (interface{}, error) {
 }
 
 // HandleGetPresets handles GetPresets request.
-func (s *Server) HandleGetPresets(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetPresets(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req GetPresetsRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -451,7 +453,7 @@ func (s *Server) HandleGetPresets(body interface{}) (interface{}, error) {
 }
 
 // HandleGotoPreset handles GotoPreset request.
-func (s *Server) HandleGotoPreset(body interface{}) (interface{}, error) {
+func (s *Server) HandleGotoPreset(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req GotoPresetRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)

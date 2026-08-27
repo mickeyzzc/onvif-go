@@ -189,6 +189,7 @@ Topic guides, English and Chinese:
 | Device discovery | [discovery.md](docs/en/discovery.md) | [设备发现](docs/zh/discovery.md) |
 | Media & streaming | [media.md](docs/en/media.md) | [媒体与码流](docs/zh/media.md) |
 | Events | [events.md](docs/en/events.md) | [事件](docs/zh/events.md) |
+| ONVIF server | [server.md](docs/en/server.md) | [服务端](docs/zh/server.md) |
 | Concurrency model | [concurrency.md](docs/en/concurrency.md) | [并发模型](docs/zh/concurrency.md) |
 | Testing | [testing.md](docs/en/testing.md) | [测试](docs/zh/testing.md) |
 | CLI tools | [cli.md](docs/en/cli.md) | [CLI 工具](docs/zh/cli.md) |
