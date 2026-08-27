@@ -3,7 +3,6 @@ package server
 import (
 	"encoding/xml"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
@@ -86,25 +85,6 @@ type PTZStatus struct {
 type PTZMoveStatus struct {
 	PanTilt string `xml:"PanTilt,omitempty"`
 	Zoom    string `xml:"Zoom,omitempty"`
-}
-
-// PTZVector represents PTZ position/velocity.
-type PTZVector struct {
-	PanTilt *Vector2D `xml:"PanTilt,omitempty"`
-	Zoom    *Vector1D `xml:"Zoom,omitempty"`
-}
-
-// Vector2D represents a 2D vector.
-type Vector2D struct {
-	X     float64 `xml:"x,attr"`
-	Y     float64 `xml:"y,attr"`
-	Space string  `xml:"space,attr,omitempty"`
-}
-
-// Vector1D represents a 1D vector.
-type Vector1D struct {
-	X     float64 `xml:"x,attr"`
-	Space string  `xml:"space,attr,omitempty"`
 }
 
 // GetPresetsRequest represents GetPresets request.
@@ -192,15 +172,8 @@ type Space1DDescription struct {
 	XRange FloatRange `xml:"XRange"`
 }
 
-// FloatRange represents a float range.
-type FloatRange struct {
-	Min float64 `xml:"Min"`
-	Max float64 `xml:"Max"`
-}
-
-// PTZ service handlers
-
-var ptzMutex sync.RWMutex
+// PTZ service handlers - stateless translations between SOAP and the
+// PTZ provider.
 
 // HandleContinuousMove handles ContinuousMove request.
 func (s *Server) HandleContinuousMove(rc *soap.RequestContext, body []byte) (interface{}, error) {
@@ -209,28 +182,9 @@ func (s *Server) HandleContinuousMove(rc *soap.RequestContext, body []byte) (int
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Get PTZ state
-	ptzMutex.Lock()
-	defer ptzMutex.Unlock()
-
-	state, ok := s.ptzState[req.ProfileToken]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrPTZNotSupported, req.ProfileToken)
+	if err := s.ptz.ContinuousMove(req.ProfileToken, req.Velocity, req.Timeout); err != nil {
+		return nil, err
 	}
-
-	// Set movement state
-	state.Moving = true
-	if req.Velocity.PanTilt != nil {
-		state.PanMoving = req.Velocity.PanTilt.X != 0 || req.Velocity.PanTilt.Y != 0
-		state.TiltMoving = state.PanMoving
-	}
-	if req.Velocity.Zoom != nil {
-		state.ZoomMoving = req.Velocity.Zoom.X != 0
-	}
-	state.LastUpdate = time.Now()
-
-	// In a real implementation, this would start a background task to
-	// simulate movement and update position over time
 
 	return &ContinuousMoveResponse{}, nil
 }
@@ -242,42 +196,9 @@ func (s *Server) HandleAbsoluteMove(rc *soap.RequestContext, body []byte) (inter
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Get PTZ state
-	ptzMutex.Lock()
-	defer ptzMutex.Unlock()
-
-	state, ok := s.ptzState[req.ProfileToken]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrPTZNotSupported, req.ProfileToken)
+	if err := s.ptz.AbsoluteMove(req.ProfileToken, req.Position); err != nil {
+		return nil, err
 	}
-
-	// Update position
-	if req.Position.PanTilt != nil {
-		state.Position.Pan = req.Position.PanTilt.X
-		state.Position.Tilt = req.Position.PanTilt.Y
-	}
-	if req.Position.Zoom != nil {
-		state.Position.Zoom = req.Position.Zoom.X
-	}
-
-	// Set moving state temporarily
-	state.Moving = true
-	state.PanMoving = req.Position.PanTilt != nil
-	state.TiltMoving = req.Position.PanTilt != nil
-	state.ZoomMoving = req.Position.Zoom != nil
-	state.LastUpdate = time.Now()
-
-	// In a real implementation, simulate movement over time
-	// For now, we'll stop immediately
-	go func() {
-		time.Sleep(500 * time.Millisecond) //nolint:mnd // PTZ movement delay
-		ptzMutex.Lock()
-		state.Moving = false
-		state.PanMoving = false
-		state.TiltMoving = false
-		state.ZoomMoving = false
-		ptzMutex.Unlock()
-	}()
 
 	return &AbsoluteMoveResponse{}, nil
 }
@@ -289,44 +210,9 @@ func (s *Server) HandleRelativeMove(rc *soap.RequestContext, body []byte) (inter
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Get PTZ state
-	ptzMutex.Lock()
-	defer ptzMutex.Unlock()
-
-	state, ok := s.ptzState[req.ProfileToken]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrPTZNotSupported, req.ProfileToken)
+	if err := s.ptz.RelativeMove(req.ProfileToken, req.Translation); err != nil {
+		return nil, err
 	}
-
-	// Update position relatively
-	if req.Translation.PanTilt != nil {
-		state.Position.Pan += req.Translation.PanTilt.X
-		state.Position.Tilt += req.Translation.PanTilt.Y
-	}
-	if req.Translation.Zoom != nil {
-		state.Position.Zoom += req.Translation.Zoom.X
-	}
-
-	// Clamp values to valid ranges (simplified)
-	const maxPan = 180 // PTZ pan range
-	const maxTilt = 90 // PTZ tilt range
-	state.Position.Pan = clamp(state.Position.Pan, -maxPan, maxPan)
-	state.Position.Tilt = clamp(state.Position.Tilt, -maxTilt, maxTilt)
-	state.Position.Zoom = clamp(state.Position.Zoom, 0, 1)
-
-	state.Moving = true
-	state.LastUpdate = time.Now()
-
-	// Simulate movement completion
-	go func() {
-		time.Sleep(500 * time.Millisecond) //nolint:mnd // PTZ movement delay
-		ptzMutex.Lock()
-		state.Moving = false
-		state.PanMoving = false
-		state.TiltMoving = false
-		state.ZoomMoving = false
-		ptzMutex.Unlock()
-	}()
 
 	return &RelativeMoveResponse{}, nil
 }
@@ -338,31 +224,9 @@ func (s *Server) HandleStop(rc *soap.RequestContext, body []byte) (interface{}, 
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Get PTZ state
-	ptzMutex.Lock()
-	defer ptzMutex.Unlock()
-
-	state, ok := s.ptzState[req.ProfileToken]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrPTZNotSupported, req.ProfileToken)
+	if err := s.ptz.Stop(req.ProfileToken, req.PanTilt, req.Zoom); err != nil {
+		return nil, err
 	}
-
-	// Stop movement
-	if req.PanTilt {
-		state.PanMoving = false
-		state.TiltMoving = false
-	}
-	if req.Zoom {
-		state.ZoomMoving = false
-	}
-	if !req.PanTilt && !req.Zoom {
-		// Stop all if neither specified
-		state.PanMoving = false
-		state.TiltMoving = false
-		state.ZoomMoving = false
-	}
-	state.Moving = state.PanMoving || state.TiltMoving || state.ZoomMoving
-	state.LastUpdate = time.Now()
 
 	return &StopResponse{}, nil
 }
@@ -374,13 +238,9 @@ func (s *Server) HandleGetStatus(rc *soap.RequestContext, body []byte) (interfac
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Get PTZ state
-	ptzMutex.RLock()
-	defer ptzMutex.RUnlock()
-
-	state, ok := s.ptzState[req.ProfileToken]
-	if !ok {
-		return nil, fmt.Errorf("%w: %s", ErrPTZNotSupported, req.ProfileToken)
+	state, err := s.ptz.Status(req.ProfileToken)
+	if err != nil {
+		return nil, err
 	}
 
 	// Build status response
@@ -459,56 +319,9 @@ func (s *Server) HandleGotoPreset(rc *soap.RequestContext, body []byte) (interfa
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
 
-	// Find the profile configuration
-	var profileCfg *ProfileConfig
-	for i := range s.config.Profiles {
-		if s.config.Profiles[i].Token == req.ProfileToken {
-			profileCfg = &s.config.Profiles[i]
-
-			break
-		}
+	if err := s.ptz.GotoPreset(req.ProfileToken, req.PresetToken); err != nil {
+		return nil, err
 	}
-
-	if profileCfg == nil || profileCfg.PTZ == nil {
-		return nil, fmt.Errorf("%w: %s", ErrPTZNotSupported, req.ProfileToken)
-	}
-
-	// Find the preset
-	var presetPos *PTZPosition
-	for _, preset := range profileCfg.PTZ.Presets {
-		if preset.Token == req.PresetToken {
-			presetPos = &preset.Position
-
-			break
-		}
-	}
-
-	if presetPos == nil {
-		return nil, fmt.Errorf("%w: %s", ErrPresetNotFound, req.PresetToken)
-	}
-
-	// Get PTZ state and move to preset
-	ptzMutex.Lock()
-	defer ptzMutex.Unlock()
-
-	state := s.ptzState[req.ProfileToken]
-	state.Position = *presetPos
-	state.Moving = true
-	state.PanMoving = true
-	state.TiltMoving = true
-	state.ZoomMoving = true
-	state.LastUpdate = time.Now()
-
-	// Simulate movement completion
-	go func() {
-		time.Sleep(1 * time.Second)
-		ptzMutex.Lock()
-		state.Moving = false
-		state.PanMoving = false
-		state.TiltMoving = false
-		state.ZoomMoving = false
-		ptzMutex.Unlock()
-	}()
 
 	return &GotoPresetResponse{}, nil
 }
@@ -521,15 +334,4 @@ func getMoveStatusString(moving bool) string {
 	}
 
 	return "IDLE"
-}
-
-func clamp(value, minVal, maxVal float64) float64 {
-	if value < minVal {
-		return minVal
-	}
-	if value > maxVal {
-		return maxVal
-	}
-
-	return value
 }

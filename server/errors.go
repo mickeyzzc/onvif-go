@@ -1,20 +1,24 @@
 package server
 
-import "errors"
+import "github.com/mickeyzzc/onvif-go/v2/server/provider"
+
+// Domain error sentinels live in the provider package (where the state
+// backends produce them); these aliases keep the historical server.*
+// spellings source-compatible.
 
 var (
 	// ErrVideoSourceNotFound is returned when a video source is not found.
-	ErrVideoSourceNotFound = errors.New("video source not found")
+	ErrVideoSourceNotFound = provider.ErrVideoSourceNotFound
 
 	// ErrProfileNotFound is returned when a profile is not found.
-	ErrProfileNotFound = errors.New("profile not found")
+	ErrProfileNotFound = provider.ErrProfileNotFound
 
 	// ErrSnapshotNotSupported is returned when snapshot is not supported for a profile.
-	ErrSnapshotNotSupported = errors.New("snapshot not supported for profile")
+	ErrSnapshotNotSupported = provider.ErrSnapshotNotSupported
 
 	// ErrPTZNotSupported is returned when PTZ is not supported for a profile.
-	ErrPTZNotSupported = errors.New("PTZ not supported for profile")
+	ErrPTZNotSupported = provider.ErrPTZNotSupported
 
 	// ErrPresetNotFound is returned when a preset is not found.
-	ErrPresetNotFound = errors.New("preset not found")
+	ErrPresetNotFound = provider.ErrPresetNotFound
 )

@@ -123,6 +123,34 @@ bytes verbatim — bypassing `encoding/xml` entirely for exact element
 names, prefixes, or formatting. Raw output is never rewritten by prefix
 modes.
 
+## Pluggable providers (M3)
+
+Every state source behind the SOAP layer is an interface in
+`server/provider` — the simulator (`server/simulator`) is just the
+default implementation:
+
+| Provider | Backs | Swap in for |
+|---|---|---|
+| `DeviceInfoProvider` | GetDeviceInformation | hardware identity / EEPROM |
+| `StreamURIProvider` (+ optional `StreamURISetter`) | GetStreamUri, RTSP paths | real RTSP mount points |
+| `SnapshotProvider` | HTTP `/snapshot` endpoint | JPEG frame buffer |
+| `ImagingProvider` | Get/SetImagingSettings, GetOptions, Move | ISP / lens controls |
+| `PTZProvider` | moves, status, presets | motor drivers (or keep the simulator) |
+
+```go
+srv, err := server.New(config,
+    server.WithDeviceInfoProvider(hwInfo),
+    server.WithStreamURIProvider(rtspMounts),
+    server.WithSnapshotProvider(frameBuffer),
+    server.WithImagingProvider(isp),
+)
+```
+
+No options = full simulator behavior (CLI and examples are unchanged).
+The SOAP handlers are stateless translators now; `Server.Handle*`
+signatures, the exported model types, and the domain error sentinels
+keep their `server.*` spellings via aliases.
+
 ## What's next
 
 M3 (#23) turns the simulator's in-memory state into pluggable provider

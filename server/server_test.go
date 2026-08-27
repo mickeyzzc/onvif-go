@@ -53,14 +53,9 @@ func TestNewInitializesStreamsAndState(t *testing.T) {
 		t.Fatalf("New() failed: %v", err)
 	}
 
-	// Verify streams are initialized
-	if len(server.streams) != len(config.Profiles) {
-		t.Errorf("Expected %d streams, got %d", len(config.Profiles), len(server.streams))
-	}
-
-	// Verify each stream has correct configuration
+	// Verify streams resolve through the provider for every profile
 	for _, profile := range config.Profiles {
-		stream, ok := server.streams[profile.Token]
+		stream, ok := server.GetStreamConfig(profile.Token)
 		if !ok {
 			t.Errorf("Stream not found for profile %s", profile.Token)
 
@@ -74,16 +69,18 @@ func TestNewInitializesStreamsAndState(t *testing.T) {
 	// Verify PTZ state is initialized for profiles with PTZ
 	for _, profile := range config.Profiles {
 		if profile.PTZ != nil {
-			_, ok := server.ptzState[profile.Token]
+			_, ok := server.GetPTZState(profile.Token)
 			if !ok {
 				t.Errorf("PTZ state not found for profile %s", profile.Token)
 			}
 		}
 	}
 
-	// Verify imaging state is initialized
-	if len(server.imagingState) != len(config.Profiles) {
-		t.Errorf("Expected %d imaging states, got %d", len(config.Profiles), len(server.imagingState))
+	// Verify imaging state is initialized per video source
+	for _, profile := range config.Profiles {
+		if _, ok := server.GetImagingState(profile.VideoSource.Token); !ok {
+			t.Errorf("Imaging state not found for video source %s", profile.VideoSource.Token)
+		}
 	}
 }
 

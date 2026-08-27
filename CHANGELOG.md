@@ -52,6 +52,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `(*soap.RequestContext, []byte)`; simulator `StreamURI` values are
     derived per request instead of pre-baked at `New()` (explicit
     `UpdateStreamURI` pins still win).
+- **Server provider architecture** (#23, closes #19 — the simulator is
+  now a swappable backend): all state sources behind the SOAP layer are
+  interfaces in the new `server/provider` package (`DeviceInfoProvider`,
+  `StreamURIProvider` + optional `StreamURISetter`, `SnapshotProvider`,
+  `ImagingProvider`, `PTZProvider`); the in-memory state moved to
+  `server/simulator` as the default; handlers are stateless translators;
+  the HTTP snapshot endpoint serves provider JPEGs (the simulator
+  generates real, decodable JPEGs — the empty-body TODO is gone);
+  `server.New(config, ...server.Option)` injects hardware-backed
+  providers without forking. The data model and error sentinels live in
+  `server/provider` with `server.*` aliases, so CLI/examples and the
+  exported surface are unchanged (one exception:
+  `ProfileConfig.ToONVIFProfile()` became `server.ProfileToONVIF()` —
+  methods cannot follow type aliases across packages).
 - **Fixed the WS-Security utility namespace typo** in the client's
   `UsernameToken.Created` tag (`oasis-200401-wsssecurity-utility-1.0.xsd`
   → the correct `oasis-200401-wss-utility-1.0.xsd`), so `Created` is now

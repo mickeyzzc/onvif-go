@@ -5,6 +5,57 @@ import (
 	"time"
 
 	"github.com/mickeyzzc/onvif-go/v2"
+	"github.com/mickeyzzc/onvif-go/v2/server/provider"
+)
+
+// The data model (profile configuration, PTZ/imaging state, imaging
+// settings/options) lives in the provider package so state backends can
+// implement the provider interfaces without importing the server. These
+// aliases keep the historical server.* spellings source-compatible.
+type (
+	DeviceInfo                    = provider.DeviceInfo
+	ProfileConfig                 = provider.ProfileConfig
+	VideoSourceConfig             = provider.VideoSourceConfig
+	AudioSourceConfig             = provider.AudioSourceConfig
+	VideoEncoderConfig            = provider.VideoEncoderConfig
+	AudioEncoderConfig            = provider.AudioEncoderConfig
+	PTZConfig                     = provider.PTZConfig
+	SnapshotConfig                = provider.SnapshotConfig
+	Resolution                    = provider.Resolution
+	Bounds                        = provider.Bounds
+	Range                         = provider.Range
+	PTZSpeed                      = provider.PTZSpeed
+	Preset                        = provider.Preset
+	PTZPosition                   = provider.PTZPosition
+	StreamConfig                  = provider.StreamConfig
+	PTZState                      = provider.PTZState
+	ImagingState                  = provider.ImagingState
+	BacklightCompensation         = provider.BacklightCompensation
+	ExposureSettings              = provider.ExposureSettings
+	FocusSettings                 = provider.FocusSettings
+	WhiteBalanceSettings          = provider.WhiteBalanceSettings
+	WDRSettings                   = provider.WDRSettings
+	ImagingSettings               = provider.ImagingSettings
+	BacklightCompensationSettings = provider.BacklightCompensationSettings
+	ExposureSettings20            = provider.ExposureSettings20
+	FocusConfiguration20          = provider.FocusConfiguration20
+	WideDynamicRangeSettings      = provider.WideDynamicRangeSettings
+	WhiteBalanceSettings20        = provider.WhiteBalanceSettings20
+	Rectangle                     = provider.Rectangle
+	ImagingOptions                = provider.ImagingOptions
+	BacklightCompensationOptions  = provider.BacklightCompensationOptions
+	ExposureOptions               = provider.ExposureOptions
+	FocusOptions                  = provider.FocusOptions
+	WideDynamicRangeOptions       = provider.WideDynamicRangeOptions
+	WhiteBalanceOptions           = provider.WhiteBalanceOptions
+	FocusMove                     = provider.FocusMove
+	AbsoluteFocus                 = provider.AbsoluteFocus
+	RelativeFocus                 = provider.RelativeFocus
+	ContinuousFocus               = provider.ContinuousFocus
+	PTZVector                     = provider.PTZVector
+	Vector2D                      = provider.Vector2D
+	Vector1D                      = provider.Vector1D
+	FloatRange                    = provider.FloatRange
 )
 
 const (
@@ -71,200 +122,16 @@ type Config struct {
 	SupportEvents  bool
 }
 
-// DeviceInfo contains device identification information.
-type DeviceInfo struct {
-	Manufacturer    string
-	Model           string
-	FirmwareVersion string
-	SerialNumber    string
-	HardwareID      string
-}
-
-// ProfileConfig represents a camera profile configuration.
-type ProfileConfig struct {
-	Token        string              // Profile token (unique identifier)
-	Name         string              // Profile name
-	VideoSource  VideoSourceConfig   // Video source configuration
-	AudioSource  *AudioSourceConfig  // Audio source configuration (optional)
-	VideoEncoder VideoEncoderConfig  // Video encoder configuration
-	AudioEncoder *AudioEncoderConfig // Audio encoder configuration (optional)
-	PTZ          *PTZConfig          // PTZ configuration (optional)
-	Snapshot     SnapshotConfig      // Snapshot configuration
-}
-
-// VideoSourceConfig represents video source configuration.
-type VideoSourceConfig struct {
-	Token      string // Video source token
-	Name       string // Video source name
-	Resolution Resolution
-	Framerate  int
-	Bounds     Bounds
-}
-
-// AudioSourceConfig represents audio source configuration.
-type AudioSourceConfig struct {
-	Token      string // Audio source token
-	Name       string // Audio source name
-	SampleRate int    // Sample rate in Hz (e.g., 8000, 16000, 48000)
-	Bitrate    int    // Bitrate in kbps
-}
-
-// VideoEncoderConfig represents video encoder configuration.
-type VideoEncoderConfig struct {
-	Encoding   string     // JPEG, H264, H265, MPEG4
-	Resolution Resolution // Video resolution
-	Quality    float64    // Quality (0-100)
-	Framerate  int        // Frames per second
-	Bitrate    int        // Bitrate in kbps
-	GovLength  int        // GOP length
-}
-
-// AudioEncoderConfig represents audio encoder configuration.
-type AudioEncoderConfig struct {
-	Encoding   string // G711, G726, AAC
-	Bitrate    int    // Bitrate in kbps
-	SampleRate int    // Sample rate in Hz
-}
-
-// PTZConfig represents PTZ configuration.
-type PTZConfig struct {
-	NodeToken          string   // PTZ node token
-	PanRange           Range    // Pan range in degrees
-	TiltRange          Range    // Tilt range in degrees
-	ZoomRange          Range    // Zoom range
-	DefaultSpeed       PTZSpeed // Default speed
-	SupportsContinuous bool     // Supports continuous move
-	SupportsAbsolute   bool     // Supports absolute move
-	SupportsRelative   bool     // Supports relative move
-	Presets            []Preset // Predefined presets
-}
-
-// SnapshotConfig represents snapshot configuration.
-type SnapshotConfig struct {
-	Enabled    bool       // Whether snapshots are supported
-	Resolution Resolution // Snapshot resolution
-	Quality    float64    // JPEG quality (0-100)
-}
-
-// Resolution represents video resolution.
-type Resolution struct {
-	Width  int
-	Height int
-}
-
-// Bounds represents video bounds.
-type Bounds struct {
-	X      int
-	Y      int
-	Width  int
-	Height int
-}
-
-// Range represents a numeric range.
-type Range struct {
-	Min float64
-	Max float64
-}
-
-// PTZSpeed represents PTZ movement speed.
-type PTZSpeed struct {
-	Pan  float64 // Pan speed (-1.0 to 1.0)
-	Tilt float64 // Tilt speed (-1.0 to 1.0)
-	Zoom float64 // Zoom speed (-1.0 to 1.0)
-}
-
-// Preset represents a PTZ preset position.
-type Preset struct {
-	Token    string      // Preset token
-	Name     string      // Preset name
-	Position PTZPosition // Position
-}
-
-// PTZPosition represents PTZ position.
-type PTZPosition struct {
-	Pan  float64 // Pan position
-	Tilt float64 // Tilt position
-	Zoom float64 // Zoom position
-}
-
-// StreamConfig represents an RTSP stream configuration.
-type StreamConfig struct {
-	ProfileToken string // Associated profile token
-	RTSPPath     string // RTSP path (e.g., "/stream1")
-	StreamURI    string // Full RTSP URI
-}
-
-// Server represents the ONVIF server.
+// Server represents the ONVIF server: stateless SOAP handlers over
+// pluggable providers. The zero-value is not usable; call New.
 type Server struct {
-	config       *Config
-	streams      map[string]*StreamConfig // Profile token -> stream config
-	ptzState     map[string]*PTZState     // Profile token -> PTZ state
-	imagingState map[string]*ImagingState // Video source token -> imaging state
-	systemTime   time.Time
-}
-
-// PTZState represents the current PTZ state.
-type PTZState struct {
-	Position   PTZPosition
-	Moving     bool
-	PanMoving  bool
-	TiltMoving bool
-	ZoomMoving bool
-	LastUpdate time.Time
-}
-
-// ImagingState represents the current imaging settings state.
-type ImagingState struct {
-	Brightness       float64
-	Contrast         float64
-	Saturation       float64
-	Sharpness        float64
-	BacklightComp    BacklightCompensation
-	Exposure         ExposureSettings
-	Focus            FocusSettings
-	WhiteBalance     WhiteBalanceSettings
-	WideDynamicRange WDRSettings
-	IrCutFilter      string // ON, OFF, AUTO
-}
-
-// BacklightCompensation represents backlight compensation settings.
-type BacklightCompensation struct {
-	Mode  string  // OFF, ON
-	Level float64 // 0-100
-}
-
-// ExposureSettings represents exposure settings.
-type ExposureSettings struct {
-	Mode         string // AUTO, MANUAL
-	Priority     string // LowNoise, FrameRate
-	MinExposure  float64
-	MaxExposure  float64
-	MinGain      float64
-	MaxGain      float64
-	ExposureTime float64
-	Gain         float64
-}
-
-// FocusSettings represents focus settings.
-type FocusSettings struct {
-	AutoFocusMode string // AUTO, MANUAL
-	DefaultSpeed  float64
-	NearLimit     float64
-	FarLimit      float64
-	CurrentPos    float64
-}
-
-// WhiteBalanceSettings represents white balance settings.
-type WhiteBalanceSettings struct {
-	Mode   string // AUTO, MANUAL
-	CrGain float64
-	CbGain float64
-}
-
-// WDRSettings represents wide dynamic range settings.
-type WDRSettings struct {
-	Mode  string  // OFF, ON
-	Level float64 // 0-100
+	config     *Config
+	deviceInfo provider.DeviceInfoProvider
+	stream     provider.StreamURIProvider
+	snapshot   provider.SnapshotProvider
+	imaging    provider.ImagingProvider
+	ptz        provider.PTZProvider
+	systemTime time.Time
 }
 
 // DefaultConfig returns a default server configuration with a multi-lens camera setup.
@@ -438,8 +305,10 @@ func (c *Config) ServiceEndpoints(host string) map[string]string {
 	return endpoints
 }
 
-// ToONVIFProfile converts a ProfileConfig to an ONVIF Profile.
-func (p *ProfileConfig) ToONVIFProfile() *onvif.Profile {
+// ProfileToONVIF converts a ProfileConfig to an ONVIF Profile (the
+// client-side wire shape). Formerly a ProfileConfig method; methods
+// cannot follow type aliases across packages.
+func ProfileToONVIF(p *ProfileConfig) *onvif.Profile {
 	profile := &onvif.Profile{
 		Token: p.Token,
 		Name:  p.Name,

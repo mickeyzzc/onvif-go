@@ -118,6 +118,32 @@ handler。
 嵌入——完全绕过 `encoding/xml`，精确控制元素名、前缀、格式。Raw 输出
 不会被前缀模式改写。
 
+## 可插拔 provider（M3）
+
+SOAP 层背后的每个状态来源都是 `server/provider` 里的接口——模拟器
+（`server/simulator`）只是默认实现：
+
+| Provider | 支撑 | 用于替换 |
+|---|---|---|
+| `DeviceInfoProvider` | GetDeviceInformation | 硬件标识 / EEPROM |
+| `StreamURIProvider`（可选 `StreamURISetter`） | GetStreamUri、RTSP 路径 | 真实 RTSP 挂载点 |
+| `SnapshotProvider` | HTTP `/snapshot` 端点 | JPEG 帧缓冲 |
+| `ImagingProvider` | Get/SetImagingSettings、GetOptions、Move | ISP / 镜头控制 |
+| `PTZProvider` | 移动、状态、预置位 | 电机驱动（或继续用模拟器） |
+
+```go
+srv, err := server.New(config,
+    server.WithDeviceInfoProvider(hwInfo),
+    server.WithStreamURIProvider(rtspMounts),
+    server.WithSnapshotProvider(frameBuffer),
+    server.WithImagingProvider(isp),
+)
+```
+
+不传选项 = 完整模拟器行为（CLI 与示例零改动）。SOAP handler 现在是
+无状态的翻译层；`Server.Handle*` 签名、导出的模型类型、领域错误哨兵
+都通过别名保持 `server.*` 拼写不变。
+
 ## 后续
 
 M3（#23）把模拟器的内存状态改造为可插拔的 provider 接口（DeviceInfo /
