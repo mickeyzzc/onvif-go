@@ -3,8 +3,16 @@ package onvif
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
+	"strings"
 )
+
+// ErrEmptyMediaURI is returned when a GetStreamUri/GetSnapshotUri response
+// parsed successfully but contained no usable Uri element. Previously such
+// responses silently produced an empty URI with a nil error — the hardest
+// failure mode to debug downstream (issue #3).
+var ErrEmptyMediaURI = errors.New("device returned an empty media URI")
 
 // Request/response types hoisted from method bodies.
 
@@ -22,6 +30,10 @@ type GetSnapshotURIResponse struct {
 		InvalidAfterReboot  bool   `xml:"InvalidAfterReboot"`
 		Timeout             string `xml:"Timeout"`
 	} `xml:"MediaUri"`
+	// InnerXML captures the raw response content so the loose URI-extraction
+	// fallback and diagnostic errors can work with what the device actually
+	// sent, whatever its namespace prefixes (issue #3).
+	InnerXML string `xml:",innerxml"`
 }
 
 type GetStreamURI struct {
@@ -45,6 +57,10 @@ type GetStreamURIResponse struct {
 		InvalidAfterReboot  bool   `xml:"InvalidAfterReboot"`
 		Timeout             string `xml:"Timeout"`
 	} `xml:"MediaUri"`
+	// InnerXML captures the raw response content so the loose URI-extraction
+	// fallback and diagnostic errors can work with what the device actually
+	// sent, whatever its namespace prefixes (issue #3).
+	InnerXML string `xml:",innerxml"`
 }
 
 type SetSynchronizationPoint struct {
@@ -65,6 +81,10 @@ type StopMulticastStreaming struct {
 	ProfileToken string   `xml:"trt:ProfileToken"`
 }
 
+// maxMediaURIErrBody caps how much raw response XML is embedded in
+// ErrEmptyMediaURI errors.
+const maxMediaURIErrBody = 512
+
 func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*MediaURI, error) {
 	endpoint := s.getMediaEndpoint()
 
@@ -82,8 +102,18 @@ func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*
 		return nil, fmt.Errorf("GetStreamURI failed: %w", err)
 	}
 
+	uri := resp.MediaURI.URI
+	if uri == "" {
+		uri = looseExtractURI(resp.InnerXML)
+	}
+
+	if uri == "" {
+		return nil, fmt.Errorf("%w: GetStreamUri (profile %s) response carried no Uri element; body: %s",
+			ErrEmptyMediaURI, profileToken, truncateForError(resp.InnerXML, maxMediaURIErrBody))
+	}
+
 	return &MediaURI{
-		URI:                 resp.MediaURI.URI,
+		URI:                 uri,
 		InvalidAfterConnect: resp.MediaURI.InvalidAfterConnect,
 		InvalidAfterReboot:  resp.MediaURI.InvalidAfterReboot,
 	}, nil
@@ -103,8 +133,20 @@ func (s *MediaService) GetSnapshotURI(ctx context.Context, profileToken string) 
 		return nil, fmt.Errorf("GetSnapshotURI failed: %w", err)
 	}
 
+	// GetSnapshotUri shares the GetStreamUri response shape and therefore the
+	// same namespace-variant parsing pitfalls (issue #3 audit conclusion).
+	uri := resp.MediaURI.URI
+	if uri == "" {
+		uri = looseExtractURI(resp.InnerXML)
+	}
+
+	if uri == "" {
+		return nil, fmt.Errorf("%w: GetSnapshotUri (profile %s) response carried no Uri element; body: %s",
+			ErrEmptyMediaURI, profileToken, truncateForError(resp.InnerXML, maxMediaURIErrBody))
+	}
+
 	return &MediaURI{
-		URI:                 resp.MediaURI.URI,
+		URI:                 uri,
 		InvalidAfterConnect: resp.MediaURI.InvalidAfterConnect,
 		InvalidAfterReboot:  resp.MediaURI.InvalidAfterReboot,
 	}, nil
@@ -153,4 +195,40 @@ func (s *MediaService) StopMulticastStreaming(ctx context.Context, profileToken 
 	}
 
 	return nil
+}
+
+// looseExtractURI scans raw response XML for the first element whose local
+// name is "Uri" (any namespace, any prefix) and returns its text. It is the
+// last-resort fallback for devices whose response shape defeats the typed
+// structs: unusual namespace bindings, SOAP 1.1 envelopes, or a missing
+// MediaUri wrapper element. Empty string when nothing is found.
+func looseExtractURI(raw string) string {
+	dec := xml.NewDecoder(strings.NewReader(raw))
+	for {
+		tok, err := dec.Token()
+		if err != nil {
+			return ""
+		}
+
+		start, ok := tok.(xml.StartElement)
+		if !ok || start.Name.Local != "Uri" {
+			continue
+		}
+
+		var value string
+		if err := dec.DecodeElement(&value, &start); err != nil {
+			return ""
+		}
+
+		return strings.TrimSpace(value)
+	}
+}
+
+// truncateForError shortens s to at most limit bytes for error messages.
+func truncateForError(s string, limit int) string {
+	if len(s) <= limit {
+		return s
+	}
+
+	return s[:limit] + "...(truncated)"
 }
