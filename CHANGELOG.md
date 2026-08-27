@@ -66,6 +66,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exported surface are unchanged (one exception:
   `ProfileConfig.ToONVIFProfile()` became `server.ProfileToONVIF()` —
   methods cannot follow type aliases across packages).
+- **Shared WS-Discovery codec + device-side responder** (#24, closes
+  #15): new `wsdiscovery` leaf package holds the wire codec for both
+  sides of the protocol (`BuildProbe`/`ParseProbe`,
+  `BuildProbeMatches`/`ParseProbeMatches` (+ `ErrNoMatches`),
+  `BuildHello`/`BuildBye`, `ParseAnnouncement`) — the client
+  (`discovery/`) now parses through it, eliminating its private
+  decoders. New `server/discovery.Responder`: resident multicast :3702
+  loop answering Probes with unicast ProbeMatches, Hello on start / Bye
+  on stop, full `http.Handler` for directed Probe-over-HTTP POSTs;
+  advertised Types/Scopes/XAddrs/MetadataVersion configurable, XAddrs
+  defaulting to the per-peer `http://<requester IP>:<port><path>` echo;
+  WS-Discovery Types filtering honored. `discovery.ProbeMatch` is now an
+  alias of `wsdiscovery.Match` (field-compatible; the unused XMLName
+  field is gone).
 - **Fixed the WS-Security utility namespace typo** in the client's
   `UsernameToken.Created` tag (`oasis-200401-wsssecurity-utility-1.0.xsd`
   → the correct `oasis-200401-wss-utility-1.0.xsd`), so `Created` is now
