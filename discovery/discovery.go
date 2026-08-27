@@ -45,8 +45,20 @@ const (
 
 // Device represents a discovered ONVIF device.
 type Device struct {
-	// Device endpoint address
+	// EndpointRef is the WS-Discovery endpoint address, conventionally a
+	// "urn:uuid:..." form. It is a stable transport-level identifier for the
+	// discovery protocol — it is NOT the device serial number. Correlating a
+	// camera across protocols (ONVIF vs GB28181) must use
+	// Info.SerialNumber; comparing EndpointRef against a serial silently
+	// never matches.
 	EndpointRef string
+
+	// Name, Hardware and Location are the structured forms of the well-known
+	// ONVIF scopes (see ParseScopes), filled wherever scopes are parsed.
+	// Empty when the device does not advertise them.
+	Name     string
+	Hardware string
+	Location string
 
 	// XAddrs contains the device service addresses
 	XAddrs []string
@@ -206,8 +218,16 @@ func parseProbeResponse(data []byte) (*Device, error) {
 		Scopes:          parseSpaceSeparated(match.Scopes),
 		MetadataVersion: match.MetadataVersion,
 	}
+	device.Name, device.Hardware, device.Location = scopeFields(device.Scopes)
 
 	return device, nil
+}
+
+// scopeFields is the ParseScopes adapter for direct struct filling.
+func scopeFields(scopes []string) (name, hardware, location string) {
+	info := ParseScopes(scopes)
+
+	return info.Name, info.Hardware, info.Location
 }
 
 // parseSpaceSeparated parses a space-separated string into a slice.
@@ -368,28 +388,18 @@ func (d *Device) GetDeviceEndpoint() string {
 
 // GetName extracts the device name from scopes.
 func (d *Device) GetName() string {
-	for _, scope := range d.Scopes {
-		if strings.Contains(scope, "name") {
-			parts := strings.Split(scope, "/")
-			if len(parts) > 0 {
-				return parts[len(parts)-1]
-			}
-		}
+	if d.Name != "" {
+		return d.Name
 	}
 
-	return ""
+	return ParseScopes(d.Scopes).Name
 }
 
 // GetLocation extracts the device location from scopes.
 func (d *Device) GetLocation() string {
-	for _, scope := range d.Scopes {
-		if strings.Contains(scope, "location") {
-			parts := strings.Split(scope, "/")
-			if len(parts) > 0 {
-				return parts[len(parts)-1]
-			}
-		}
+	if d.Location != "" {
+		return d.Location
 	}
 
-	return ""
+	return ParseScopes(d.Scopes).Location
 }

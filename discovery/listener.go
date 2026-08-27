@@ -218,11 +218,14 @@ func parseDiscoveryDatagram(data []byte) *Device {
 		return nil
 	}
 
-	return &Device{
+	device := &Device{
 		EndpointRef:     match.EndpointRef,
 		XAddrs:          parseSpaceSeparated(match.XAddrs),
 		Types:           parseSpaceSeparated(match.Types),
 		Scopes:          parseSpaceSeparated(match.Scopes),
 		MetadataVersion: match.MetadataVersion,
 	}
+	device.Name, device.Hardware, device.Location = scopeFields(device.Scopes)
+
+	return device
 }
