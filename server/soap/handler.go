@@ -14,6 +14,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"sync"
 
 	originsoap "github.com/mickeyzzc/onvif-go/v2/internal/soap"
 )
@@ -32,7 +33,8 @@ type requestEnvelope struct {
 	} `xml:"Body"`
 }
 
-// Handler handles incoming SOAP requests.
+// Handler handles incoming SOAP requests. Registration is safe while
+// the handler is serving traffic (embedding hosts register lazily).
 type Handler struct {
 	username string
 	password string
@@ -40,7 +42,9 @@ type Handler struct {
 	// explicitPrefixes emits responses with s:/tds:/trt:/... namespace
 	// prefixes instead of default xmlns declarations.
 	explicitPrefixes bool
-	handlers         map[string]ContextHandler
+
+	mu       sync.RWMutex
+	handlers map[string]ContextHandler
 }
 
 // RequestContext carries per-request state to message handlers.
@@ -124,6 +128,9 @@ func (h *Handler) RegisterHandler(action string, handler MessageHandler) {
 // RegisterContextHandler registers a context-aware handler for a specific
 // action/message type.
 func (h *Handler) RegisterContextHandler(action string, handler ContextHandler) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
 	h.handlers[action] = handler
 }
 
@@ -171,7 +178,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Find and execute handler
+	h.mu.RLock()
 	handler, ok := h.handlers[action]
+	h.mu.RUnlock()
+
 	if !ok {
 		h.sendFault(w, "Receiver", "Action not supported", "No handler for action: "+action)
 

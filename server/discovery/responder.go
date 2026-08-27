@@ -82,6 +82,7 @@ type Responder struct {
 
 	mu       sync.Mutex
 	started  bool
+	conn     *net.UDPConn
 	stopOnce sync.Once
 	stopped  chan struct{}
 	done     chan struct{}
@@ -118,7 +119,9 @@ func NewResponder(config Config) *Responder {
 
 // Start begins listening on the WS-Discovery multicast group (on its
 // own goroutine) and sends the Hello announcement. Call Stop to shut
-// down (which sends Bye).
+// down (which sends Bye). Configuration errors (unknown interface)
+// surface here synchronously; late bind failures terminate the loop and
+// close Done.
 func (r *Responder) Start(ctx context.Context) error {
 	r.mu.Lock()
 	if r.started {
@@ -128,6 +131,14 @@ func (r *Responder) Start(ctx context.Context) error {
 	}
 	r.started = true
 	r.mu.Unlock()
+
+	// Validate the interface synchronously so misconfiguration is
+	// reported by Start, not swallowed by the loop goroutine.
+	if r.config.Interface != "" {
+		if _, err := resolveInterface(r.config.Interface); err != nil {
+			return fmt.Errorf("discovery responder: %w", err)
+		}
+	}
 
 	go func() {
 		defer close(r.done)
@@ -156,6 +167,23 @@ func (r *Responder) run(ctx context.Context) error {
 	conn, err := net.ListenMulticastUDP("udp", iface, group)
 	if err != nil {
 		return fmt.Errorf("discovery responder: listen multicast: %w", err)
+	}
+
+	// Expose the socket so Stop can unblock the read loop immediately
+	// (closing the conn interrupts ReadFromUDP; without it, Stop would
+	// only be noticed on the next read-deadline tick).
+	r.mu.Lock()
+	r.conn = conn
+	r.mu.Unlock()
+
+	// Cover the Stop-before-bind race: if Stop already ran, it found no
+	// socket to close — close it here ourselves and bail out.
+	select {
+	case <-r.stopped:
+		_ = conn.Close()
+
+		return nil
+	default:
 	}
 
 	// Announce ourselves.
@@ -271,11 +299,19 @@ func (r *Responder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	_, _ = w.Write(answer)
 }
 
-// Stop shuts the responder down (sending Bye) and unblocks the loop.
-// Idempotent.
+// Stop shuts the responder down (sending Bye) and unblocks the loop
+// immediately by closing the multicast socket. Idempotent.
 func (r *Responder) Stop() {
 	r.stopOnce.Do(func() {
 		close(r.stopped)
+
+		r.mu.Lock()
+		conn := r.conn
+		r.mu.Unlock()
+
+		if conn != nil {
+			_ = conn.Close()
+		}
 	})
 }
 

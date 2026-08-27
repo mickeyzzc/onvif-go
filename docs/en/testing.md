@@ -49,6 +49,40 @@ it as a fixture under `testdata/captures/` so the regression lives on after
 the camera is gone. `cmd/onvif-diagnostics` (see [cli.md](cli.md)) exists
 exactly for producing those captures.
 
+## Test-driven development
+
+The library is developed TDD-first: **write the failing test before the
+code** — for bug fixes the test reproduces the defect first, for new
+service operations the test pins the wire contract (request fields the
+device branches on + parsed response fields) before the implementation.
+This backfill pass found four real defects that green-looking code was
+hiding (`imaging.Move` never encoded its focus parameters,
+`imaging.GetOptions` silently dropping most option groups, dead
+endpoint-fallback guards, a `Stop` that took a full read-deadline tick
+to unblock).
+
+Rules of thumb:
+
+- Service operations are tested through `internal/testutil.FakeCaller`
+  — the exact `xml.Unmarshal` decode path of the real transport, no
+  sockets, microsecond latency. Reach for `httptest` only when HTTP
+  behavior itself is under test.
+- **Every channel wait is bounded**: `waitFor`/`mustReceive` helpers
+  fail in 5s instead of hanging the suite — a deadlock must surface as
+  a test failure, never as a CI timeout.
+- Background loops (`events.EventStream`, `discovery.Listener`,
+  `server/discovery.Responder`) must observe cancellation **immediately**,
+  not on the next timer tick — Stop paths close the underlying socket
+  to interrupt blocked reads; the tests assert prompt `Done()` closure.
+- Time is injected, never slept on: lifecycle tests pass short
+  durations through options; assertions on timestamps render fixtures
+  relative to `time.Now()` (timezone-independent).
+- Timing budgets: a table case costs microseconds; the whole
+  package-level suite stays in single-digit seconds (the one 1s
+  backoff-recovery test in `events` is the deliberate exception).
+  CI runs the same suite under `-race` — registration maps and shared
+  state must be lock-guarded (`server/soap.Handler` is the reference).
+
 ## Conventions for new tests
 
 - Prefer `httptest` servers over hand-mocked transports; classify requests
