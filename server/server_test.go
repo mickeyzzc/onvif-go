@@ -120,8 +120,15 @@ func TestGetStreamConfig(t *testing.T) {
 				if sc.ProfileToken != profileToken {
 					return errorf("profile token mismatch: %s != %s", sc.ProfileToken, profileToken)
 				}
-				if sc.StreamURI == "" {
-					return errorf("StreamURI is empty")
+				// StreamURI is intentionally empty after New(): it is
+				// derived per request from the advertised host and can be
+				// pinned with UpdateStreamURI.
+				if sc.RTSPPath == "" {
+					return errorf("RTSPPath is empty")
+				}
+
+				if sc.StreamURI != "" {
+					return errorf("StreamURI unexpectedly pre-populated: %s", sc.StreamURI)
 				}
 
 				return nil

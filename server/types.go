@@ -41,9 +41,26 @@ type Config struct {
 	// Device information
 	DeviceInfo DeviceInfo
 
-	// Authentication
+	// Authentication. With credentials configured, the default policy
+	// authenticates write-style actions (Set*/Remove*/Create*/Go* plus
+	// SystemReboot and AuthProtectedActions) and leaves reads open;
+	// without credentials everything is open.
 	Username string
 	Password string
+
+	// AuthProtectedActions lists extra action names (beyond the default
+	// write-style prefixes) that require authentication.
+	AuthProtectedActions []string
+
+	// AdvertiseHost overrides the host published in XAddr responses and
+	// stream/snapshot URIs. Empty → the requesting client's IP is echoed
+	// back, so each peer receives addresses reachable from its own
+	// network (real-camera behavior for multi-interface hosts).
+	AdvertiseHost string
+
+	// ExplicitPrefixes emits response envelopes with explicit namespace
+	// prefixes (s:/tds:/trt:/...) instead of default xmlns declarations.
+	ExplicitPrefixes bool
 
 	// Camera profiles (supports multi-lens cameras)
 	Profiles []ProfileConfig

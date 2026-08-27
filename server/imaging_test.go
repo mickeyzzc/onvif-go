@@ -17,7 +17,7 @@ func TestHandleGetImagingSettings(t *testing.T) {
 
 	req := GetImagingSettingsRequest{VideoSourceToken: videoSourceToken}
 
-	resp, err := server.HandleGetImagingSettings(&req)
+	resp, err := server.HandleGetImagingSettings(nil, testBody(t, &req))
 	if err != nil {
 		t.Fatalf("HandleGetImagingSettings() error = %v", err)
 	}
@@ -62,7 +62,7 @@ func TestHandleSetImagingSettings(t *testing.T) {
 		ForcePersistence: true,
 	}
 
-	resp, err := server.HandleSetImagingSettings(&setReq)
+	resp, err := server.HandleSetImagingSettings(nil, testBody(t, &setReq))
 	if err != nil {
 		t.Fatalf("HandleSetImagingSettings() error = %v", err)
 	}
@@ -78,7 +78,7 @@ func TestHandleSetImagingSettings(t *testing.T) {
 
 	// Verify the settings were actually changed
 	getReq := GetImagingSettingsRequest{VideoSourceToken: videoSourceToken}
-	getResp, _ := server.HandleGetImagingSettings(&getReq)
+	getResp, _ := server.HandleGetImagingSettings(nil, testBody(t, &getReq))
 	getResp2, _ := getResp.(*GetImagingSettingsResponse)
 	if getResp2.ImagingSettings.Brightness == nil || *getResp2.ImagingSettings.Brightness != 75 {
 		if getResp2.ImagingSettings.Brightness != nil {
@@ -101,7 +101,7 @@ func TestHandleGetOptions(t *testing.T) {
 	req := getOptionsRequest{VideoSourceToken: videoSourceToken}
 	reqData, _ := xml.Marshal(req)
 
-	resp, err := server.HandleGetOptions(reqData)
+	resp, err := server.HandleGetOptions(nil, reqData)
 	if err != nil {
 		t.Fatalf("HandleGetOptions() error = %v", err)
 	}
@@ -136,7 +136,7 @@ func _DisabledTestHandleMove(t *testing.T) {
 	videoSourceToken := config.Profiles[0].VideoSource.Token
 
 	reqXML := `<Move><VideoSourceToken>` + videoSourceToken + `</VideoSourceToken><Focus><Absolute><Position>0.5</Position></Absolute></Focus></Move>`
-	resp, err := server.HandleMove([]byte(reqXML))
+	resp, err := server.HandleMove(nil, []byte(reqXML))
 	if err != nil {
 		t.Fatalf("HandleMove() error = %v", err)
 	}
@@ -473,11 +473,8 @@ func TestGetImagingSettingsResponseXML(t *testing.T) {
 func TestHandleGetOptionsDetails(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
-	videoSourceToken := config.Profiles[0].VideoSource.Token
 
-	resp, err := server.HandleGetOptions(struct {
-		VideoSourceToken string `xml:"VideoSourceToken"`
-	}{VideoSourceToken: videoSourceToken})
+	resp, err := server.HandleGetOptions(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetOptions error: %v", err)
 	}
@@ -517,7 +514,7 @@ func TestSetImagingSettingsEdgeCases(t *testing.T) {
 		ForcePersistence: false,
 	}
 
-	resp, err := server.HandleSetImagingSettings(&setReq)
+	resp, err := server.HandleSetImagingSettings(nil, testBody(t, &setReq))
 
 	if err == nil && resp != nil {
 		t.Logf("SetImagingSettings with nil settings succeeded")
@@ -528,12 +525,11 @@ func TestGetImagingSettingsEdgeCases(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	// Test with invalid token
-	invalidReq := struct {
-		VideoSourceToken string `xml:"VideoSourceToken"`
-	}{VideoSourceToken: "invalid_token"}
+	// Test with invalid token — the error must come from the token
+	// lookup, not from request decoding.
+	invalidBody := []byte("<GetImagingSettings><VideoSourceToken>invalid_token</VideoSourceToken></GetImagingSettings>")
 
-	resp, err := server.HandleGetImagingSettings(invalidReq)
+	resp, err := server.HandleGetImagingSettings(nil, invalidBody)
 
 	if err == nil {
 		t.Error("Expected error for invalid token")

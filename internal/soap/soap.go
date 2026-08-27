@@ -40,6 +40,17 @@ const (
 	nonceEncodingType  = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary"    //nolint:lll // Long XML namespace
 )
 
+// Exported aliases for consumers inside this module (the server-side
+// UsernameToken validator matches on these URIs).
+const (
+	// PasswordDigestType marks a WS-Security Password element carrying
+	// Base64(SHA1(nonce + created + password)).
+	PasswordDigestType = passwordDigestType
+	// PasswordTextType marks a WS-Security Password element carrying the
+	// cleartext password.
+	PasswordTextType = passwordTextType
+)
+
 // Envelope represents a SOAP envelope.
 type Envelope struct {
 	XMLName xml.Name `xml:"http://www.w3.org/2003/05/soap-envelope Envelope"`
@@ -79,7 +90,7 @@ type UsernameToken struct {
 	Username string   `xml:"Username"`
 	Password Password `xml:"Password"`
 	Nonce    Nonce    `xml:"Nonce"`
-	Created  string   `xml:"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd Created"`
+	Created  string   `xml:"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-utility-1.0.xsd Created"`
 }
 
 // Password represents a WS-Security password.

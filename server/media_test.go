@@ -9,7 +9,7 @@ func TestHandleGetProfiles(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetProfiles(nil)
+	resp, err := server.HandleGetProfiles(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetProfiles() error = %v", err)
 	}
@@ -35,52 +35,52 @@ func TestHandleGetProfiles(t *testing.T) {
 	}
 }
 
-func TestHandleGetStreamURI(t *testing.T) {
+func TestHandleGetStreamUri(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 	profileToken := config.Profiles[0].Token
 
 	// Create SOAP body with profile token
 	reqXML := `<GetStreamURI><ProfileToken>` + profileToken + `</ProfileToken></GetStreamURI>`
-	resp, err := server.HandleGetStreamURI([]byte(reqXML))
+	resp, err := server.HandleGetStreamUri(nil, []byte(reqXML))
 	if err != nil {
-		t.Fatalf("HandleGetStreamURI() error = %v", err)
+		t.Fatalf("HandleGetStreamUri() error = %v", err)
 	}
 
-	streamResp, ok := resp.(*GetStreamURIResponse)
+	streamResp, ok := resp.(*GetStreamUriResponse)
 	if !ok {
-		t.Fatalf("Response is not GetStreamURIResponse, got %T", resp)
+		t.Fatalf("Response is not GetStreamUriResponse, got %T", resp)
 	}
 
-	if streamResp.MediaURI.URI == "" {
+	if streamResp.MediaUri.URI == "" {
 		t.Error("Stream URI is empty")
 
 		return
 	}
 
 	// URI should contain stream path
-	if !contains(streamResp.MediaURI.URI, "rtsp://") {
-		t.Errorf("Invalid stream URI format: %s", streamResp.MediaURI.URI)
+	if !contains(streamResp.MediaUri.URI, "rtsp://") {
+		t.Errorf("Invalid stream URI format: %s", streamResp.MediaUri.URI)
 	}
 }
 
-func TestHandleGetSnapshotURI(t *testing.T) {
+func TestHandleGetSnapshotUri(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 	profileToken := config.Profiles[0].Token
 
 	reqXML := `<GetSnapshotURI><ProfileToken>` + profileToken + `</ProfileToken></GetSnapshotURI>`
-	resp, err := server.HandleGetSnapshotURI([]byte(reqXML))
+	resp, err := server.HandleGetSnapshotUri(nil, []byte(reqXML))
 	if err != nil {
-		t.Fatalf("HandleGetSnapshotURI() error = %v", err)
+		t.Fatalf("HandleGetSnapshotUri() error = %v", err)
 	}
 
-	snapResp, ok := resp.(*GetSnapshotURIResponse)
+	snapResp, ok := resp.(*GetSnapshotUriResponse)
 	if !ok {
-		t.Fatalf("Response is not GetSnapshotURIResponse, got %T", resp)
+		t.Fatalf("Response is not GetSnapshotUriResponse, got %T", resp)
 	}
 
-	if snapResp.MediaURI.URI == "" {
+	if snapResp.MediaUri.URI == "" {
 		t.Error("Snapshot URI is empty")
 	}
 }
@@ -89,7 +89,7 @@ func TestHandleGetVideoSources(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetVideoSources(nil)
+	resp, err := server.HandleGetVideoSources(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetVideoSources() error = %v", err)
 	}
@@ -329,7 +329,7 @@ func TestHandleGetProfilesDetails(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetProfiles(nil)
+	resp, err := server.HandleGetProfiles(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetProfiles error: %v", err)
 	}
@@ -364,7 +364,7 @@ func TestHandleGetVideoSourcesDetails(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetVideoSources(nil)
+	resp, err := server.HandleGetVideoSources(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetVideoSources error: %v", err)
 	}
@@ -391,7 +391,7 @@ func TestStreamURIEdgeCases(t *testing.T) {
 
 	// Test with invalid profile token
 	reqXML := `<GetStreamURI><ProfileToken>invalid_token</ProfileToken></GetStreamURI>`
-	resp, err := server.HandleGetStreamURI([]byte(reqXML))
+	resp, err := server.HandleGetStreamUri(nil, []byte(reqXML))
 
 	if err == nil {
 		t.Error("Expected error for invalid profile token")
@@ -407,7 +407,7 @@ func TestSnapshotURIEdgeCases(t *testing.T) {
 
 	// Test with invalid profile token
 	reqXML := `<GetSnapshotURI><ProfileToken>invalid_token</ProfileToken></GetSnapshotURI>`
-	resp, err := server.HandleGetSnapshotURI([]byte(reqXML))
+	resp, err := server.HandleGetSnapshotUri(nil, []byte(reqXML))
 
 	if err == nil {
 		t.Error("Expected error for invalid profile token")

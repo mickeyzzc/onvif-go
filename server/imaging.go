@@ -4,6 +4,8 @@ import (
 	"encoding/xml"
 	"fmt"
 	"sync"
+
+	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
 // Imaging service SOAP message types
@@ -207,7 +209,7 @@ type MoveResponse struct {
 var imagingMutex sync.RWMutex
 
 // HandleGetImagingSettings handles GetImagingSettings request.
-func (s *Server) HandleGetImagingSettings(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetImagingSettings(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req GetImagingSettingsRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -268,7 +270,7 @@ func (s *Server) HandleGetImagingSettings(body interface{}) (interface{}, error)
 // HandleSetImagingSettings handles SetImagingSettings request.
 //
 //nolint:gocyclo // SetImagingSettings has high complexity due to multiple validation and update paths
-func (s *Server) HandleSetImagingSettings(body interface{}) (interface{}, error) {
+func (s *Server) HandleSetImagingSettings(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req SetImagingSettingsRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
@@ -345,7 +347,7 @@ func (s *Server) HandleSetImagingSettings(body interface{}) (interface{}, error)
 }
 
 // HandleGetOptions handles GetOptions request.
-func (s *Server) HandleGetOptions(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetOptions(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	// Return available imaging options/capabilities
 	const maxImagingValue = 100   // Maximum imaging parameter value
 	const maxExposureTime = 10000 // Maximum exposure time in microseconds
@@ -392,7 +394,7 @@ func (s *Server) HandleGetOptions(body interface{}) (interface{}, error) {
 }
 
 // HandleMove handles Move (focus) request.
-func (s *Server) HandleMove(body interface{}) (interface{}, error) {
+func (s *Server) HandleMove(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req MoveRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)

@@ -152,7 +152,7 @@ type SystemRebootResponse struct {
 // Device service handlers
 
 // HandleGetDeviceInformation handles GetDeviceInformation request.
-func (s *Server) HandleGetDeviceInformation(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetDeviceInformation(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	return &GetDeviceInformationResponse{
 		Manufacturer:    s.config.DeviceInfo.Manufacturer,
 		Model:           s.config.DeviceInfo.Model,
@@ -163,13 +163,8 @@ func (s *Server) HandleGetDeviceInformation(body interface{}) (interface{}, erro
 }
 
 // HandleGetCapabilities handles GetCapabilities request.
-func (s *Server) HandleGetCapabilities(body interface{}) (interface{}, error) {
-	// Get the host from the request (in a real implementation)
-	// For now, use a placeholder
-	host := s.config.Host
-	if host == defaultHost || host == "" {
-		host = defaultHostname
-	}
+func (s *Server) HandleGetCapabilities(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	host := s.advertiseHost(rc)
 
 	baseURL := fmt.Sprintf("http://%s:%d%s", host, s.config.Port, s.config.BasePath)
 
@@ -242,7 +237,7 @@ func (s *Server) HandleGetCapabilities(body interface{}) (interface{}, error) {
 }
 
 // HandleGetSystemDateAndTime handles GetSystemDateAndTime request.
-func (s *Server) HandleGetSystemDateAndTime(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetSystemDateAndTime(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	now := time.Now().UTC()
 
 	return &soap.GetSystemDateAndTimeResponse{
@@ -259,11 +254,8 @@ func (s *Server) HandleGetSystemDateAndTime(body interface{}) (interface{}, erro
 }
 
 // HandleGetServices handles GetServices request.
-func (s *Server) HandleGetServices(body interface{}) (interface{}, error) {
-	host := s.config.Host
-	if host == defaultHost || host == "" {
-		host = defaultHostname
-	}
+func (s *Server) HandleGetServices(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	host := s.advertiseHost(rc)
 
 	baseURL := fmt.Sprintf("http://%s:%d%s", host, s.config.Port, s.config.BasePath)
 
@@ -302,7 +294,7 @@ func (s *Server) HandleGetServices(body interface{}) (interface{}, error) {
 }
 
 // HandleSystemReboot handles SystemReboot request.
-func (s *Server) HandleSystemReboot(body interface{}) (interface{}, error) {
+func (s *Server) HandleSystemReboot(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	return &SystemRebootResponse{
 		Message: "Device rebooting",
 	}, nil

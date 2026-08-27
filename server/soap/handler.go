@@ -1,41 +1,129 @@
 // Package soap provides SOAP request handling for the ONVIF server.
+//
+// The Handler is an http.Handler: it parses the SOAP envelope, applies the
+// per-action authentication policy, and dispatches the request body to the
+// registered ContextHandler. Handlers receive the raw request element bytes
+// (decode with ParseRequest or encoding/xml) plus a RequestContext carrying
+// the action name, the client IP, and the underlying *http.Request.
 package soap
 
 import (
 	"bytes"
-	"crypto/sha1" //nolint:gosec // SHA1 used for ONVIF digest authentication
-	"encoding/base64"
+	"context"
 	"encoding/xml"
-	"fmt"
 	"io"
+	"net"
 	"net/http"
-	"strings"
-	"time"
 
 	originsoap "github.com/mickeyzzc/onvif-go/v2/internal/soap"
 )
+
+// soapEnvelopeNS is the SOAP 1.2 envelope namespace.
+const soapEnvelopeNS = "http://www.w3.org/2003/05/soap-envelope"
+
+// requestEnvelope is the decode target for incoming requests. The body is
+// captured as raw inner XML — encoding/xml cannot populate interface{}
+// fields, so the request element is handed to handlers as bytes.
+type requestEnvelope struct {
+	XMLName xml.Name           `xml:"http://www.w3.org/2003/05/soap-envelope Envelope"`
+	Header  *originsoap.Header `xml:"Header"`
+	Body    struct {
+		Raw []byte `xml:",innerxml"`
+	} `xml:"Body"`
+}
 
 // Handler handles incoming SOAP requests.
 type Handler struct {
 	username string
 	password string
-	handlers map[string]MessageHandler
+	auth     *AuthPolicy
+	// explicitPrefixes emits responses with s:/tds:/trt:/... namespace
+	// prefixes instead of default xmlns declarations.
+	explicitPrefixes bool
+	handlers         map[string]ContextHandler
 }
 
-// MessageHandler is a function that handles a specific SOAP message.
-type MessageHandler func(body interface{}) (interface{}, error)
+// RequestContext carries per-request state to message handlers.
+type RequestContext struct {
+	// Action is the canonical local name of the request element, e.g.
+	// "GetStreamUri".
+	Action string
 
-// NewHandler creates a new SOAP handler.
+	// RemoteIP is the client's IP address (host part of RemoteAddr).
+	// Real cameras echo it as the host of advertised URLs so each peer
+	// receives addresses reachable from its own network.
+	RemoteIP string
+
+	// Request is the underlying HTTP request.
+	Request *http.Request
+}
+
+// Context returns the request-scoped context for cancellation, deadlines,
+// and values. It never returns nil.
+func (c *RequestContext) Context() context.Context {
+	if c == nil || c.Request == nil {
+		return context.Background()
+	}
+
+	return c.Request.Context()
+}
+
+// ContextHandler handles a SOAP message with access to request state.
+type ContextHandler func(ctx *RequestContext, body []byte) (interface{}, error)
+
+// MessageHandler is the legacy handler signature: no request context, body
+// as raw bytes. RegisterHandler wraps it into a ContextHandler.
+type MessageHandler func(body []byte) (interface{}, error)
+
+// HandlerOptions configures a Handler.
+type HandlerOptions struct {
+	// Username and Password enable WS-Security UsernameToken validation.
+	// When either is empty, every action is served without authentication.
+	Username string
+	Password string
+
+	// Auth is the per-action authentication policy applied when credentials
+	// are configured. nil → DefaultAuthPolicy (write-style actions require
+	// authentication, reads stay open, PasswordText accepted).
+	Auth *AuthPolicy
+
+	// ExplicitPrefixes emits response envelopes with explicit namespace
+	// prefixes (s:Envelope, trt:GetStreamUriResponse, ...) instead of
+	// default xmlns declarations. RawXML responses are never rewritten.
+	ExplicitPrefixes bool
+}
+
+// NewHandler creates a new SOAP handler with the default per-action
+// authentication policy.
 func NewHandler(username, password string) *Handler {
+	return NewHandlerWithOptions(HandlerOptions{
+		Username: username,
+		Password: password,
+	})
+}
+
+// NewHandlerWithOptions creates a new SOAP handler.
+func NewHandlerWithOptions(opts HandlerOptions) *Handler {
 	return &Handler{
-		username: username,
-		password: password,
-		handlers: make(map[string]MessageHandler),
+		username:         opts.Username,
+		password:         opts.Password,
+		auth:             opts.Auth,
+		explicitPrefixes: opts.ExplicitPrefixes,
+		handlers:         make(map[string]ContextHandler),
 	}
 }
 
 // RegisterHandler registers a handler for a specific action/message type.
+// The action name should use the ONVIF WSDL spelling (e.g. "GetStreamUri").
 func (h *Handler) RegisterHandler(action string, handler MessageHandler) {
+	h.RegisterContextHandler(action, func(_ *RequestContext, body []byte) (interface{}, error) {
+		return handler(body)
+	})
+}
+
+// RegisterContextHandler registers a context-aware handler for a specific
+// action/message type.
+func (h *Handler) RegisterContextHandler(action string, handler ContextHandler) {
 	h.handlers[action] = handler
 }
 
@@ -57,8 +145,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	_ = r.Body.Close()
 
-	// Extract action from raw XML first (before parsing)
-	action := h.extractAction(body)
+	// Extract action from raw XML first (before parsing), canonicalized
+	// to the ONVIF WSDL spelling so legacy client spellings still
+	// dispatch to the registered handler.
+	action := canonicalAction(h.extractAction(body))
 	if action == "" {
 		h.sendFault(w, "Sender", "Unknown action", "Could not determine request action")
 
@@ -66,20 +156,18 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Parse SOAP envelope
-	var envelope originsoap.Envelope
+	var envelope requestEnvelope
 	if err := xml.Unmarshal(body, &envelope); err != nil {
 		h.sendFault(w, "Sender", "Invalid SOAP envelope", err.Error())
 
 		return
 	}
 
-	// Authenticate if credentials are configured
-	if h.username != "" && h.password != "" {
-		if !h.authenticate(&envelope) {
-			h.sendFault(w, "Sender", "Authentication failed", "Invalid username or password")
+	// Authenticate actions the policy protects
+	if h.requiresAuth(action) && !h.authenticate(envelope.Header) {
+		h.sendFault(w, "Sender", "Sender not authorized", "Invalid username or password")
 
-			return
-		}
+		return
 	}
 
 	// Find and execute handler
@@ -90,8 +178,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	reqCtx := &RequestContext{
+		Action:   action,
+		RemoteIP: remoteIP(r),
+		Request:  r,
+	}
+
 	// Execute handler
-	response, err := handler(envelope.Body.Content)
+	response, err := handler(reqCtx, envelope.Body.Raw)
 	if err != nil {
 		h.sendFault(w, "Receiver", "Handler error", err.Error())
 
@@ -100,36 +194,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Send response
 	h.sendResponse(w, response)
-}
-
-// authenticate verifies the WS-Security credentials.
-func (h *Handler) authenticate(envelope *originsoap.Envelope) bool {
-	if envelope.Header == nil || envelope.Header.Security == nil || envelope.Header.Security.UsernameToken == nil {
-		return false
-	}
-
-	token := envelope.Header.Security.UsernameToken
-
-	// Check username
-	if token.Username != h.username {
-		return false
-	}
-
-	// Decode nonce
-	nonce, err := base64.StdEncoding.DecodeString(token.Nonce.Nonce)
-	if err != nil {
-		return false
-	}
-
-	// Calculate expected digest
-	hash := sha1.New() //nolint:gosec // SHA1 required for ONVIF digest auth
-	hash.Write(nonce)
-	hash.Write([]byte(token.Created))
-	hash.Write([]byte(h.password))
-	expectedDigest := base64.StdEncoding.EncodeToString(hash.Sum(nil))
-
-	// Compare digests
-	return token.Password.Password == expectedDigest
 }
 
 // extractAction extracts the action/message type from the SOAP body.
@@ -164,205 +228,31 @@ func (h *Handler) extractAction(bodyXML []byte) string {
 	}
 }
 
-// sendResponse sends a SOAP response.
-func (h *Handler) sendResponse(w http.ResponseWriter, response interface{}) {
-	envelope := &originsoap.Envelope{
-		Body: originsoap.Body{
-			Content: response,
-		},
-	}
-
-	// Marshal to XML
-	body, err := xml.MarshalIndent(envelope, "", "  ")
-	if err != nil {
-		h.sendFault(w, "Receiver", "Failed to marshal response", err.Error())
-
-		return
-	}
-
-	// Add XML declaration
-	xmlBody := append([]byte(xml.Header), body...)
-
-	// Send response
-	w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-
-	_, _ = w.Write(xmlBody)
+// canonicalActions maps legacy action spellings to the ONVIF WSDL names.
+var canonicalActions = map[string]string{
+	"GetStreamURI":   "GetStreamUri",
+	"GetSnapshotURI": "GetSnapshotUri",
 }
 
-// sendFault sends a SOAP fault response.
-func (h *Handler) sendFault(w http.ResponseWriter, code, reason, detail string) {
-	fault := &originsoap.Fault{
-		Code:   code,
-		Reason: reason,
-		Detail: detail,
-	}
-
-	envelope := &originsoap.Envelope{
-		Body: originsoap.Body{
-			Fault: fault,
-		},
-	}
-
-	// Marshal to XML
-	body, err := xml.MarshalIndent(envelope, "", "  ")
-	if err != nil {
-		http.Error(w, "Internal server error", http.StatusInternalServerError)
-
-		return
-	}
-
-	// Add XML declaration
-	xmlBody := append([]byte(xml.Header), body...)
-
-	// Send fault response - use appropriate status code based on fault code
-	w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
-	statusCode := http.StatusInternalServerError
-	if code == "Sender" {
-		statusCode = http.StatusBadRequest
-	}
-	w.WriteHeader(statusCode)
-
-	_, _ = w.Write(xmlBody)
-}
-
-// RequestWrapper wraps incoming SOAP request structures.
-type RequestWrapper struct {
-	XMLName xml.Name
-	Content []byte `xml:",innerxml"`
-}
-
-// ParseRequest parses a SOAP request into a specific structure.
-func ParseRequest(bodyContent, target interface{}) error {
-	// Marshal the body content back to XML
-	bodyXML, err := xml.Marshal(bodyContent)
-	if err != nil {
-		return fmt.Errorf("failed to marshal body content: %w", err)
-	}
-
-	// Unmarshal into target structure
-	if err := xml.Unmarshal(bodyXML, target); err != nil {
-		return fmt.Errorf("failed to unmarshal request: %w", err)
-	}
-
-	return nil
-}
-
-// Common SOAP request/response structures for ONVIF
-
-// GetSystemDateAndTimeRequest represents GetSystemDateAndTime request.
-type GetSystemDateAndTimeRequest struct {
-	XMLName xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetSystemDateAndTime"`
-}
-
-// GetSystemDateAndTimeResponse represents GetSystemDateAndTime response.
-type GetSystemDateAndTimeResponse struct {
-	XMLName           xml.Name          `xml:"http://www.onvif.org/ver10/device/wsdl GetSystemDateAndTimeResponse"`
-	SystemDateAndTime SystemDateAndTime `xml:"SystemDateAndTime"`
-}
-
-// SystemDateAndTime represents system date and time.
-type SystemDateAndTime struct {
-	DateTimeType    string   `xml:"DateTimeType"`
-	DaylightSavings bool     `xml:"DaylightSavings"`
-	TimeZone        TimeZone `xml:"TimeZone,omitempty"`
-	UTCDateTime     DateTime `xml:"UTCDateTime,omitempty"`
-	LocalDateTime   DateTime `xml:"LocalDateTime,omitempty"`
-}
-
-// TimeZone represents timezone information.
-type TimeZone struct {
-	TZ string `xml:"TZ"`
-}
-
-// DateTime represents date and time.
-type DateTime struct {
-	Time Time `xml:"Time"`
-	Date Date `xml:"Date"`
-}
-
-// Time represents time components.
-type Time struct {
-	Hour   int `xml:"Hour"`
-	Minute int `xml:"Minute"`
-	Second int `xml:"Second"`
-}
-
-// Date represents date components.
-type Date struct {
-	Year  int `xml:"Year"`
-	Month int `xml:"Month"`
-	Day   int `xml:"Day"`
-}
-
-// ToDateTime converts time.Time to DateTime structure.
-func ToDateTime(t time.Time) DateTime {
-	return DateTime{
-		Date: Date{
-			Year:  t.Year(),
-			Month: int(t.Month()),
-			Day:   t.Day(),
-		},
-		Time: Time{
-			Hour:   t.Hour(),
-			Minute: t.Minute(),
-			Second: t.Second(),
-		},
-	}
-}
-
-// GetCapabilitiesRequest represents GetCapabilities request.
-type GetCapabilitiesRequest struct {
-	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetCapabilities"`
-	Category []string `xml:"Category,omitempty"`
-}
-
-// GetDeviceInformationRequest represents GetDeviceInformation request.
-type GetDeviceInformationRequest struct {
-	XMLName xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetDeviceInformation"`
-}
-
-// GetServicesRequest represents GetServices request.
-type GetServicesRequest struct {
-	XMLName           xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetServices"`
-	IncludeCapability bool     `xml:"IncludeCapability"`
-}
-
-// GetProfilesRequest represents GetProfiles request.
-type GetProfilesRequest struct {
-	XMLName xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetProfiles"`
-}
-
-// GetStreamURIRequest represents GetStreamURI request.
-type GetStreamURIRequest struct {
-	XMLName      xml.Name    `xml:"http://www.onvif.org/ver10/media/wsdl GetStreamURI"`
-	StreamSetup  StreamSetup `xml:"StreamSetup"`
-	ProfileToken string      `xml:"ProfileToken"`
-}
-
-// StreamSetup represents stream setup parameters.
-type StreamSetup struct {
-	Stream    string    `xml:"Stream"`
-	Transport Transport `xml:"Transport"`
-}
-
-// Transport represents transport parameters.
-type Transport struct {
-	Protocol string `xml:"Protocol"`
-}
-
-// GetSnapshotURIRequest represents GetSnapshotURI request.
-type GetSnapshotURIRequest struct {
-	XMLName      xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetSnapshotURI"`
-	ProfileToken string   `xml:"ProfileToken"`
-}
-
-// NormalizeAction normalizes SOAP action names.
-func NormalizeAction(action string) string {
-	// Remove namespace prefixes
-	if idx := strings.LastIndex(action, ":"); idx != -1 {
-		action = action[idx+1:]
+// canonicalAction returns the canonical WSDL spelling for an action name,
+// or the name itself when no mapping exists.
+func canonicalAction(action string) string {
+	if canonical, ok := canonicalActions[action]; ok {
+		return canonical
 	}
 
 	return action
+}
+
+// remoteIP extracts the client IP from an HTTP request.
+func remoteIP(r *http.Request) string {
+	if r == nil || r.RemoteAddr == "" {
+		return ""
+	}
+
+	if host, _, err := net.SplitHostPort(r.RemoteAddr); err == nil {
+		return host
+	}
+
+	return r.RemoteAddr
 }

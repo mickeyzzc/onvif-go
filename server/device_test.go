@@ -9,7 +9,7 @@ func TestHandleGetDeviceInformation(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetDeviceInformation(nil)
+	resp, err := server.HandleGetDeviceInformation(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetDeviceInformation() error = %v", err)
 	}
@@ -42,7 +42,7 @@ func TestHandleGetCapabilities(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetCapabilities(nil)
+	resp, err := server.HandleGetCapabilities(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetCapabilities() error = %v", err)
 	}
@@ -83,7 +83,7 @@ func TestHandleGetSystemDateAndTime(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetSystemDateAndTime(nil)
+	resp, err := server.HandleGetSystemDateAndTime(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetSystemDateAndTime() error = %v", err)
 	}
@@ -100,7 +100,7 @@ func TestHandleGetServices(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetServices(nil)
+	resp, err := server.HandleGetServices(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetServices() error = %v", err)
 	}
@@ -141,7 +141,7 @@ func TestHandleSystemReboot(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleSystemReboot(nil)
+	resp, err := server.HandleSystemReboot(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleSystemReboot() error = %v", err)
 	}
@@ -281,7 +281,7 @@ func TestHandleGetCapabilitiesDetails(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetCapabilities(nil)
+	resp, err := server.HandleGetCapabilities(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetCapabilities error: %v", err)
 	}
@@ -322,7 +322,7 @@ func TestHandleGetServicesDetails(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
-	resp, err := server.HandleGetServices(nil)
+	resp, err := server.HandleGetServices(nil, nil)
 	if err != nil {
 		t.Fatalf("HandleGetServices error: %v", err)
 	}

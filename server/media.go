@@ -3,6 +3,8 @@ package server
 import (
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
 // Media service SOAP message types
@@ -135,24 +137,24 @@ type IPAddress struct {
 	IPv6Address string `xml:"IPv6Address,omitempty"`
 }
 
-// GetStreamURIResponse represents GetStreamURI response.
-type GetStreamURIResponse struct {
-	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetStreamURIResponse"`
-	MediaURI MediaURI `xml:"MediaUri"`
+// GetStreamUriResponse represents GetStreamUri response.
+type GetStreamUriResponse struct {
+	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetStreamUriResponse"`
+	MediaUri MediaUri `xml:"MediaUri"`
 }
 
-// MediaURI represents a media URI.
-type MediaURI struct {
+// MediaUri represents a media URI.
+type MediaUri struct {
 	URI                 string `xml:"Uri"`
 	InvalidAfterConnect bool   `xml:"InvalidAfterConnect"`
 	InvalidAfterReboot  bool   `xml:"InvalidAfterReboot"`
 	Timeout             string `xml:"Timeout"`
 }
 
-// GetSnapshotURIResponse represents GetSnapshotURI response.
-type GetSnapshotURIResponse struct {
-	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetSnapshotURIResponse"`
-	MediaURI MediaURI `xml:"MediaUri"`
+// GetSnapshotUriResponse represents GetSnapshotUri response.
+type GetSnapshotUriResponse struct {
+	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetSnapshotUriResponse"`
+	MediaUri MediaUri `xml:"MediaUri"`
 }
 
 // GetVideoSourcesResponse represents GetVideoSources response.
@@ -171,7 +173,7 @@ type VideoSource struct {
 // Media service handlers
 
 // HandleGetProfiles handles GetProfiles request.
-func (s *Server) HandleGetProfiles(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetProfiles(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	profiles := make([]MediaProfile, len(s.config.Profiles))
 
 	for i, profileCfg := range s.config.Profiles {
@@ -258,8 +260,8 @@ func (s *Server) HandleGetProfiles(body interface{}) (interface{}, error) {
 	}, nil
 }
 
-// HandleGetStreamURI handles GetStreamURI request.
-func (s *Server) HandleGetStreamURI(body interface{}) (interface{}, error) {
+// HandleGetStreamUri handles GetStreamUri request.
+func (s *Server) HandleGetStreamUri(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req struct {
 		ProfileToken string `xml:"ProfileToken"`
 	}
@@ -278,15 +280,12 @@ func (s *Server) HandleGetStreamURI(body interface{}) (interface{}, error) {
 	uri := streamCfg.StreamURI
 	if uri == "" {
 		// Default URI construction
-		host := s.config.Host
-		if host == defaultHost || host == "" {
-			host = defaultHostname
-		}
+		host := s.advertiseHost(rc)
 		uri = fmt.Sprintf("rtsp://%s:8554%s", host, streamCfg.RTSPPath)
 	}
 
-	return &GetStreamURIResponse{
-		MediaURI: MediaURI{
+	return &GetStreamUriResponse{
+		MediaUri: MediaUri{
 			URI:                 uri,
 			InvalidAfterConnect: false,
 			InvalidAfterReboot:  true,
@@ -295,8 +294,8 @@ func (s *Server) HandleGetStreamURI(body interface{}) (interface{}, error) {
 	}, nil
 }
 
-// HandleGetSnapshotURI handles GetSnapshotURI request.
-func (s *Server) HandleGetSnapshotURI(body interface{}) (interface{}, error) {
+// HandleGetSnapshotUri handles GetSnapshotUri request.
+func (s *Server) HandleGetSnapshotUri(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req struct {
 		ProfileToken string `xml:"ProfileToken"`
 	}
@@ -324,15 +323,12 @@ func (s *Server) HandleGetSnapshotURI(body interface{}) (interface{}, error) {
 	}
 
 	// Build snapshot URI
-	host := s.config.Host
-	if host == defaultHost || host == "" {
-		host = defaultHostname
-	}
+	host := s.advertiseHost(rc)
 	uri := fmt.Sprintf("http://%s:%d%s/snapshot?profile=%s",
 		host, s.config.Port, s.config.BasePath, req.ProfileToken)
 
-	return &GetSnapshotURIResponse{
-		MediaURI: MediaURI{
+	return &GetSnapshotUriResponse{
+		MediaUri: MediaUri{
 			URI:                 uri,
 			InvalidAfterConnect: false,
 			InvalidAfterReboot:  true,
@@ -342,7 +338,7 @@ func (s *Server) HandleGetSnapshotURI(body interface{}) (interface{}, error) {
 }
 
 // HandleGetVideoSources handles GetVideoSources request.
-func (s *Server) HandleGetVideoSources(body interface{}) (interface{}, error) {
+func (s *Server) HandleGetVideoSources(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	sources := make([]VideoSource, 0)
 
 	// Collect unique video sources from profiles

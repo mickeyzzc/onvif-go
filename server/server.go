@@ -26,22 +26,17 @@ func New(config *Config) (*Server, error) {
 		systemTime:   time.Now(),
 	}
 
-	// Initialize streams for each profile
+	// Initialize streams for each profile. StreamURI stays empty so
+	// GetStreamUri derives it per request from the advertised host (the
+	// requesting client's IP by default); UpdateStreamURI pins an explicit
+	// override that then wins.
 	for i := range config.Profiles {
 		profile := &config.Profiles[i]
 		streamPath := fmt.Sprintf("/stream%d", i)
 
-		host := config.Host
-		if host == "0.0.0.0" || host == "" {
-			host = "localhost"
-		}
-
-		streamURI := fmt.Sprintf("rtsp://%s:8554%s", host, streamPath)
-
 		server.streams[profile.Token] = &StreamConfig{
 			ProfileToken: profile.Token,
 			RTSPPath:     streamPath,
-			StreamURI:    streamURI,
 		}
 
 		// Initialize PTZ state if PTZ is supported
@@ -175,58 +170,94 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 }
 
+// newSOAPHandler builds a SOAP handler with the server's credentials and
+// response encoding settings. The default policy authenticates
+// write-style actions plus SystemReboot (and any configured extras);
+// read operations stay open for credential-less discovery clients.
+func (s *Server) newSOAPHandler() *soap.Handler {
+	policy := soap.DefaultAuthPolicy()
+	policy.Actions = append([]string{"SystemReboot"}, s.config.AuthProtectedActions...)
+
+	return soap.NewHandlerWithOptions(soap.HandlerOptions{
+		Username:         s.config.Username,
+		Password:         s.config.Password,
+		Auth:             policy,
+		ExplicitPrefixes: s.config.ExplicitPrefixes,
+	})
+}
+
+// advertiseHost returns the host to publish in XAddr responses and
+// stream/snapshot URIs: the configured override, else the requesting
+// client's IP, else the bind address.
+func (s *Server) advertiseHost(rc *soap.RequestContext) string {
+	if s.config.AdvertiseHost != "" {
+		return s.config.AdvertiseHost
+	}
+
+	if rc != nil && rc.RemoteIP != "" {
+		return rc.RemoteIP
+	}
+
+	host := s.config.Host
+	if host == defaultHost || host == "" {
+		host = defaultHostname
+	}
+
+	return host
+}
+
 // registerDeviceService registers the device service handler.
 func (s *Server) registerDeviceService(mux *http.ServeMux) {
-	handler := soap.NewHandler(s.config.Username, s.config.Password)
+	handler := s.newSOAPHandler()
 
 	// Register device service handlers
-	handler.RegisterHandler("GetDeviceInformation", s.HandleGetDeviceInformation)
-	handler.RegisterHandler("GetCapabilities", s.HandleGetCapabilities)
-	handler.RegisterHandler("GetSystemDateAndTime", s.HandleGetSystemDateAndTime)
-	handler.RegisterHandler("GetServices", s.HandleGetServices)
-	handler.RegisterHandler("SystemReboot", s.HandleSystemReboot)
+	handler.RegisterContextHandler("GetDeviceInformation", s.HandleGetDeviceInformation)
+	handler.RegisterContextHandler("GetCapabilities", s.HandleGetCapabilities)
+	handler.RegisterContextHandler("GetSystemDateAndTime", s.HandleGetSystemDateAndTime)
+	handler.RegisterContextHandler("GetServices", s.HandleGetServices)
+	handler.RegisterContextHandler("SystemReboot", s.HandleSystemReboot)
 
 	mux.Handle(s.config.BasePath+"/device_service", handler)
 }
 
 // registerMediaService registers the media service handler.
 func (s *Server) registerMediaService(mux *http.ServeMux) {
-	handler := soap.NewHandler(s.config.Username, s.config.Password)
+	handler := s.newSOAPHandler()
 
 	// Register media service handlers
-	handler.RegisterHandler("GetProfiles", s.HandleGetProfiles)
-	handler.RegisterHandler("GetStreamURI", s.HandleGetStreamURI)
-	handler.RegisterHandler("GetSnapshotURI", s.HandleGetSnapshotURI)
-	handler.RegisterHandler("GetVideoSources", s.HandleGetVideoSources)
+	handler.RegisterContextHandler("GetProfiles", s.HandleGetProfiles)
+	handler.RegisterContextHandler("GetStreamUri", s.HandleGetStreamUri)
+	handler.RegisterContextHandler("GetSnapshotUri", s.HandleGetSnapshotUri)
+	handler.RegisterContextHandler("GetVideoSources", s.HandleGetVideoSources)
 
 	mux.Handle(s.config.BasePath+"/media_service", handler)
 }
 
 // registerPTZService registers the PTZ service handler.
 func (s *Server) registerPTZService(mux *http.ServeMux) {
-	handler := soap.NewHandler(s.config.Username, s.config.Password)
+	handler := s.newSOAPHandler()
 
 	// Register PTZ service handlers
-	handler.RegisterHandler("ContinuousMove", s.HandleContinuousMove)
-	handler.RegisterHandler("AbsoluteMove", s.HandleAbsoluteMove)
-	handler.RegisterHandler("RelativeMove", s.HandleRelativeMove)
-	handler.RegisterHandler("Stop", s.HandleStop)
-	handler.RegisterHandler("GetStatus", s.HandleGetStatus)
-	handler.RegisterHandler("GetPresets", s.HandleGetPresets)
-	handler.RegisterHandler("GotoPreset", s.HandleGotoPreset)
+	handler.RegisterContextHandler("ContinuousMove", s.HandleContinuousMove)
+	handler.RegisterContextHandler("AbsoluteMove", s.HandleAbsoluteMove)
+	handler.RegisterContextHandler("RelativeMove", s.HandleRelativeMove)
+	handler.RegisterContextHandler("Stop", s.HandleStop)
+	handler.RegisterContextHandler("GetStatus", s.HandleGetStatus)
+	handler.RegisterContextHandler("GetPresets", s.HandleGetPresets)
+	handler.RegisterContextHandler("GotoPreset", s.HandleGotoPreset)
 
 	mux.Handle(s.config.BasePath+"/ptz_service", handler)
 }
 
 // registerImagingService registers the imaging service handler.
 func (s *Server) registerImagingService(mux *http.ServeMux) {
-	handler := soap.NewHandler(s.config.Username, s.config.Password)
+	handler := s.newSOAPHandler()
 
 	// Register imaging service handlers
-	handler.RegisterHandler("GetImagingSettings", s.HandleGetImagingSettings)
-	handler.RegisterHandler("SetImagingSettings", s.HandleSetImagingSettings)
-	handler.RegisterHandler("GetOptions", s.HandleGetOptions)
-	handler.RegisterHandler("Move", s.HandleMove)
+	handler.RegisterContextHandler("GetImagingSettings", s.HandleGetImagingSettings)
+	handler.RegisterContextHandler("SetImagingSettings", s.HandleSetImagingSettings)
+	handler.RegisterContextHandler("GetOptions", s.HandleGetOptions)
+	handler.RegisterContextHandler("Move", s.HandleMove)
 
 	mux.Handle(s.config.BasePath+"/imaging_service", handler)
 }
@@ -339,7 +370,12 @@ func (s *Server) ServerInfo() string {
 			profile.VideoEncoder.Framerate,
 			profile.VideoEncoder.Encoding)
 		if stream, ok := s.streams[profile.Token]; ok {
-			fmt.Fprintf(&sb, "      RTSP: %s\n", stream.StreamURI)
+			uri := stream.StreamURI
+			if uri == "" {
+				uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(nil), stream.RTSPPath)
+			}
+
+			fmt.Fprintf(&sb, "      RTSP: %s\n", uri)
 		}
 		if profile.PTZ != nil {
 			sb.WriteString("      PTZ: Enabled\n")

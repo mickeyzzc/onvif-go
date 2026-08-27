@@ -33,9 +33,17 @@ A complete ONVIF-compliant server implementation that simulates multi-lens IP ca
 - ⏳ **Events Service**: (Planned)
 
 ### 🔐 Security
-- **WS-Security Authentication**: UsernameToken with password digest
-- **Configurable Credentials**: Custom username/password
-- **SOAP Message Security**: Nonce and timestamp validation
+- **Per-Action Authentication** (v2): write-style actions (`Set*`, `Remove*`, `Create*`, `Go*`, `SystemReboot`) require credentials; read operations stay open for discovery clients
+- **WS-Security UsernameToken**: both PasswordDigest and PasswordText accepted
+- **Configurable Credentials**: Custom username/password; fully open when unset
+
+### 🧭 v2 Transport Highlights
+- **Request Context**: handlers see the client IP, the action name, and the request `context.Context`
+- **XAddr Echo**: advertised URLs (capabilities, services, stream/snapshot URIs) use the requesting client's IP by default; `AdvertiseHost` overrides
+- **Canonical XML Casing**: `GetStreamUriResponse` / `GetSnapshotUriResponse` per the ONVIF WSDL (legacy `...URI...` requests still accepted)
+- **Byte-Predictable Output**: golden-locked envelope layout, optional explicit prefixes (`s:`/`tds:`/`trt:`/...), and a `soap.RawXML` passthrough channel for hand-built bodies
+
+See [docs/en/server.md](../docs/en/server.md) for the full transport guide.
 
 ## Installation
 
