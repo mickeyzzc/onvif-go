@@ -400,11 +400,20 @@ func (d *skewDevice) handler(w http.ResponseWriter, r *http.Request) {
 	deviceNow := time.Now().UTC().Add(d.offset)
 
 	if strings.Contains(bodyStr, "GetSystemDateAndTime") {
+		// Sample the device clock at the RTT midpoint (half the delay before,
+		// half after): the library's midpoint compensation then measures ~0
+		// error even when CI scheduling stretches the round trip, because the
+		// stretch hits both halves symmetrically.
 		if d.rttDelay > 0 {
-			time.Sleep(d.rttDelay)
+			time.Sleep(d.rttDelay / 2)
 		}
 
+		deviceNow = time.Now().UTC().Add(d.offset)
 		t := deviceNow
+
+		if d.rttDelay > 0 {
+			time.Sleep(d.rttDelay / 2)
+		}
 		_, _ = w.Write([]byte(xmlEnvelope(`
 <tds:GetSystemDateAndTimeResponse xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
 <tds:SystemDateAndTime>
