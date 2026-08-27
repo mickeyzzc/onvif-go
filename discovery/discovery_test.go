@@ -360,7 +360,25 @@ func TestResolveNetworkInterface(t *testing.T) {
 	}
 }
 
+// skipWithoutMulticast skips tests that need the WS-Discovery multicast
+// group when this host currently has no usable multicast route (VPN-up
+// laptops, some CI runners report WSAENETUNREACH on group join).
+func skipWithoutMulticast(t *testing.T) {
+	t.Helper()
+
+	probe, err := net.ListenMulticastUDP("udp", nil, &net.UDPAddr{
+		IP:   net.IPv4(239, 255, 255, 250),
+		Port: 3702,
+	})
+	if err != nil {
+		t.Skipf("host cannot join the WS-Discovery multicast group: %v", err)
+	}
+	_ = probe.Close()
+}
+
 func TestDiscoverWithOptions_DefaultOptions(t *testing.T) {
+	skipWithoutMulticast(t)
+
 	// Test with default options (should not error even if no cameras found)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -379,6 +397,8 @@ func TestDiscoverWithOptions_DefaultOptions(t *testing.T) {
 }
 
 func TestDiscoverWithOptions_NilOptions(t *testing.T) {
+	skipWithoutMulticast(t)
+
 	// Test with nil options (should work with nil)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
@@ -441,6 +461,8 @@ func TestDiscoverWithOptions_InvalidInterface(t *testing.T) {
 }
 
 func TestDiscover_BackwardCompatibility(t *testing.T) {
+	skipWithoutMulticast(t)
+
 	// Test that old Discover function still works (backward compatibility)
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 	defer cancel()
