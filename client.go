@@ -99,6 +99,10 @@ type Client struct {
 	stickyAuth   AuthMode
 	stickySet    bool
 
+	// autoClockSkew makes Initialize measure and apply the device clock skew
+	// before its first authenticated call (WithAutoClockSkew).
+	autoClockSkew bool
+
 	// clockSkew is the offset (deviceTime - localTime) applied to WS-Security
 	// digest timestamps. Set via SetClockSkew after measuring the device's clock
 	// via GetSystemDateAndTime. Fixes Hikvision time-skew auth rejections.
@@ -335,8 +339,22 @@ func isLoopbackHost(host string) bool {
 	return host == "localhost" || host == "127.0.0.1" || host == "0.0.0.0" || host == "::1"
 }
 
-// Initialize discovers and initializes service endpoints.
+// Initialize discovers and initializes service endpoints. With
+// WithAutoClockSkew configured, the device clock is measured (via an
+// unauthenticated GetSystemDateAndTime) and applied BEFORE the capabilities
+// call, so the very first authenticated request already carries
+// device-correct digest timestamps; measurement failure is silently skipped.
 func (c *Client) Initialize(ctx context.Context) error {
+	c.mu.RLock()
+	autoSkew := c.autoClockSkew
+	c.mu.RUnlock()
+
+	if autoSkew {
+		if skew, err := c.MeasureClockSkew(ctx); err == nil {
+			c.SetClockSkew(skew)
+		}
+	}
+
 	// Get device information and capabilities
 	capabilities, err := c.Device().GetCapabilities(ctx)
 	if err != nil {
