@@ -59,6 +59,11 @@ type Device struct {
 
 	// Metadata version
 	MetadataVersion int
+
+	// Info carries identity fields (manufacturer, model, serial) when a
+	// probe or enrichment round fetched them via GetDeviceInformation.
+	// nil when unavailable.
+	Info *DeviceInfo
 }
 
 // ProbeMatch represents a WS-Discovery probe match.
