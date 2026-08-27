@@ -7,6 +7,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Auth ladder** (#1): `WithAuthMode` (digest / password-text / HTTP Basic /
+  none), `WithAuthFallback` with sticky first-working-mode memory, and the
+  `errors.Is(err, onvif.ErrUnauthorized)` sentinel covering HTTP 401/403,
+  NotAuthorized SOAP faults, and 200-with-fault responses. All service
+  operations route through a single audited call dispatcher.
+- **StreamSetup parameterization** (#2): `GetStreamURIWithOptions` selects
+  stream type × transport protocol (RTSP/HTTP/UDP, unicast/multicast);
+  `GetStreamURI` delegates with the historical defaults.
+- **Robust media URI parsing** (#3): namespace/SOAP-version-tolerant response
+  handling with a local-name fallback extractor; empty URIs are now explicit
+  `ErrEmptyMediaURI` errors carrying a body summary (was: silent empty
+  string + nil error). Regression fixtures under `testdata/captures/`.
+- **Directed unicast probing** (#4): `discovery.ProbeEndpoint` (WS-Discovery
+  Probe over HTTP with GetDeviceInformation fallback — works across subnets)
+  and `discovery.ProbeSerial` (namespace-agnostic serial extraction, common
+  port scan).
+- **Passive discovery listener** (#5): `discovery.Listener` on the WS-Discovery
+  multicast group for camera power-on Hello and third-party ProbeMatches,
+  coexisting with active `Discover()` sockets; panic-isolated handlers,
+  idempotent Stop, context-aware shutdown.
+- **Managed pull-point subscriptions** (#6): `Events().SubscribeEvents` runs
+  the whole lifecycle (long-poll dispatch, pre-expiry auto-renewal,
+  termination on renewal failure, best-effort cleanup) with the
+  `ErrEventsNotSupported` sentinel for devices that advertise but do not
+  implement the events service.
+- **Main/sub stream profile selection** (#7): `SelectMainProfile` /
+  `SelectSubProfile` — resolution-first heuristics with bilingual naming
+  tie-breaks and the Amcrest same-resolution-dual-token exclusion.
+- **Clock-skew measurement & auth diagnosis** (#8): `WithAutoClockSkew`
+  (RTT-compensated, failure-tolerant), `MeasureClockSkew`,
+  `DiagnoseAuth` (clock-skew / bad-credentials / ok triage).
+- **Discovery post-processing** (#9): `ParseScopes`, structured
+  `Device.Name/Hardware/Location`, `FilterONVIFDevices` (ghost-responder
+  cull), parallel `EnrichDevices`; `Device.EndpointRef` documented as
+  NOT a serial number.
+- **Network config setters** (#10): `SetNetworkInterfaces` (DHCP/manual IPv4,
+  RebootNeeded round trip), `NetmaskFromPrefixLength` +
+  `PrefixedIPv4Address.Netmask` convenience.
+- **Capabilities cache** (#11): `GetCapabilitiesCached` (single-flighted,
+  shared pointer semantics), `InvalidateCapabilitiesCache`, opt-in
+  `WithMinimalCapsFallback` degradation for weak devices.
+
+### Fixed
+- **Fault detection everywhere** (#1, #3): SOAP Faults carried with HTTP 200
+  were previously missed for void operations (reported as success) and
+  surfaced as confusing unmarshal errors elsewhere; every call now returns a
+  structured `*FaultError` / `*HTTPStatusError`.
+- **Concurrency contract** (#12): endpoint getters raced `Initialize`;
+  PTZ/Imaging calls before `Initialize` used an empty endpoint. All endpoint
+  access is lock-guarded with device-endpoint fallback; the Client's
+  concurrency safety is documented and pinned by a mixed-operation race
+  matrix test.
+
+## [1.2.0] - 2026-08-26
+
+### Changed
+- **Module path**: `github.com/0x524a/onvif-go` → `github.com/mickeyzzc/onvif-go`.
+  The project became a fully-owned continuation of 0x524a/onvif-go; tags
+  v1.0.0–v1.1.7 (0x524a lineage) remain on the repository for history.
+- **Service-facade API**: `client.Device()`, `client.Media()`, `client.PTZ()`,
+  `client.Imaging()`, `client.Events()`, `client.DeviceIO()`,
+  `client.Security()` — the Client is a connection + configuration holder,
+  operations live on the service that owns them (mirrors the ONVIF service
+  model). Legacy delegators on Client were removed.
+- **Media split**: media.go split into topic files; 130 method-local types
+  hoisted.
+- **Toolchain**: Go 1.26; zero third-party dependencies; gofumpt + goimports
+  + golangci-lint v2 at zero findings; `main` is the protected primary branch
+  with required lint/test/build checks.
+
 ## [1.1.3] - 2025-11-18
 
 ### Changed
