@@ -27,6 +27,55 @@ const (
 	NonceSize = 16
 )
 
+// AuthMode selects how the client authenticates its SOAP requests. Real-world
+// device compatibility varies wildly per firmware and even per service on the
+// same device, which is why the client also supports an auth fallback ladder
+// (see WithAuthFallback).
+type AuthMode string
+
+const (
+	// AuthDigest is the ONVIF default: WS-Security UsernameToken with
+	// PasswordDigest. Behavior matches the historical client exactly.
+	AuthDigest AuthMode = "digest"
+
+	// AuthPasswordText sends the password cleartext inside the WS-Security
+	// UsernameToken. Some firmwares reject digest on specific services (PTZ,
+	// GetUsers) while accepting this.
+	AuthPasswordText AuthMode = "password-text"
+
+	// AuthHTTPBasic authenticates with an HTTP Basic Authorization header and
+	// no WS-Security header.
+	AuthHTTPBasic AuthMode = "http-basic"
+
+	// AuthNone sends no authentication at all. Minimal embedded devices
+	// (e.g. ESP32 firmwares) may reject every auth-bearing request.
+	AuthNone AuthMode = "none"
+)
+
+// validate reports whether the mode is one of the known AuthMode values.
+func (m AuthMode) validate() error {
+	switch m {
+	case AuthDigest, AuthPasswordText, AuthHTTPBasic, AuthNone:
+		return nil
+	default:
+		return fmt.Errorf("%w: unknown auth mode %q", ErrInvalidParameter, string(m))
+	}
+}
+
+// soapMode maps the public AuthMode onto the internal soap layer enum.
+func (m AuthMode) soapMode() soap.AuthMode {
+	switch m {
+	case AuthPasswordText:
+		return soap.AuthModePasswordText
+	case AuthHTTPBasic:
+		return soap.AuthModeHTTPBasic
+	case AuthNone:
+		return soap.AuthModeNone
+	default:
+		return soap.AuthModeDigest
+	}
+}
+
 // Client represents an ONVIF client for communicating with IP cameras.
 type Client struct {
 	endpoint   string
@@ -40,6 +89,15 @@ type Client struct {
 	ptzEndpoint     string
 	imagingEndpoint string
 	eventEndpoint   string
+
+	// Auth configuration. authMode is the primary mode; authFallback lists
+	// modes to try (in order) when the primary fails with an auth-class error.
+	// stickyAuth/stickySet remember the first mode the ladder found working so
+	// later calls skip the ladder's failed attempts.
+	authMode     AuthMode
+	authFallback []AuthMode
+	stickyAuth   AuthMode
+	stickySet    bool
 
 	// clockSkew is the offset (deviceTime - localTime) applied to WS-Security
 	// digest timestamps. Set via SetClockSkew after measuring the device's clock
@@ -86,6 +144,27 @@ func WithCredentials(username, password string) ClientOption {
 	}
 }
 
+// WithAuthMode sets the primary authentication mode (default AuthDigest,
+// which preserves the historical behavior). Unknown modes are rejected by
+// NewClient.
+func WithAuthMode(mode AuthMode) ClientOption {
+	return func(c *Client) {
+		c.authMode = mode
+	}
+}
+
+// WithAuthFallback configures an authentication fallback ladder: when a call
+// fails with an auth-class error (HTTP 401/403 or a NotAuthorized SOAP fault)
+// under the primary mode, the listed modes are tried in order. The first mode
+// that works is remembered (sticky) so subsequent calls do not pay the ladder
+// cost again; changing credentials clears the memory. Setting a fallback also
+// makes errors.Is(err, ErrUnauthorized) meaningful for exhausted ladders.
+func WithAuthFallback(modes ...AuthMode) ClientOption {
+	return func(c *Client) {
+		c.authFallback = append(c.authFallback, modes...)
+	}
+}
+
 // NewClient creates a new ONVIF client
 // The endpoint can be provided in multiple formats:
 //   - Full URL: "http://192.168.1.100/onvif/device_service"
@@ -100,6 +179,7 @@ func NewClient(endpoint string, opts ...ClientOption) (*Client, error) {
 
 	client := &Client{
 		endpoint: normalizedEndpoint,
+		authMode: AuthDigest,
 		httpClient: &http.Client{
 			Timeout: DefaultTimeout,
 			Transport: &http.Transport{
@@ -120,7 +200,38 @@ func NewClient(endpoint string, opts ...ClientOption) (*Client, error) {
 		opt(client)
 	}
 
+	if err := client.validateAuthConfig(); err != nil {
+		return nil, err
+	}
+
 	return client, nil
+}
+
+// validateAuthConfig checks the auth mode and fallback ladder configured via
+// options, deduplicating repeated fallback entries.
+func (c *Client) validateAuthConfig() error {
+	if err := c.authMode.validate(); err != nil {
+		return fmt.Errorf("invalid auth configuration: %w", err)
+	}
+
+	seen := map[AuthMode]bool{c.authMode: true}
+	deduped := make([]AuthMode, 0, len(c.authFallback))
+	for _, mode := range c.authFallback {
+		if err := mode.validate(); err != nil {
+			return fmt.Errorf("invalid auth fallback: %w", err)
+		}
+
+		if seen[mode] {
+			continue
+		}
+
+		seen[mode] = true
+		deduped = append(deduped, mode)
+	}
+
+	c.authFallback = deduped
+
+	return nil
 }
 
 // normalizeEndpoint converts various endpoint formats to a full ONVIF URL.
@@ -255,12 +366,26 @@ func (c *Client) Endpoint() string {
 	return c.endpoint
 }
 
-// SetCredentials updates the authentication credentials.
+// SetCredentials updates the authentication credentials. Any auth-mode
+// conclusion remembered by the fallback ladder is cleared, since the ladder's
+// stickiness is only valid for the credentials it was measured with.
 func (c *Client) SetCredentials(username, password string) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.username = username
 	c.password = password
+	c.stickySet = false
+	c.stickyAuth = ""
+}
+
+// ResetAuthLadder clears the remembered (sticky) auth mode so the next call
+// re-runs the full fallback ladder. Useful after device-side credential or
+// firmware changes.
+func (c *Client) ResetAuthLadder() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.stickySet = false
+	c.stickyAuth = ""
 }
 
 // GetCredentials returns the current credentials.
@@ -269,6 +394,28 @@ func (c *Client) GetCredentials() (username, password string) {
 	defer c.mu.RUnlock()
 
 	return c.username, c.password
+}
+
+// AuthMode returns the primary authentication mode (not the sticky ladder
+// result; use AuthLadderMode for the effective mode).
+func (c *Client) AuthMode() AuthMode {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	return c.authMode
+}
+
+// AuthLadderMode returns the auth mode currently in effect: the sticky ladder
+// result when one was established, otherwise the configured primary mode.
+func (c *Client) AuthLadderMode() AuthMode {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.stickySet {
+		return c.stickyAuth
+	}
+
+	return c.authMode
 }
 
 // SetClockSkew sets the clock offset (deviceTime - localTime) used for WS-Security
@@ -280,13 +427,77 @@ func (c *Client) SetClockSkew(skew time.Duration) {
 	c.mu.Unlock()
 }
 
-// newSoapClient creates a soap.Client with the current credentials and clock
-// skew applied. All device/media/ptz/imaging methods should use this instead of
-// soap.NewClient directly so the skew propagates to every authenticated call.
-func (c *Client) newSoapClient(username, password string) *soap.Client {
-	sc := soap.NewClient(c.httpClient, username, password)
+// call performs a SOAP call through the client's auth configuration: it
+// applies the configured mode, retries through the fallback ladder on
+// auth-class errors, and remembers the first working mode. All service
+// operations go through this single audited path (issue #12).
+//
+// Auth-class failures are wrapped so errors.Is(err, ErrUnauthorized) holds
+// regardless of how many modes were tried; other failures propagate unchanged.
+func (c *Client) call(ctx context.Context, endpoint, action string, request, response interface{}) error {
+	modes := c.authLadder()
+
+	var lastErr error
+
+	for i, mode := range modes {
+		lastErr = c.callWithMode(ctx, endpoint, action, request, response, mode)
+		if lastErr == nil {
+			if i > 0 {
+				c.rememberStickyAuth(mode)
+			}
+
+			return nil
+		}
+
+		if !soap.IsAuthFailure(lastErr) {
+			// Non-auth failures are never retried with another mode.
+			return lastErr
+		}
+	}
+
+	return fmt.Errorf("%w: %w", ErrUnauthorized, lastErr)
+}
+
+// callWithMode executes one SOAP attempt with a specific auth mode.
+func (c *Client) callWithMode(ctx context.Context, endpoint, action string, request, response interface{}, mode AuthMode) error {
 	c.mu.RLock()
-	sc.SetClockSkew(c.clockSkew)
+	username, password := c.username, c.password
+	skew := c.clockSkew
+	httpClient := c.httpClient
 	c.mu.RUnlock()
-	return sc
+
+	sc := soap.NewClient(httpClient, username, password)
+	sc.SetClockSkew(skew)
+	sc.SetAuthMode(mode.soapMode())
+
+	return sc.Call(ctx, endpoint, action, request, response)
+}
+
+// authLadder snapshots the modes to try: the sticky result when established,
+// otherwise the primary mode followed by the (already validated, deduplicated)
+// fallback list.
+func (c *Client) authLadder() []AuthMode {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	if c.stickySet {
+		return []AuthMode{c.stickyAuth}
+	}
+
+	if len(c.authFallback) == 0 {
+		return []AuthMode{c.authMode}
+	}
+
+	modes := make([]AuthMode, 0, 1+len(c.authFallback))
+	modes = append(modes, c.authMode)
+
+	return append(modes, c.authFallback...)
+}
+
+// rememberStickyAuth records the first ladder mode that succeeded.
+func (c *Client) rememberStickyAuth(mode AuthMode) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.stickyAuth = mode
+	c.stickySet = true
 }

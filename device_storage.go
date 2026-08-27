@@ -23,10 +23,7 @@ func (s *DeviceService) GetStorageConfigurations(ctx context.Context) ([]*Storag
 	}
 	var response GetStorageConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfigurations failed: %w", err)
 	}
 
@@ -52,10 +49,7 @@ func (s *DeviceService) GetStorageConfiguration(ctx context.Context, token strin
 	}
 	var response GetStorageConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfiguration failed: %w", err)
 	}
 
@@ -82,10 +76,7 @@ func (s *DeviceService) CreateStorageConfiguration(ctx context.Context, config *
 	}
 	var response CreateStorageConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return "", fmt.Errorf("CreateStorageConfiguration failed: %w", err)
 	}
 
@@ -110,10 +101,7 @@ func (s *DeviceService) SetStorageConfiguration(ctx context.Context, config *Sto
 	}
 	var response SetStorageConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetStorageConfiguration failed: %w", err)
 	}
 
@@ -139,10 +127,7 @@ func (s *DeviceService) DeleteStorageConfiguration(ctx context.Context, token st
 	}
 	var response DeleteStorageConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteStorageConfiguration failed: %w", err)
 	}
 
@@ -167,10 +152,7 @@ func (s *DeviceService) SetHashingAlgorithm(ctx context.Context, algorithm strin
 	}
 	var response SetHashingAlgorithmResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetHashingAlgorithm failed: %w", err)
 	}
 

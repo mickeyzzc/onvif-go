@@ -559,10 +559,7 @@ func (s *MediaService) GetAudioSources(ctx context.Context) ([]*AudioSource, err
 
 	var resp GetAudioSourcesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSources failed: %w", err)
 	}
 
@@ -586,10 +583,7 @@ func (s *MediaService) GetAudioOutputs(ctx context.Context) ([]*AudioOutput, err
 
 	var resp GetAudioOutputsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputs failed: %w", err)
 	}
 
@@ -616,10 +610,7 @@ func (s *MediaService) GetAudioEncoderConfiguration(
 
 	var resp GetAudioEncoderConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfiguration failed: %w", err)
 	}
 
@@ -702,10 +693,7 @@ func (s *MediaService) SetAudioEncoderConfiguration(
 		}
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioEncoderConfiguration failed: %w", err)
 	}
 
@@ -725,10 +713,7 @@ func (s *MediaService) GetMetadataConfiguration(
 
 	var resp GetMetadataConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfiguration failed: %w", err)
 	}
 
@@ -828,10 +813,7 @@ func (s *MediaService) SetMetadataConfiguration(
 		}
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetMetadataConfiguration failed: %w", err)
 	}
 
@@ -847,10 +829,7 @@ func (s *MediaService) AddAudioEncoderConfiguration(ctx context.Context, profile
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioEncoderConfiguration failed: %w", err)
 	}
 
@@ -865,10 +844,7 @@ func (s *MediaService) RemoveAudioEncoderConfiguration(ctx context.Context, prof
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioEncoderConfiguration failed: %w", err)
 	}
 
@@ -884,10 +860,7 @@ func (s *MediaService) AddAudioSourceConfiguration(ctx context.Context, profileT
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioSourceConfiguration failed: %w", err)
 	}
 
@@ -902,10 +875,7 @@ func (s *MediaService) RemoveAudioSourceConfiguration(ctx context.Context, profi
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioSourceConfiguration failed: %w", err)
 	}
 
@@ -921,10 +891,7 @@ func (s *MediaService) AddMetadataConfiguration(ctx context.Context, profileToke
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddMetadataConfiguration failed: %w", err)
 	}
 
@@ -939,10 +906,7 @@ func (s *MediaService) RemoveMetadataConfiguration(ctx context.Context, profileT
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveMetadataConfiguration failed: %w", err)
 	}
 
@@ -967,10 +931,7 @@ func (s *MediaService) GetAudioEncoderConfigurationOptions(
 
 	var resp GetAudioEncoderConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurationOptions failed: %w", err)
 	}
 
@@ -999,10 +960,7 @@ func (s *MediaService) GetMetadataConfigurationOptions(
 
 	var resp GetMetadataConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurationOptions failed: %w", err)
 	}
 
@@ -1027,10 +985,7 @@ func (s *MediaService) GetAudioOutputConfiguration(ctx context.Context, configur
 
 	var resp GetAudioOutputConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfiguration failed: %w", err)
 	}
 
@@ -1056,10 +1011,7 @@ func (s *MediaService) SetAudioOutputConfiguration(ctx context.Context, config *
 	req.Configuration.UseCount = config.UseCount
 	req.Configuration.OutputToken = config.OutputToken
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioOutputConfiguration failed: %w", err)
 	}
 
@@ -1081,10 +1033,7 @@ func (s *MediaService) GetAudioOutputConfigurationOptions(
 
 	var resp GetAudioOutputConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurationOptions failed: %w", err)
 	}
 
@@ -1108,10 +1057,7 @@ func (s *MediaService) GetAudioDecoderConfigurationOptions(
 
 	var resp GetAudioDecoderConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurationOptions failed: %w", err)
 	}
 
@@ -1145,10 +1091,7 @@ func (s *MediaService) GetAudioSourceConfigurations(ctx context.Context) ([]*Aud
 
 	var resp GetAudioSourceConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurations failed: %w", err)
 	}
 
@@ -1174,10 +1117,7 @@ func (s *MediaService) GetAudioEncoderConfigurations(ctx context.Context) ([]*Au
 
 	var resp GetAudioEncoderConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioEncoderConfigurations failed: %w", err)
 	}
 
@@ -1223,10 +1163,7 @@ func (s *MediaService) GetAudioSourceConfiguration(ctx context.Context, configur
 
 	var resp GetAudioSourceConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfiguration failed: %w", err)
 	}
 
@@ -1256,10 +1193,7 @@ func (s *MediaService) GetAudioSourceConfigurationOptions(
 
 	var resp GetAudioSourceConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioSourceConfigurationOptions failed: %w", err)
 	}
 
@@ -1282,10 +1216,7 @@ func (s *MediaService) SetAudioSourceConfiguration(ctx context.Context, config *
 	req.Configuration.UseCount = config.UseCount
 	req.Configuration.SourceToken = config.SourceToken
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioSourceConfiguration failed: %w", err)
 	}
 
@@ -1305,10 +1236,7 @@ func (s *MediaService) GetCompatibleAudioEncoderConfigurations(
 
 	var resp GetCompatibleAudioEncoderConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioEncoderConfigurations failed: %w", err)
 	}
 
@@ -1337,10 +1265,7 @@ func (s *MediaService) GetCompatibleAudioSourceConfigurations(ctx context.Contex
 
 	var resp GetCompatibleAudioSourceConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioSourceConfigurations failed: %w", err)
 	}
 
@@ -1367,10 +1292,7 @@ func (s *MediaService) GetCompatibleMetadataConfigurations(ctx context.Context, 
 
 	var resp GetCompatibleMetadataConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleMetadataConfigurations failed: %w", err)
 	}
 
@@ -1397,10 +1319,7 @@ func (s *MediaService) GetCompatibleAudioOutputConfigurations(ctx context.Contex
 
 	var resp GetCompatibleAudioOutputConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioOutputConfigurations failed: %w", err)
 	}
 
@@ -1427,10 +1346,7 @@ func (s *MediaService) GetCompatibleAudioDecoderConfigurations(ctx context.Conte
 
 	var resp GetCompatibleAudioDecoderConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleAudioDecoderConfigurations failed: %w", err)
 	}
 
@@ -1455,10 +1371,7 @@ func (s *MediaService) GetMetadataConfigurations(ctx context.Context) ([]*Metada
 
 	var resp GetMetadataConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMetadataConfigurations failed: %w", err)
 	}
 
@@ -1484,10 +1397,7 @@ func (s *MediaService) GetAudioOutputConfigurations(ctx context.Context) ([]*Aud
 
 	var resp GetAudioOutputConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioOutputConfigurations failed: %w", err)
 	}
 
@@ -1513,10 +1423,7 @@ func (s *MediaService) GetAudioDecoderConfigurations(ctx context.Context) ([]*Au
 
 	var resp GetAudioDecoderConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfigurations failed: %w", err)
 	}
 
@@ -1545,10 +1452,7 @@ func (s *MediaService) GetAudioDecoderConfiguration(
 
 	var resp GetAudioDecoderConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAudioDecoderConfiguration failed: %w", err)
 	}
 
@@ -1572,10 +1476,7 @@ func (s *MediaService) SetAudioDecoderConfiguration(ctx context.Context, config 
 	req.Configuration.Name = config.Name
 	req.Configuration.UseCount = config.UseCount
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAudioDecoderConfiguration failed: %w", err)
 	}
 
@@ -1591,10 +1492,7 @@ func (s *MediaService) AddAudioOutputConfiguration(ctx context.Context, profileT
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioOutputConfiguration failed: %w", err)
 	}
 
@@ -1609,10 +1507,7 @@ func (s *MediaService) RemoveAudioOutputConfiguration(ctx context.Context, profi
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioOutputConfiguration failed: %w", err)
 	}
 
@@ -1628,10 +1523,7 @@ func (s *MediaService) AddAudioDecoderConfiguration(ctx context.Context, profile
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddAudioDecoderConfiguration failed: %w", err)
 	}
 
@@ -1646,10 +1538,7 @@ func (s *MediaService) RemoveAudioDecoderConfiguration(ctx context.Context, prof
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveAudioDecoderConfiguration failed: %w", err)
 	}
 

@@ -88,10 +88,7 @@ func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, ve
 		Timeout:      timeout,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("ContinuousMove failed: %w", err)
 	}
 
@@ -120,10 +117,7 @@ func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, posi
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AbsoluteMove failed: %w", err)
 	}
 
@@ -152,10 +146,7 @@ func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, tran
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RelativeMove failed: %w", err)
 	}
 
@@ -189,10 +180,7 @@ func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoo
 		req.Zoom = &zoom
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
 	}
 
@@ -242,10 +230,7 @@ func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZSt
 
 	var resp GetStatusResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)
 	}
 
@@ -319,10 +304,7 @@ func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PT
 
 	var resp GetPresetsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPresets failed: %w", err)
 	}
 
@@ -378,10 +360,7 @@ func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken s
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoPreset failed: %w", err)
 	}
 
@@ -422,10 +401,7 @@ func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, pr
 
 	var resp SetPresetResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SetPreset failed: %w", err)
 	}
 
@@ -452,10 +428,7 @@ func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken
 		PresetToken:  presetToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePreset failed: %w", err)
 	}
 
@@ -482,10 +455,7 @@ func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, 
 		Speed:        convertToPTZSpeedXML(speed),
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("GotoHomePosition failed: %w", err)
 	}
 
@@ -510,10 +480,7 @@ func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) e
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHomePosition failed: %w", err)
 	}
 
@@ -550,10 +517,7 @@ func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken st
 
 	var resp GetConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfiguration failed: %w", err)
 	}
 
@@ -593,10 +557,7 @@ func (s *PTZService) GetConfigurations(ctx context.Context) ([]*PTZConfiguration
 
 	var resp GetConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetConfigurations failed: %w", err)
 	}
 

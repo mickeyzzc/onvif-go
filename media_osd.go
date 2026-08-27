@@ -91,10 +91,7 @@ func (s *MediaService) GetOSDs(ctx context.Context, configurationToken string) (
 
 	var resp GetOSDsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDs failed: %w", err)
 	}
 
@@ -118,10 +115,7 @@ func (s *MediaService) GetOSD(ctx context.Context, osdToken string) (*OSDConfigu
 
 	var resp GetOSDResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSD failed: %w", err)
 	}
 
@@ -139,10 +133,7 @@ func (s *MediaService) SetOSD(ctx context.Context, osd *OSDConfiguration) error 
 	}
 	req.OSD.Token = osd.Token
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetOSD failed: %w", err)
 	}
 
@@ -167,10 +158,7 @@ func (s *MediaService) CreateOSD(
 
 	var resp CreateOSDResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateOSD failed: %w", err)
 	}
 
@@ -187,10 +175,7 @@ func (s *MediaService) DeleteOSD(ctx context.Context, osdToken string) error {
 		OSDToken: osdToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteOSD failed: %w", err)
 	}
 
@@ -209,10 +194,7 @@ func (s *MediaService) GetOSDOptions(ctx context.Context, configurationToken str
 
 	var resp GetOSDOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDOptions failed: %w", err)
 	}
 

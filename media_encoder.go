@@ -377,10 +377,7 @@ func (s *MediaService) GetVideoEncoderConfiguration(
 
 	var resp GetVideoEncoderConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfiguration failed: %w", err)
 	}
 
@@ -419,10 +416,7 @@ func (s *MediaService) GetVideoSources(ctx context.Context) ([]*VideoSource, err
 
 	var resp GetVideoSourcesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSources failed: %w", err)
 	}
 
@@ -485,10 +479,7 @@ func (s *MediaService) SetVideoEncoderConfiguration(
 		}
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoEncoderConfiguration failed: %w", err)
 	}
 
@@ -509,10 +500,7 @@ func (s *MediaService) GetVideoEncoderConfigurationOptions(
 
 	var resp GetVideoEncoderConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurationOptions failed: %w", err)
 	}
 
@@ -591,10 +579,7 @@ func (s *MediaService) GetVideoSourceModes(ctx context.Context, videoSourceToken
 
 	var resp GetVideoSourceModesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceModes failed: %w", err)
 	}
 
@@ -622,10 +607,7 @@ func (s *MediaService) SetVideoSourceMode(ctx context.Context, videoSourceToken,
 		ModeToken:        modeToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceMode failed: %w", err)
 	}
 
@@ -641,10 +623,7 @@ func (s *MediaService) AddVideoEncoderConfiguration(ctx context.Context, profile
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoEncoderConfiguration failed: %w", err)
 	}
 
@@ -659,10 +638,7 @@ func (s *MediaService) RemoveVideoEncoderConfiguration(ctx context.Context, prof
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoEncoderConfiguration failed: %w", err)
 	}
 
@@ -678,10 +654,7 @@ func (s *MediaService) AddVideoSourceConfiguration(ctx context.Context, profileT
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoSourceConfiguration failed: %w", err)
 	}
 
@@ -696,10 +669,7 @@ func (s *MediaService) RemoveVideoSourceConfiguration(ctx context.Context, profi
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoSourceConfiguration failed: %w", err)
 	}
 
@@ -719,10 +689,7 @@ func (s *MediaService) GetGuaranteedNumberOfVideoEncoderInstances(
 
 	var resp GetGuaranteedNumberOfVideoEncoderInstancesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetGuaranteedNumberOfVideoEncoderInstances failed: %w", err)
 	}
 
@@ -743,10 +710,7 @@ func (s *MediaService) GetVideoSourceConfigurations(ctx context.Context) ([]*Vid
 
 	var resp GetVideoSourceConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurations failed: %w", err)
 	}
 
@@ -781,10 +745,7 @@ func (s *MediaService) GetVideoEncoderConfigurations(ctx context.Context) ([]*Vi
 
 	var resp GetVideoEncoderConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurations failed: %w", err)
 	}
 
@@ -861,10 +822,7 @@ func (s *MediaService) GetVideoSourceConfiguration(
 
 	var resp GetVideoSourceConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfiguration failed: %w", err)
 	}
 
@@ -905,10 +863,7 @@ func (s *MediaService) GetVideoSourceConfigurationOptions(
 
 	var resp GetVideoSourceConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurationOptions failed: %w", err)
 	}
 
@@ -958,10 +913,7 @@ func (s *MediaService) SetVideoSourceConfiguration(
 		}
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceConfiguration failed: %w", err)
 	}
 
@@ -981,10 +933,7 @@ func (s *MediaService) GetCompatibleVideoEncoderConfigurations(
 
 	var resp GetCompatibleVideoEncoderConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoEncoderConfigurations failed: %w", err)
 	}
 
@@ -1032,10 +981,7 @@ func (s *MediaService) GetCompatibleVideoSourceConfigurations(
 
 	var resp GetCompatibleVideoSourceConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoSourceConfigurations failed: %w", err)
 	}
 

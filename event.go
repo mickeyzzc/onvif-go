@@ -156,10 +156,7 @@ func (s *EventService) GetEventServiceCapabilities(ctx context.Context) (*EventS
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventServiceCapabilities failed: %w", err)
 	}
 
@@ -236,10 +233,7 @@ func (s *EventService) CreatePullPointSubscription(
 
 	var resp CreatePullPointSubscriptionResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreatePullPointSubscription failed: %w", err)
 	}
 
@@ -328,10 +322,7 @@ func (s *EventService) PullMessages(
 
 	var resp PullMessagesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("PullMessages failed: %w", err)
 	}
 
@@ -400,10 +391,7 @@ func (s *EventService) Seek(ctx context.Context, subscriptionReference string, u
 
 	var resp SeekResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("Seek failed: %w", err)
 	}
 
@@ -431,10 +419,7 @@ func (s *EventService) SetEventSynchronizationPoint(ctx context.Context, subscri
 
 	var resp SetSynchronizationPointResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
 	}
 
@@ -462,10 +447,7 @@ func (s *EventService) Unsubscribe(ctx context.Context, subscriptionReference st
 
 	var resp UnsubscribeResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return fmt.Errorf("Unsubscribe failed: %w", err)
 	}
 
@@ -505,10 +487,7 @@ func (s *EventService) RenewSubscription(
 
 	var resp RenewResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, subscriptionReference, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, subscriptionReference, "", req, &resp); err != nil {
 		return time.Time{}, time.Time{}, fmt.Errorf("RenewSubscription failed: %w", err)
 	}
 
@@ -554,10 +533,7 @@ func (s *EventService) GetEventProperties(ctx context.Context) (*EventProperties
 
 	var resp GetEventPropertiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventProperties failed: %w", err)
 	}
 
@@ -624,10 +600,7 @@ func (s *EventService) AddEventBroker(ctx context.Context, config *EventBrokerCo
 
 	var resp AddEventBrokerResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("AddEventBroker failed: %w", err)
 	}
 
@@ -659,10 +632,7 @@ func (s *EventService) DeleteEventBroker(ctx context.Context, address string) er
 
 	var resp DeleteEventBrokerResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("DeleteEventBroker failed: %w", err)
 	}
 
@@ -700,10 +670,7 @@ func (s *EventService) GetEventBrokers(ctx context.Context) ([]*EventBrokerConfi
 
 	var resp GetEventBrokersResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetEventBrokers failed: %w", err)
 	}
 

@@ -254,10 +254,7 @@ func (s *MediaService) GetProfiles(ctx context.Context) ([]*Profile, error) {
 
 	var resp GetProfilesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfiles failed: %w", err)
 	}
 
@@ -336,10 +333,7 @@ func (s *MediaService) CreateProfile(ctx context.Context, name, token string) (*
 
 	var resp CreateProfileResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateProfile failed: %w", err)
 	}
 
@@ -357,10 +351,7 @@ func (s *MediaService) DeleteProfile(ctx context.Context, profileToken string) e
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteProfile failed: %w", err)
 	}
 
@@ -376,10 +367,7 @@ func (s *MediaService) GetMediaServiceCapabilities(ctx context.Context) (*MediaS
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMediaServiceCapabilities failed: %w", err)
 	}
 
@@ -415,10 +403,7 @@ func (s *MediaService) GetProfile(ctx context.Context, profileToken string) (*Pr
 
 	var resp GetProfileResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetProfile failed: %w", err)
 	}
 
@@ -438,10 +423,7 @@ func (s *MediaService) SetProfile(ctx context.Context, profile *Profile) error {
 	req.Profile.Token = profile.Token
 	req.Profile.Name = profile.Name
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetProfile failed: %w", err)
 	}
 
@@ -457,10 +439,7 @@ func (s *MediaService) AddPTZConfiguration(ctx context.Context, profileToken, co
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddPTZConfiguration failed: %w", err)
 	}
 
@@ -475,10 +454,7 @@ func (s *MediaService) RemovePTZConfiguration(ctx context.Context, profileToken 
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemovePTZConfiguration failed: %w", err)
 	}
 
@@ -495,10 +471,7 @@ func (s *MediaService) GetCompatiblePTZConfigurations(ctx context.Context, profi
 
 	var resp GetCompatiblePTZConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatiblePTZConfigurations failed: %w", err)
 	}
 
@@ -524,10 +497,7 @@ func (s *MediaService) GetVideoAnalyticsConfigurations(ctx context.Context) ([]*
 
 	var resp GetVideoAnalyticsConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurations failed: %w", err)
 	}
 
@@ -556,10 +526,7 @@ func (s *MediaService) GetVideoAnalyticsConfiguration(
 
 	var resp GetVideoAnalyticsConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfiguration failed: %w", err)
 	}
 
@@ -580,10 +547,7 @@ func (s *MediaService) GetCompatibleVideoAnalyticsConfigurations(ctx context.Con
 
 	var resp GetCompatibleVideoAnalyticsConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoAnalyticsConfigurations failed: %w", err)
 	}
 
@@ -612,10 +576,7 @@ func (s *MediaService) SetVideoAnalyticsConfiguration(ctx context.Context, confi
 	req.Configuration.Name = config.Name
 	req.Configuration.UseCount = config.UseCount
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoAnalyticsConfiguration failed: %w", err)
 	}
 
@@ -640,10 +601,7 @@ func (s *MediaService) GetVideoAnalyticsConfigurationOptions(
 
 	var resp GetVideoAnalyticsConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoAnalyticsConfigurationOptions failed: %w", err)
 	}
 
@@ -659,10 +617,7 @@ func (s *MediaService) AddVideoAnalyticsConfiguration(ctx context.Context, profi
 		ConfigurationToken: configurationToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoAnalyticsConfiguration failed: %w", err)
 	}
 
@@ -677,10 +632,7 @@ func (s *MediaService) RemoveVideoAnalyticsConfiguration(ctx context.Context, pr
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoAnalyticsConfiguration failed: %w", err)
 	}
 

@@ -205,10 +205,7 @@ func (s *DeviceIOService) GetDeviceIOServiceCapabilities(ctx context.Context) (*
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceIOServiceCapabilities failed: %w", err)
 	}
 
@@ -248,10 +245,7 @@ func (s *DeviceIOService) GetDigitalInputs(ctx context.Context) ([]*DigitalInput
 
 	var resp GetDigitalInputsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDigitalInputs failed: %w", err)
 	}
 
@@ -294,10 +288,7 @@ func (s *DeviceIOService) GetDigitalInputConfigurationOptions(ctx context.Contex
 
 	var resp GetDigitalInputConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDigitalInputConfigurationOptions failed: %w", err)
 	}
 
@@ -354,10 +345,7 @@ func (s *DeviceIOService) SetDigitalInputConfigurations(ctx context.Context, inp
 
 	var resp SetDigitalInputConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetDigitalInputConfigurations failed: %w", err)
 	}
 
@@ -403,10 +391,7 @@ func (s *DeviceIOService) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, 
 
 	var resp GetVideoOutputsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputs failed: %w", err)
 	}
 
@@ -472,10 +457,7 @@ func (s *DeviceIOService) GetSerialPorts(ctx context.Context) ([]*SerialPort, er
 
 	var resp GetSerialPortsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPorts failed: %w", err)
 	}
 
@@ -523,10 +505,7 @@ func (s *DeviceIOService) GetSerialPortConfiguration(ctx context.Context, serial
 
 	var resp GetSerialPortConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPortConfiguration failed: %w", err)
 	}
 
@@ -572,10 +551,7 @@ func (s *DeviceIOService) GetSerialPortConfigurationOptions(ctx context.Context,
 
 	var resp GetSerialPortConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPortConfigurationOptions failed: %w", err)
 	}
 
@@ -640,10 +616,7 @@ func (s *DeviceIOService) SetSerialPortConfiguration(ctx context.Context, config
 
 	var resp SetSerialPortConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetSerialPortConfiguration failed: %w", err)
 	}
 
@@ -699,10 +672,7 @@ func (s *DeviceIOService) SendReceiveSerialCommand(ctx context.Context, serialPo
 
 	var resp SendReceiveSerialCommandResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("SendReceiveSerialCommand failed: %w", err)
 	}
 
@@ -740,10 +710,7 @@ func (s *DeviceIOService) GetVideoOutputConfiguration(ctx context.Context, video
 
 	var resp GetVideoOutputConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputConfiguration failed: %w", err)
 	}
 
@@ -787,10 +754,7 @@ func (s *DeviceIOService) GetVideoOutputConfigurationOptions(ctx context.Context
 
 	var resp GetVideoOutputConfigurationOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputConfigurationOptions failed: %w", err)
 	}
 
@@ -848,10 +812,7 @@ func (s *DeviceIOService) SetVideoOutputConfiguration(ctx context.Context, confi
 
 	var resp SetVideoOutputConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetVideoOutputConfiguration failed: %w", err)
 	}
 
@@ -889,10 +850,7 @@ func (s *DeviceIOService) GetRelayOutputOptions(ctx context.Context, relayOutput
 
 	var resp GetRelayOutputOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRelayOutputOptions failed: %w", err)
 	}
 

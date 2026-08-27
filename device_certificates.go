@@ -23,10 +23,7 @@ func (s *DeviceService) GetCertificates(ctx context.Context) ([]*Certificate, er
 	}
 	var response GetCertificatesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificates failed: %w", err)
 	}
 
@@ -50,10 +47,7 @@ func (s *DeviceService) GetCACertificates(ctx context.Context) ([]*Certificate, 
 	}
 	var response GetCACertificatesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCACertificates failed: %w", err)
 	}
 
@@ -78,10 +72,7 @@ func (s *DeviceService) LoadCertificates(ctx context.Context, certificates []*Ce
 	}
 	var response LoadCertificatesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificates failed: %w", err)
 	}
 
@@ -106,10 +97,7 @@ func (s *DeviceService) LoadCACertificates(ctx context.Context, certificates []*
 	}
 	var response LoadCACertificatesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCACertificates failed: %w", err)
 	}
 
@@ -144,10 +132,7 @@ func (s *DeviceService) CreateCertificate(
 	}
 	var response CreateCertificateResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("CreateCertificate failed: %w", err)
 	}
 
@@ -172,10 +157,7 @@ func (s *DeviceService) DeleteCertificates(ctx context.Context, certificateIDs [
 	}
 	var response DeleteCertificatesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteCertificates failed: %w", err)
 	}
 
@@ -202,10 +184,7 @@ func (s *DeviceService) GetCertificateInformation(ctx context.Context, certifica
 	}
 	var response GetCertificateInformationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificateInformation failed: %w", err)
 	}
 
@@ -229,10 +208,7 @@ func (s *DeviceService) GetCertificatesStatus(ctx context.Context) ([]*Certifica
 	}
 	var response GetCertificatesStatusResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetCertificatesStatus failed: %w", err)
 	}
 
@@ -257,10 +233,7 @@ func (s *DeviceService) SetCertificatesStatus(ctx context.Context, statuses []*C
 	}
 	var response SetCertificatesStatusResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetCertificatesStatus failed: %w", err)
 	}
 
@@ -294,10 +267,7 @@ func (s *DeviceService) GetPkcs10Request(
 	}
 	var response GetPkcs10RequestResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetPkcs10Request failed: %w", err)
 	}
 
@@ -348,10 +318,7 @@ func (s *DeviceService) LoadCertificateWithPrivateKey(
 
 	var response LoadCertificateWithPrivateKeyResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("LoadCertificateWithPrivateKey failed: %w", err)
 	}
 
@@ -376,10 +343,7 @@ func (s *DeviceService) GetClientCertificateMode(ctx context.Context) (bool, err
 	}
 	var response GetClientCertificateModeResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return false, fmt.Errorf("GetClientCertificateMode failed: %w", err)
 	}
 
@@ -404,10 +368,7 @@ func (s *DeviceService) SetClientCertificateMode(ctx context.Context, enabled bo
 	}
 	var response SetClientCertificateModeResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetClientCertificateMode failed: %w", err)
 	}
 

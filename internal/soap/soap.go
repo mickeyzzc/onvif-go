@@ -14,6 +14,32 @@ import (
 	"time"
 )
 
+// AuthMode selects how requests are authenticated.
+type AuthMode int
+
+const (
+	// AuthModeDigest is the ONVIF default: WS-Security UsernameToken with
+	// PasswordDigest (Base64(SHA1(nonce + created + password))).
+	AuthModeDigest AuthMode = iota
+	// AuthModePasswordText sends the password in cleartext inside the
+	// WS-Security UsernameToken (PasswordText profile). Some firmwares
+	// reject digest on specific services while accepting this.
+	AuthModePasswordText
+	// AuthModeHTTPBasic sends no WS-Security header and authenticates with
+	// an HTTP Basic Authorization header instead.
+	AuthModeHTTPBasic
+	// AuthModeNone sends no authentication at all. Minimal embedded devices
+	// (e.g. ESP32 firmwares) may reject every auth-bearing request.
+	AuthModeNone
+)
+
+// Password type URIs from the WS-Security UsernameToken profile.
+const (
+	passwordDigestType = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest" //nolint:lll // Long XML namespace
+	passwordTextType   = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordText"   //nolint:lll // Long XML namespace
+	nonceEncodingType  = "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary"    //nolint:lll // Long XML namespace
+)
+
 // Envelope represents a SOAP envelope.
 type Envelope struct {
 	XMLName xml.Name `xml:"http://www.w3.org/2003/05/soap-envelope Envelope"`
@@ -73,6 +99,7 @@ type Client struct {
 	httpClient *http.Client
 	username   string
 	password   string
+	authMode   AuthMode
 	debug      bool
 	logger     func(format string, args ...interface{})
 	// clockSkew is the offset (deviceTime - localTime) applied to the Created
@@ -92,9 +119,16 @@ func NewClient(httpClient *http.Client, username, password string) *Client {
 		httpClient: httpClient,
 		username:   username,
 		password:   password,
+		authMode:   AuthModeDigest,
 		debug:      false,
 		logger:     nil,
 	}
+}
+
+// SetAuthMode selects the authentication mode used for subsequent calls.
+// The zero value AuthModeDigest preserves the historical behavior.
+func (c *Client) SetAuthMode(mode AuthMode) {
+	c.authMode = mode
 }
 
 // SetDebug enables debug logging with a custom logger.
@@ -119,6 +153,11 @@ func (c *Client) logDebugf(format string, args ...interface{}) {
 }
 
 // Call makes a SOAP call to the specified endpoint.
+//
+// Faults are detected regardless of the HTTP status: ONVIF devices frequently
+// return SOAP Faults (including NotAuthorized) with HTTP 200, and before fault
+// detection existed such responses were mistaken for successful — or worse,
+// silently dropped — operation results.
 func (c *Client) Call(ctx context.Context, endpoint, action string, request, response interface{}) error {
 	// Build SOAP envelope
 	envelope := &Envelope{
@@ -127,8 +166,10 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 		},
 	}
 
-	// Add security header if credentials are provided
-	if c.username != "" && c.password != "" {
+	// Add the WS-Security header for the header-based modes when credentials
+	// are present (HTTP Basic and None need no SOAP header).
+	if c.username != "" && c.password != "" &&
+		(c.authMode == AuthModeDigest || c.authMode == AuthModePasswordText) {
 		envelope.Header = &Header{
 			Security: c.createSecurityHeader(),
 		}
@@ -158,6 +199,10 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 		req.Header.Set("SOAPAction", action)
 	}
 
+	if c.authMode == AuthModeHTTPBasic && c.username != "" {
+		req.SetBasicAuth(c.username, c.password)
+	}
+
 	// Send request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -178,7 +223,7 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 
 	// Check HTTP status
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("%w with status %d: %s", ErrHTTPRequestFailed, resp.StatusCode, string(respBody))
+		return &HTTPStatusError{Status: resp.StatusCode, Body: string(respBody)}
 	}
 
 	// If response is empty, return immediately
@@ -186,21 +231,26 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 		return fmt.Errorf("%w", ErrEmptyResponseBody)
 	}
 
+	// Extract the raw Body content first: fault detection must happen for
+	// every call (including void operations whose response is nil), because a
+	// 200-with-Fault must never be reported as success.
+	var envelopeResp struct {
+		Body struct {
+			Content []byte `xml:",innerxml"`
+		} `xml:"Body"`
+	}
+
+	if err := xml.Unmarshal(respBody, &envelopeResp); err != nil {
+		return fmt.Errorf("failed to unmarshal SOAP envelope: %w", err)
+	}
+
+	if fault := parseFault(envelopeResp.Body.Content, resp.StatusCode); fault != nil {
+		return fault
+	}
+
 	// Unmarshal response content if response is provided
 	if response != nil {
-		// Create a flexible envelope structure for parsing responses
-		var envelope struct {
-			Body struct {
-				Content []byte `xml:",innerxml"`
-			} `xml:"Body"`
-		}
-
-		if err := xml.Unmarshal(respBody, &envelope); err != nil {
-			return fmt.Errorf("failed to unmarshal SOAP envelope: %w", err)
-		}
-
-		// Unmarshal the body content into the response
-		if err := xml.Unmarshal(envelope.Body.Content, response); err != nil {
+		if err := xml.Unmarshal(envelopeResp.Body.Content, response); err != nil {
 			return fmt.Errorf("failed to unmarshal response: %w", err)
 		}
 	}
@@ -208,8 +258,77 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 	return nil
 }
 
-// createSecurityHeader creates a WS-Security header with username token digest.
+// faultXML parses a Fault element by local name so any namespace prefix
+// (s:, soapenv:, SOAP-ENV:, ...) and either SOAP version matches.
+type faultXML struct {
+	XMLName xml.Name `xml:"Fault"`
+
+	// SOAP 1.2 shape.
+	Code struct {
+		Value   string `xml:"Value"`
+		Subcode struct {
+			Value string `xml:"Value"`
+		} `xml:"Subcode"`
+	} `xml:"Code"`
+	Reason struct {
+		Text string `xml:"Text"`
+	} `xml:"Reason"`
+	Detail struct {
+		Inner string `xml:",innerxml"`
+	} `xml:"Detail"`
+
+	// SOAP 1.1 shape.
+	FaultCode   string `xml:"faultcode"`
+	FaultString string `xml:"faultstring"`
+}
+
+// parseFault detects a SOAP Fault in the raw body content and converts it to a
+// FaultError. Returns nil when the content is not a fault: a failed unmarshal
+// here simply means the body holds an operation response instead of a Fault
+// element. Matching is by local element name, so it tolerates arbitrary
+// prefixes and both SOAP 1.1 and 1.2 fault layouts.
+func parseFault(bodyContent []byte, httpStatus int) *FaultError {
+	var f faultXML
+	if err := xml.Unmarshal(bodyContent, &f); err != nil {
+		return nil //nolint:nilerr // unmarshal failure = body is not a fault
+	}
+
+	fault := &FaultError{
+		Code:       f.Code.Value,
+		Subcode:    f.Code.Subcode.Value,
+		Reason:     f.Reason.Text,
+		Detail:     f.Detail.Inner,
+		HTTPStatus: httpStatus,
+	}
+
+	// Map SOAP 1.1 fields when the 1.2 shape is empty.
+	if fault.Code == "" {
+		fault.Code = f.FaultCode
+	}
+
+	if fault.Reason == "" {
+		fault.Reason = f.FaultString
+	}
+
+	return fault
+}
+
+// createSecurityHeader creates a WS-Security header with a UsernameToken for
+// the configured auth mode (digest or cleartext password).
 func (c *Client) createSecurityHeader() *Security {
+	if c.authMode == AuthModePasswordText {
+		return &Security{
+			MustUnderstand: "1",
+			UsernameToken: &UsernameToken{
+				Username: c.username,
+				Password: Password{
+					Type:     passwordTextType,
+					Password: c.password,
+				},
+			},
+		}
+	}
+
 	// Generate nonce
 	const nonceSize = 16
 	nonceBytes := make([]byte, nonceSize)
@@ -234,11 +353,11 @@ func (c *Client) createSecurityHeader() *Security {
 		UsernameToken: &UsernameToken{
 			Username: c.username,
 			Password: Password{
-				Type:     "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest",
+				Type:     passwordDigestType,
 				Password: digest,
 			},
 			Nonce: Nonce{
-				Type:  "http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary",
+				Type:  nonceEncodingType,
 				Nonce: nonce,
 			},
 			Created: created,

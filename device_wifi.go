@@ -23,10 +23,7 @@ func (s *DeviceService) GetDot11Capabilities(ctx context.Context) (*Dot11Capabil
 	}
 	var response GetDot11CapabilitiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot11Capabilities failed: %w", err)
 	}
 
@@ -52,10 +49,7 @@ func (s *DeviceService) GetDot11Status(ctx context.Context, interfaceToken strin
 	}
 	var response GetDot11StatusResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot11Status failed: %w", err)
 	}
 
@@ -81,10 +75,7 @@ func (s *DeviceService) GetDot1XConfiguration(ctx context.Context, configToken s
 	}
 	var response GetDot1XConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot1XConfiguration failed: %w", err)
 	}
 
@@ -108,10 +99,7 @@ func (s *DeviceService) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XCon
 	}
 	var response GetDot1XConfigurationsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot1XConfigurations failed: %w", err)
 	}
 
@@ -136,10 +124,7 @@ func (s *DeviceService) SetDot1XConfiguration(ctx context.Context, config *Dot1X
 	}
 	var response SetDot1XConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetDot1XConfiguration failed: %w", err)
 	}
 
@@ -164,10 +149,7 @@ func (s *DeviceService) CreateDot1XConfiguration(ctx context.Context, config *Do
 	}
 	var response CreateDot1XConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("CreateDot1XConfiguration failed: %w", err)
 	}
 
@@ -192,10 +174,7 @@ func (s *DeviceService) DeleteDot1XConfiguration(ctx context.Context, configToke
 	}
 	var response DeleteDot1XConfigurationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteDot1XConfiguration failed: %w", err)
 	}
 
@@ -225,10 +204,7 @@ func (s *DeviceService) ScanAvailableDot11Networks(
 	}
 	var response ScanAvailableDot11NetworksResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("ScanAvailableDot11Networks failed: %w", err)
 	}
 

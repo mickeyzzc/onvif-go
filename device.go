@@ -31,10 +31,7 @@ func (s *DeviceService) GetDeviceInformation(ctx context.Context) (*DeviceInform
 
 	var resp GetDeviceInformationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceInformation failed: %w", err)
 	}
 
@@ -127,10 +124,7 @@ func (s *DeviceService) GetCapabilities(ctx context.Context) (*Capabilities, err
 
 	var resp GetCapabilitiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCapabilities failed: %w", err)
 	}
 
@@ -248,10 +242,7 @@ func (s *DeviceService) SystemReboot(ctx context.Context) (string, error) {
 
 	var resp SystemRebootResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("SystemReboot failed: %w", err)
 	}
 
@@ -271,10 +262,7 @@ func (s *DeviceService) GetSystemDateAndTime(ctx context.Context) (interface{}, 
 
 	var resp interface{}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
 	}
 
@@ -302,10 +290,7 @@ func (s *DeviceService) GetHostname(ctx context.Context) (*HostnameInformation, 
 
 	var resp GetHostnameResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetHostname failed: %w", err)
 	}
 
@@ -328,10 +313,7 @@ func (s *DeviceService) SetHostname(ctx context.Context, name string) error {
 		Name:  name,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetHostname failed: %w", err)
 	}
 
@@ -367,10 +349,7 @@ func (s *DeviceService) GetDNS(ctx context.Context) (*DNSInformation, error) {
 
 	var resp GetDNSResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDNS failed: %w", err)
 	}
 
@@ -426,10 +405,7 @@ func (s *DeviceService) GetNTP(ctx context.Context) (*NTPInformation, error) {
 
 	var resp GetNTPResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNTP failed: %w", err)
 	}
 
@@ -492,10 +468,7 @@ func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInt
 
 	var resp GetNetworkInterfacesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkInterfaces failed: %w", err)
 	}
 
@@ -554,10 +527,7 @@ func (s *DeviceService) GetScopes(ctx context.Context) ([]*Scope, error) {
 
 	var resp GetScopesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetScopes failed: %w", err)
 	}
 
@@ -593,10 +563,7 @@ func (s *DeviceService) GetUsers(ctx context.Context) ([]*User, error) {
 
 	var resp GetUsersResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetUsers failed: %w", err)
 	}
 
@@ -639,10 +606,7 @@ func (s *DeviceService) CreateUsers(ctx context.Context, users []*User) error {
 		})
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("CreateUsers failed: %w", err)
 	}
 
@@ -662,10 +626,7 @@ func (s *DeviceService) DeleteUsers(ctx context.Context, usernames []string) err
 		Username: usernames,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteUsers failed: %w", err)
 	}
 
@@ -693,10 +654,7 @@ func (s *DeviceService) SetUser(ctx context.Context, user *User) error {
 	}
 	req.User.UserLevel = user.UserLevel
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetUser failed: %w", err)
 	}
 
@@ -731,10 +689,7 @@ func (s *DeviceService) GetServices(ctx context.Context, includeCapability bool)
 
 	var resp GetServicesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServices failed: %w", err)
 	}
 
@@ -794,10 +749,7 @@ func (s *DeviceService) GetServiceCapabilities(ctx context.Context) (*DeviceServ
 
 	var resp GetServiceCapabilitiesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServiceCapabilities failed: %w", err)
 	}
 
@@ -843,10 +795,7 @@ func (s *DeviceService) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, er
 
 	var resp GetDiscoveryModeResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetDiscoveryMode failed: %w", err)
 	}
 
@@ -866,10 +815,7 @@ func (s *DeviceService) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode
 		DiscoveryMode: mode,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDiscoveryMode failed: %w", err)
 	}
 
@@ -894,10 +840,7 @@ func (s *DeviceService) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMo
 
 	var resp GetRemoteDiscoveryModeResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetRemoteDiscoveryMode failed: %w", err)
 	}
 
@@ -917,10 +860,7 @@ func (s *DeviceService) SetRemoteDiscoveryMode(ctx context.Context, mode Discove
 		RemoteDiscoveryMode: mode,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteDiscoveryMode failed: %w", err)
 	}
 
@@ -945,10 +885,7 @@ func (s *DeviceService) GetEndpointReference(ctx context.Context) (string, error
 
 	var resp GetEndpointReferenceResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetEndpointReference failed: %w", err)
 	}
 
@@ -977,10 +914,7 @@ func (s *DeviceService) GetNetworkProtocols(ctx context.Context) ([]*NetworkProt
 
 	var resp GetNetworkProtocolsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkProtocols failed: %w", err)
 	}
 
@@ -1024,10 +958,7 @@ func (s *DeviceService) SetNetworkProtocols(ctx context.Context, protocols []*Ne
 		})
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkProtocols failed: %w", err)
 	}
 
@@ -1055,10 +986,7 @@ func (s *DeviceService) GetNetworkDefaultGateway(ctx context.Context) (*NetworkG
 
 	var resp GetNetworkDefaultGatewayResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkDefaultGateway failed: %w", err)
 	}
 
@@ -1083,10 +1011,7 @@ func (s *DeviceService) SetNetworkDefaultGateway(ctx context.Context, gateway *N
 		IPv6Address: gateway.IPv6Address,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkDefaultGateway failed: %w", err)
 	}
 

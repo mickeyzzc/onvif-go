@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-
-	"github.com/mickeyzzc/onvif-go/internal/soap"
 )
 
 // Common XML request/response types for device security operations.
@@ -55,13 +53,6 @@ func buildIPAddressFilterRequest(filter *IPAddressFilter) ipAddressFilterRequest
 	return req
 }
 
-// newSOAPClient creates a SOAP client with the current client credentials.
-func (s *SecurityService) newSOAPClient() *soap.Client {
-	username, password := s.client.GetCredentials()
-
-	return s.client.newSoapClient(username, password)
-}
-
 // GetRemoteUser returns the configured remote user.
 func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error) {
 	type getRemoteUserRequest struct {
@@ -83,7 +74,7 @@ func (s *SecurityService) GetRemoteUser(ctx context.Context) (*RemoteUser, error
 	}
 
 	var resp getRemoteUserResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRemoteUser failed: %w", err)
 	}
 
@@ -124,7 +115,7 @@ func (s *SecurityService) SetRemoteUser(ctx context.Context, remoteUser *RemoteU
 		}
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteUser failed: %w", err)
 	}
 
@@ -157,7 +148,7 @@ func (s *SecurityService) GetIPAddressFilter(ctx context.Context) (*IPAddressFil
 	}
 
 	var resp getIPAddressFilterResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetIPAddressFilter failed: %w", err)
 	}
 
@@ -196,7 +187,7 @@ func (s *SecurityService) SetIPAddressFilter(ctx context.Context, filter *IPAddr
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetIPAddressFilter failed: %w", err)
 	}
 
@@ -216,7 +207,7 @@ func (s *SecurityService) AddIPAddressFilter(ctx context.Context, filter *IPAddr
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddIPAddressFilter failed: %w", err)
 	}
 
@@ -236,7 +227,7 @@ func (s *SecurityService) RemoveIPAddressFilter(ctx context.Context, filter *IPA
 		IPAddressFilter: buildIPAddressFilterRequest(filter),
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveIPAddressFilter failed: %w", err)
 	}
 
@@ -264,7 +255,7 @@ func (s *SecurityService) GetZeroConfiguration(ctx context.Context) (*NetworkZer
 	}
 
 	var resp getZeroConfigurationResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetZeroConfiguration failed: %w", err)
 	}
 
@@ -290,7 +281,7 @@ func (s *SecurityService) SetZeroConfiguration(ctx context.Context, interfaceTok
 		Enabled:        enabled,
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetZeroConfiguration failed: %w", err)
 	}
 
@@ -318,7 +309,7 @@ func (s *SecurityService) GetDynamicDNS(ctx context.Context) (*DynamicDNSInforma
 	}
 
 	var resp getDynamicDNSResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDynamicDNS failed: %w", err)
 	}
 
@@ -344,7 +335,7 @@ func (s *SecurityService) SetDynamicDNS(ctx context.Context, dnsType DynamicDNST
 		Name:  name,
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetDynamicDNS failed: %w", err)
 	}
 
@@ -373,7 +364,7 @@ func (s *SecurityService) GetPasswordComplexityConfiguration(ctx context.Context
 	}
 
 	var resp getPasswordComplexityConfigurationResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPasswordComplexityConfiguration failed: %w", err)
 	}
 
@@ -413,7 +404,7 @@ func (s *SecurityService) SetPasswordComplexityConfiguration(
 		PolicyConfigurationLocked: config.PolicyConfigurationLocked,
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetPasswordComplexityConfiguration failed: %w", err)
 	}
 
@@ -438,7 +429,7 @@ func (s *SecurityService) GetPasswordHistoryConfiguration(ctx context.Context) (
 	}
 
 	var resp getPasswordHistoryConfigurationResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetPasswordHistoryConfiguration failed: %w", err)
 	}
 
@@ -463,7 +454,7 @@ func (s *SecurityService) SetPasswordHistoryConfiguration(ctx context.Context, c
 		Length:  config.Length,
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetPasswordHistoryConfiguration failed: %w", err)
 	}
 
@@ -489,7 +480,7 @@ func (s *SecurityService) GetAuthFailureWarningConfiguration(ctx context.Context
 	}
 
 	var resp getAuthFailureWarningConfigurationResponse
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetAuthFailureWarningConfiguration failed: %w", err)
 	}
 
@@ -520,7 +511,7 @@ func (s *SecurityService) SetAuthFailureWarningConfiguration(
 		MaxAuthFailures: config.MaxAuthFailures,
 	}
 
-	if err := s.newSOAPClient().Call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetAuthFailureWarningConfiguration failed: %w", err)
 	}
 

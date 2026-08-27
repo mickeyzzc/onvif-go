@@ -78,10 +78,7 @@ func (s *MediaService) GetStreamURI(ctx context.Context, profileToken string) (*
 
 	var resp GetStreamURIResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStreamURI failed: %w", err)
 	}
 
@@ -102,10 +99,7 @@ func (s *MediaService) GetSnapshotURI(ctx context.Context, profileToken string) 
 
 	var resp GetSnapshotURIResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSnapshotURI failed: %w", err)
 	}
 
@@ -124,10 +118,7 @@ func (s *MediaService) SetSynchronizationPoint(ctx context.Context, profileToken
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetSynchronizationPoint failed: %w", err)
 	}
 
@@ -142,10 +133,7 @@ func (s *MediaService) StartMulticastStreaming(ctx context.Context, profileToken
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StartMulticastStreaming failed: %w", err)
 	}
 
@@ -160,10 +148,7 @@ func (s *MediaService) StopMulticastStreaming(ctx context.Context, profileToken 
 		ProfileToken: profileToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("StopMulticastStreaming failed: %w", err)
 	}
 

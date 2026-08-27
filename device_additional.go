@@ -23,10 +23,7 @@ func (s *DeviceService) GetGeoLocation(ctx context.Context) ([]LocationEntity, e
 	}
 	var response GetGeoLocationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetGeoLocation failed: %w", err)
 	}
 
@@ -51,10 +48,7 @@ func (s *DeviceService) SetGeoLocation(ctx context.Context, location []LocationE
 	}
 	var response SetGeoLocationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetGeoLocation failed: %w", err)
 	}
 
@@ -79,10 +73,7 @@ func (s *DeviceService) DeleteGeoLocation(ctx context.Context, location []Locati
 	}
 	var response DeleteGeoLocationResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("DeleteGeoLocation failed: %w", err)
 	}
 
@@ -106,10 +97,7 @@ func (s *DeviceService) GetDPAddresses(ctx context.Context) ([]NetworkHost, erro
 	}
 	var response GetDPAddressesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDPAddresses failed: %w", err)
 	}
 
@@ -134,10 +122,7 @@ func (s *DeviceService) SetDPAddresses(ctx context.Context, dpAddress []NetworkH
 	}
 	var response SetDPAddressesResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetDPAddresses failed: %w", err)
 	}
 
@@ -161,10 +146,7 @@ func (s *DeviceService) GetAccessPolicy(ctx context.Context) (*AccessPolicy, err
 	}
 	var response GetAccessPolicyResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetAccessPolicy failed: %w", err)
 	}
 
@@ -189,10 +171,7 @@ func (s *DeviceService) SetAccessPolicy(ctx context.Context, policy *AccessPolic
 	}
 	var response SetAccessPolicyResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return fmt.Errorf("SetAccessPolicy failed: %w", err)
 	}
 
@@ -216,10 +195,7 @@ func (s *DeviceService) GetWsdlURL(ctx context.Context) (string, error) {
 	}
 	var response GetWsdlURLResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
 		return "", fmt.Errorf("GetWsdlURL failed: %w", err)
 	}
 

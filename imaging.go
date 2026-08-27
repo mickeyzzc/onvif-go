@@ -74,10 +74,7 @@ func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToke
 
 	var resp GetImagingSettingsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetImagingSettings failed: %w", err)
 	}
 
@@ -283,10 +280,7 @@ func (s *ImagingService) SetImagingSettings(
 		}
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetImagingSettings failed: %w", err)
 	}
 
@@ -341,10 +335,7 @@ func (s *ImagingService) Move(ctx context.Context, videoSourceToken string, focu
 		// Implementation would add specific focus move types here
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Move failed: %w", err)
 	}
 
@@ -420,10 +411,7 @@ func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string
 
 	var resp GetOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOptions failed: %w", err)
 	}
 
@@ -505,10 +493,7 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 
 	var resp GetMoveOptionsResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMoveOptions failed: %w", err)
 	}
 
@@ -570,10 +555,7 @@ func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string)
 		VideoSourceToken: videoSourceToken,
 	}
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
 	}
 
@@ -611,10 +593,7 @@ func (s *ImagingService) GetImagingStatus(ctx context.Context, videoSourceToken 
 
 	var resp GetStatusResponse
 
-	username, password := s.client.GetCredentials()
-	soapClient := s.client.newSoapClient(username, password)
-
-	if err := soapClient.Call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)
 	}
 

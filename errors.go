@@ -3,9 +3,19 @@ package onvif
 import (
 	"errors"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/internal/soap"
 )
 
 var (
+	// ErrUnauthorized is the sentinel for every authentication-shaped failure:
+	// HTTP 401/403, a SOAP Fault with a NotAuthorized code, or a 200-status
+	// response carrying such a fault. It also covers exhaustion of the auth
+	// fallback ladder (WithAuthFallback). Test with
+	// errors.Is(err, ErrUnauthorized) to reliably distinguish credential
+	// problems from other failures.
+	ErrUnauthorized = soap.ErrUnauthorized
+
 	// ErrInvalidEndpoint is returned when the endpoint is invalid.
 	ErrInvalidEndpoint = errors.New("invalid endpoint")
 
