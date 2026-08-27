@@ -2,12 +2,13 @@ package discovery
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/wsdiscovery"
 )
 
 // ErrListenerStopped is returned by Start after the listener was stopped —
@@ -176,45 +177,13 @@ func (l *Listener) Done() <-chan struct{} {
 	return l.done
 }
 
-// discoveryEnvelope is the shape of both Hello and ProbeMatches messages.
-type discoveryEnvelope struct {
-	Body struct {
-		Hello        *discoveryMatch `xml:"Hello"`
-		ProbeMatches struct {
-			ProbeMatch []discoveryMatch `xml:"ProbeMatch"`
-		} `xml:"ProbeMatches"`
-	} `xml:"Body"`
-}
-
-// discoveryMatch carries the announcement fields shared by Hello and
-// ProbeMatch; there is deliberately no XMLName constraint — the envelope
-// parser dispatches on the containing element.
-type discoveryMatch struct {
-	EndpointRef     string `xml:"EndpointReference>Address"`
-	Types           string `xml:"Types"`
-	Scopes          string `xml:"Scopes"`
-	XAddrs          string `xml:"XAddrs"`
-	MetadataVersion int    `xml:"MetadataVersion"`
-}
-
 // parseDiscoveryDatagram extracts a device from a Hello or ProbeMatches
-// datagram. Returns nil for Bye messages, responses with no match, and
-// anything unparseable — a listener must survive garbage on the wire.
+// datagram through the shared wsdiscovery codec. Returns nil for Bye
+// messages, responses with no match, and anything unparseable — a
+// listener must survive garbage on the wire.
 func parseDiscoveryDatagram(data []byte) *Device {
-	var envelope discoveryEnvelope
-	if err := xml.Unmarshal(data, &envelope); err != nil {
-		return nil
-	}
-
-	var match *discoveryMatch
-	switch {
-	case envelope.Body.Hello != nil && envelope.Body.Hello.EndpointRef != "":
-		match = envelope.Body.Hello
-	case len(envelope.Body.ProbeMatches.ProbeMatch) > 0:
-		first := envelope.Body.ProbeMatches.ProbeMatch[0]
-		match = &first
-	default:
-		// Bye, Probe acks, or empty body: not a device announcement.
+	match := wsdiscovery.ParseAnnouncement(data)
+	if match == nil {
 		return nil
 	}
 

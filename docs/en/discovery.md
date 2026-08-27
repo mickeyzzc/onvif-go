@@ -102,3 +102,40 @@ discovery.EnrichDevices(ctx, usable)            // parallel identity fetch
 form) — **not** the device serial number. Correlating a camera across
 protocols (ONVIF vs GB28181) must use `Device.Info.SerialNumber`; comparing
 `EndpointRef` against a serial silently never matches.
+
+## Device side: the WS-Discovery responder
+
+The same codec powers the device side (`server/discovery`): a resident
+multicast `:3702` listener that answers Probe messages with
+ProbeMatches (unicast to the probing socket), announces Hello on start
+and Bye on stop, and answers directed Probe-over-HTTP POSTs through an
+`http.Handler` — the transport `ProbeEndpoint` uses across subnets.
+
+```go
+responder := serverdiscovery.NewResponder(serverdiscovery.Config{
+    Types:   []string{"tds:Device", "dp0:NetworkVideoTransmitter"},
+    Scopes:  []string{"onvif://www.onvif.org/name/MiBeeEye"},
+    Port:    8080, // derived XAddrs: http://<requester IP>:8080/onvif/device_service
+})
+err := responder.Start(ctx)
+defer responder.Stop()
+mux.Handle("/onvif/device_service", soapHandler)   // SOAP
+mux.Handle("/onvif/discovery", responder)          // directed HTTP probes
+```
+
+With `XAddrs` empty the responder echoes the requesting peer's IP — the
+same per-peer reachability rule the SOAP layer applies to XAddr
+responses. Answer content (Types/Scopes/XAddrs/MetadataVersion) is fully
+configurable; probes whose Types filter does not select the configured
+types are ignored, per WS-Discovery semantics.
+
+Coexistence: the responder, `Discover()`, and the passive `Listener`
+all bind the multicast group the same way; on Linux and macOS the
+kernel delivers a copy of each multicast datagram to every bound
+socket, so device side and client side coexist in one process without
+stealing each other's traffic. Answers are always unicast.
+
+The wire codec itself lives in `wsdiscovery/` (shared by both sides):
+`BuildProbe`/`ParseProbe`, `BuildProbeMatches`/`ParseProbeMatches`,
+`BuildHello`/`BuildBye`, and `ParseAnnouncement` — one definition, no
+private parsing drift between client and device.

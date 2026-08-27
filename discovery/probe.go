@@ -3,6 +3,7 @@ package discovery
 import (
 	"context"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -11,6 +12,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/wsdiscovery"
 )
 
 // DefaultProbePorts are the ports commonly serving ONVIF device_service.
@@ -66,38 +69,21 @@ const maxProbeResponseBytes = 1 << 20 // 1 MiB
 // over HTTP. Some devices answer it even when they ignore UDP probes.
 func probeViaWSDiscovery(ctx context.Context, client *http.Client, url string) (*ProbeMatch, error) {
 	body, status, err := postSOAP(ctx, client, url,
-		fmt.Sprintf(probeTemplate, generateUUID()))
+		string(wsdiscovery.BuildProbe(generateUUID())))
 	if err != nil || status != http.StatusOK {
 		return nil, fmt.Errorf("probe via HTTP failed (status %d): %w", status, err)
 	}
 
-	match, err := parseProbeBody(body)
+	matches, err := wsdiscovery.ParseProbeMatches(body)
 	if err != nil {
+		if errors.Is(err, wsdiscovery.ErrNoMatches) {
+			return nil, fmt.Errorf("%w (HTTP form)", ErrNoProbeMatches)
+		}
+
 		return nil, err
 	}
 
-	return match, nil
-}
-
-// parseProbeBody extracts the first ProbeMatch from a ProbeMatches envelope.
-func parseProbeBody(body []byte) (*ProbeMatch, error) {
-	var envelope struct {
-		Body struct {
-			ProbeMatches ProbeMatches `xml:"ProbeMatches"`
-		} `xml:"Body"`
-	}
-
-	if err := xml.Unmarshal(body, &envelope); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal probe response: %w", err)
-	}
-
-	if len(envelope.Body.ProbeMatches.ProbeMatch) == 0 {
-		return nil, fmt.Errorf("%w (HTTP form)", ErrNoProbeMatches)
-	}
-
-	match := envelope.Body.ProbeMatches.ProbeMatch[0]
-
-	return &match, nil
+	return &matches[0], nil
 }
 
 // getDeviceInformationRequest is the most widely accepted unauthenticated

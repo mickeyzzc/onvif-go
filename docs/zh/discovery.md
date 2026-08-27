@@ -88,3 +88,35 @@ discovery.EnrichDevices(ctx, usable)            // 并行补全身份信息
 `Device.EndpointRef` 是 WS-Discovery 端点地址（`urn:uuid:...` 形态）——
 **不是**设备序列号。跨协议关联同一台相机（ONVIF vs GB28181）必须用
 `Device.Info.SerialNumber`；拿 `EndpointRef` 比对序列号会静默地永远对不上。
+
+## 设备侧：WS-Discovery 应答器
+
+同一套编解码驱动设备侧（`server/discovery`）：常驻组播 `:3702` 监听，
+以 ProbeMatches 应答 Probe（单播回探测方套接字），启动时发 Hello、
+停止时发 Bye，并通过 `http.Handler` 应答定向的 Probe-over-HTTP POST
+——即 `ProbeEndpoint` 跨子网探测所用的传输。
+
+```go
+responder := serverdiscovery.NewResponder(serverdiscovery.Config{
+    Types:   []string{"tds:Device", "dp0:NetworkVideoTransmitter"},
+    Scopes:  []string{"onvif://www.onvif.org/name/MiBeeEye"},
+    Port:    8080, // 派生 XAddrs: http://<请求方 IP>:8080/onvif/device_service
+})
+err := responder.Start(ctx)
+defer responder.Stop()
+mux.Handle("/onvif/device_service", soapHandler)   // SOAP
+mux.Handle("/onvif/discovery", responder)          // 定向 HTTP 探测
+```
+
+`XAddrs` 为空时应答器回显请求方的 IP——与 SOAP 层 XAddr 响应相同的
+"对等可达"规则。应答内容（Types/Scopes/XAddrs/MetadataVersion）完全
+可配；Types 过滤不匹配的探测按 WS-Discovery 语义忽略。
+
+共存：应答器、`Discover()`、被动 `Listener` 以相同方式绑定组播组；
+Linux/macOS 上内核会把每个组播数据报复制给所有绑定套接字，设备侧与
+客户端在同一进程共存互不抢流量。应答永远是单播。
+
+线上编解码本体在 `wsdiscovery/`（两侧共享）：`BuildProbe`/
+`ParseProbe`、`BuildProbeMatches`/`ParseProbeMatches`、`BuildHello`/
+`BuildBye`、`ParseAnnouncement`——一套定义，客户端与设备侧不再有
+私有解析漂移。

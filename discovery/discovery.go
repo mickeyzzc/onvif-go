@@ -3,12 +3,13 @@ package discovery
 
 import (
 	"context"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/wsdiscovery"
 )
 
 const (
@@ -17,30 +18,6 @@ const (
 	// UUID generation constants.
 	uuidMod1000  = 1000
 	uuidMod10000 = 10000
-
-	// WS-Discovery probe message.
-	probeTemplate = `<?xml version="1.0" encoding="UTF-8"?>
-<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" ` +
-		`xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing">
-	<s:Header>
-		<a:Action s:mustUnderstand="1">` +
-		`http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe</a:Action>
-		<a:MessageID>uuid:%s</a:MessageID>
-		<a:ReplyTo>
-			<a:Address>` +
-		`http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:Address>
-		</a:ReplyTo>
-		<a:To s:mustUnderstand="1">` +
-		`urn:schemas-xmlsoap-org:ws:2005:04:discovery</a:To>
-	</s:Header>
-	<s:Body>
-		<Probe xmlns="http://schemas.xmlsoap.org/ws/2005/04/discovery">
-			<d:Types xmlns:d="http://schemas.xmlsoap.org/ws/2005/04/discovery" ` +
-		`xmlns:dp0="http://www.onvif.org/ver10/network/wsdl">` +
-		`dp0:NetworkVideoTransmitter</d:Types>
-		</Probe>
-	</s:Body>
-</s:Envelope>`
 )
 
 // Device represents a discovered ONVIF device.
@@ -78,21 +55,10 @@ type Device struct {
 	Info *DeviceInfo
 }
 
-// ProbeMatch represents a WS-Discovery probe match.
-type ProbeMatch struct {
-	XMLName         xml.Name `xml:"ProbeMatch"`
-	EndpointRef     string   `xml:"EndpointReference>Address"`
-	Types           string   `xml:"Types"`
-	Scopes          string   `xml:"Scopes"`
-	XAddrs          string   `xml:"XAddrs"`
-	MetadataVersion int      `xml:"MetadataVersion"`
-}
-
-// ProbeMatches represents WS-Discovery probe matches.
-type ProbeMatches struct {
-	XMLName    xml.Name     `xml:"ProbeMatches"`
-	ProbeMatch []ProbeMatch `xml:"ProbeMatch"`
-}
+// ProbeMatch represents a WS-Discovery probe match (the shared
+// wsdiscovery codec type; the client and the device-side responder
+// parse each other's messages with the same definitions).
+type ProbeMatch = wsdiscovery.Match
 
 // DiscoverOptions contains options for device discovery.
 type DiscoverOptions struct {
@@ -149,9 +115,8 @@ func DiscoverWithOptions(ctx context.Context, timeout time.Duration, opts *Disco
 	// Generate message ID
 	messageID := generateUUID()
 
-	// Send probe message
-	probeMsg := fmt.Sprintf(probeTemplate, messageID)
-	if _, err := conn.WriteToUDP([]byte(probeMsg), addr); err != nil {
+	// Send probe message (shared codec with the device-side responder)
+	if _, err := conn.WriteToUDP(wsdiscovery.BuildProbe(messageID), addr); err != nil {
 		return nil, fmt.Errorf("failed to send probe message: %w", err)
 	}
 
@@ -192,24 +157,20 @@ func DiscoverWithOptions(ctx context.Context, timeout time.Duration, opts *Disco
 	}
 }
 
-// parseProbeResponse parses a WS-Discovery probe response.
+// parseProbeResponse parses a WS-Discovery probe response through the
+// shared wsdiscovery codec.
 func parseProbeResponse(data []byte) (*Device, error) {
-	var envelope struct {
-		Body struct {
-			ProbeMatches ProbeMatches `xml:"ProbeMatches"`
-		} `xml:"Body"`
-	}
+	matches, err := wsdiscovery.ParseProbeMatches(data)
+	if err != nil {
+		if errors.Is(err, wsdiscovery.ErrNoMatches) {
+			return nil, fmt.Errorf("%w", ErrNoProbeMatches)
+		}
 
-	if err := xml.Unmarshal(data, &envelope); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal probe response: %w", err)
 	}
 
-	if len(envelope.Body.ProbeMatches.ProbeMatch) == 0 {
-		return nil, fmt.Errorf("%w", ErrNoProbeMatches)
-	}
-
 	// Take the first probe match
-	match := envelope.Body.ProbeMatches.ProbeMatch[0]
+	match := matches[0]
 
 	device := &Device{
 		EndpointRef:     match.EndpointRef,
