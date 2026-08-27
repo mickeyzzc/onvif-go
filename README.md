@@ -1,8 +1,8 @@
 # onvif-go
 
 [![CI](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml/badge.svg)](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/mickeyzzc/onvif-go.svg)](https://pkg.go.dev/github.com/mickeyzzc/onvif-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mickeyzzc/onvif-go)](https://goreportcard.com/report/github.com/mickeyzzc/onvif-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/mickeyzzc/onvif-go/v2.svg)](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mickeyzzc/onvif-go/v2)](https://goreportcard.com/report/github.com/mickeyzzc/onvif-go/v2)
 [![License](https://img.shields.io/github/license/mickeyzzc/onvif-go)](LICENSE)
 [![Go Version](https://img.shields.io/badge/go-1.26-00ADD8.svg)](https://go.dev/)
 
@@ -69,7 +69,7 @@ your recorder without hardware.
 ## Install
 
 ```bash
-go get github.com/mickeyzzc/onvif-go
+go get github.com/mickeyzzc/onvif-go/v2
 ```
 
 Requires Go **1.26+**. The library module has zero third-party dependencies.
@@ -84,7 +84,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/mickeyzzc/onvif-go"
+    "github.com/mickeyzzc/onvif-go/v2"
 )
 
 func main() {
@@ -167,7 +167,9 @@ diag, _ := client.DiagnoseAuth(ctx)
 
 | Path | Purpose |
 |---|---|
-| `*.go` (root) | Client library — per-service facade files (`media*.go`, `device*.go`, `ptz.go`, …) |
+| `client.go` etc. (root) | `Client` (auth ladder, clock skew, download) + v1 compatibility aliases |
+| `device/` `security/` `deviceio/` `media/` `ptz/` `imaging/` `events/` | domain service packages (v2 split, issue #20) |
+| `types/` | shared data-model leaf |
 | `discovery/` | WS-Discovery: active probe, passive listener, directed HTTP probing, post-processing |
 | `internal/soap/` | SOAP transport + WS-Security (digest/text modes, fault detection) |
 | `server/` | Virtual ONVIF camera server (simulator for testing) |
@@ -191,7 +193,7 @@ Topic guides, English and Chinese:
 | Testing | [testing.md](docs/en/testing.md) | [测试](docs/zh/testing.md) |
 | CLI tools | [cli.md](docs/en/cli.md) | [CLI 工具](docs/zh/cli.md) |
 
-API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go).
+API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2).
 
 ## Development
 

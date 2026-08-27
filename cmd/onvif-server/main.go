@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/server"
+	"github.com/mickeyzzc/onvif-go/v2/server"
 )
 
 var version = "1.0.0"

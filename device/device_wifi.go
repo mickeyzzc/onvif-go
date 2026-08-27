@@ -1,13 +1,15 @@
-package onvif
+package device
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 )
 
 // GetDot11Capabilities retrieves 802.11 capabilities. ONVIF Specification: GetDot11Capabilities operation.
-func (s *DeviceService) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, error) {
+func (s *Service) GetDot11Capabilities(ctx context.Context) (*Dot11Capabilities, error) {
 	type GetDot11CapabilitiesBody struct {
 		XMLName xml.Name `xml:"tds:GetDot11Capabilities"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -19,11 +21,11 @@ func (s *DeviceService) GetDot11Capabilities(ctx context.Context) (*Dot11Capabil
 	}
 
 	request := GetDot11CapabilitiesBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 	var response GetDot11CapabilitiesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot11Capabilities failed: %w", err)
 	}
 
@@ -31,7 +33,7 @@ func (s *DeviceService) GetDot11Capabilities(ctx context.Context) (*Dot11Capabil
 }
 
 // GetDot11Status retrieves 802.11 status. ONVIF Specification: GetDot11Status operation.
-func (s *DeviceService) GetDot11Status(ctx context.Context, interfaceToken string) (*Dot11Status, error) {
+func (s *Service) GetDot11Status(ctx context.Context, interfaceToken string) (*Dot11Status, error) {
 	type GetDot11StatusBody struct {
 		XMLName        xml.Name `xml:"tds:GetDot11Status"`
 		Xmlns          string   `xml:"xmlns:tds,attr"`
@@ -44,12 +46,12 @@ func (s *DeviceService) GetDot11Status(ctx context.Context, interfaceToken strin
 	}
 
 	request := GetDot11StatusBody{
-		Xmlns:          deviceNamespace,
+		Xmlns:          Namespace,
 		InterfaceToken: interfaceToken,
 	}
 	var response GetDot11StatusResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot11Status failed: %w", err)
 	}
 
@@ -57,7 +59,7 @@ func (s *DeviceService) GetDot11Status(ctx context.Context, interfaceToken strin
 }
 
 // GetDot1XConfiguration retrieves an 802.1X configuration. ONVIF Specification: GetDot1XConfiguration operation.
-func (s *DeviceService) GetDot1XConfiguration(ctx context.Context, configToken string) (*Dot1XConfiguration, error) {
+func (s *Service) GetDot1XConfiguration(ctx context.Context, configToken string) (*Dot1XConfiguration, error) {
 	type GetDot1XConfigurationBody struct {
 		XMLName                 xml.Name `xml:"tds:GetDot1XConfiguration"`
 		Xmlns                   string   `xml:"xmlns:tds,attr"`
@@ -70,12 +72,12 @@ func (s *DeviceService) GetDot1XConfiguration(ctx context.Context, configToken s
 	}
 
 	request := GetDot1XConfigurationBody{
-		Xmlns:                   deviceNamespace,
+		Xmlns:                   Namespace,
 		Dot1XConfigurationToken: configToken,
 	}
 	var response GetDot1XConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot1XConfiguration failed: %w", err)
 	}
 
@@ -83,7 +85,7 @@ func (s *DeviceService) GetDot1XConfiguration(ctx context.Context, configToken s
 }
 
 // GetDot1XConfigurations retrieves all 802.1X configurations. ONVIF Specification: GetDot1XConfigurations operation.
-func (s *DeviceService) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfiguration, error) {
+func (s *Service) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XConfiguration, error) {
 	type GetDot1XConfigurationsBody struct {
 		XMLName xml.Name `xml:"tds:GetDot1XConfigurations"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -95,11 +97,11 @@ func (s *DeviceService) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XCon
 	}
 
 	request := GetDot1XConfigurationsBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 	var response GetDot1XConfigurationsResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDot1XConfigurations failed: %w", err)
 	}
 
@@ -107,7 +109,7 @@ func (s *DeviceService) GetDot1XConfigurations(ctx context.Context) ([]*Dot1XCon
 }
 
 // SetDot1XConfiguration sets an 802.1X configuration. ONVIF Specification: SetDot1XConfiguration operation.
-func (s *DeviceService) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
+func (s *Service) SetDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
 	type SetDot1XConfigurationBody struct {
 		XMLName            xml.Name            `xml:"tds:SetDot1XConfiguration"`
 		Xmlns              string              `xml:"xmlns:tds,attr"`
@@ -119,12 +121,12 @@ func (s *DeviceService) SetDot1XConfiguration(ctx context.Context, config *Dot1X
 	}
 
 	request := SetDot1XConfigurationBody{
-		Xmlns:              deviceNamespace,
+		Xmlns:              Namespace,
 		Dot1XConfiguration: config,
 	}
 	var response SetDot1XConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetDot1XConfiguration failed: %w", err)
 	}
 
@@ -132,7 +134,7 @@ func (s *DeviceService) SetDot1XConfiguration(ctx context.Context, config *Dot1X
 }
 
 // CreateDot1XConfiguration creates an 802.1X configuration. ONVIF Specification: CreateDot1XConfiguration operation.
-func (s *DeviceService) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
+func (s *Service) CreateDot1XConfiguration(ctx context.Context, config *Dot1XConfiguration) error {
 	type CreateDot1XConfigurationBody struct {
 		XMLName            xml.Name            `xml:"tds:CreateDot1XConfiguration"`
 		Xmlns              string              `xml:"xmlns:tds,attr"`
@@ -144,12 +146,12 @@ func (s *DeviceService) CreateDot1XConfiguration(ctx context.Context, config *Do
 	}
 
 	request := CreateDot1XConfigurationBody{
-		Xmlns:              deviceNamespace,
+		Xmlns:              Namespace,
 		Dot1XConfiguration: config,
 	}
 	var response CreateDot1XConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("CreateDot1XConfiguration failed: %w", err)
 	}
 
@@ -157,7 +159,7 @@ func (s *DeviceService) CreateDot1XConfiguration(ctx context.Context, config *Do
 }
 
 // DeleteDot1XConfiguration deletes an 802.1X configuration. ONVIF Specification: DeleteDot1XConfiguration operation.
-func (s *DeviceService) DeleteDot1XConfiguration(ctx context.Context, configToken string) error {
+func (s *Service) DeleteDot1XConfiguration(ctx context.Context, configToken string) error {
 	type DeleteDot1XConfigurationBody struct {
 		XMLName                 xml.Name `xml:"tds:DeleteDot1XConfiguration"`
 		Xmlns                   string   `xml:"xmlns:tds,attr"`
@@ -169,12 +171,12 @@ func (s *DeviceService) DeleteDot1XConfiguration(ctx context.Context, configToke
 	}
 
 	request := DeleteDot1XConfigurationBody{
-		Xmlns:                   deviceNamespace,
+		Xmlns:                   Namespace,
 		Dot1XConfigurationToken: configToken,
 	}
 	var response DeleteDot1XConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("DeleteDot1XConfiguration failed: %w", err)
 	}
 
@@ -183,7 +185,7 @@ func (s *DeviceService) DeleteDot1XConfiguration(ctx context.Context, configToke
 
 // ScanAvailableDot11Networks scans for available 802.11 networks.
 // ONVIF Specification: ScanAvailableDot11Networks operation.
-func (s *DeviceService) ScanAvailableDot11Networks(
+func (s *Service) ScanAvailableDot11Networks(
 	ctx context.Context,
 	interfaceToken string,
 ) ([]*Dot11AvailableNetworks, error) {
@@ -199,12 +201,12 @@ func (s *DeviceService) ScanAvailableDot11Networks(
 	}
 
 	request := ScanAvailableDot11NetworksBody{
-		Xmlns:          deviceNamespace,
+		Xmlns:          Namespace,
 		InterfaceToken: interfaceToken,
 	}
 	var response ScanAvailableDot11NetworksResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("ScanAvailableDot11Networks failed: %w", err)
 	}
 

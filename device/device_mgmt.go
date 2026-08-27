@@ -1,16 +1,20 @@
 // Device management: system date/time, DNS/NTP, network interfaces and
 // gateway, storage.
 
-package onvif
+package device
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/ptz"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // SetDNS sets the DNS settings on a device.
-func (s *DeviceService) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []string, dnsManual []IPAddress) error {
+func (s *Service) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []string, dnsManual []types.IPAddress) error {
 	type SetDNS struct {
 		XMLName      xml.Name `xml:"tds:SetDNS"`
 		Xmlns        string   `xml:"xmlns:tds,attr"`
@@ -24,7 +28,7 @@ func (s *DeviceService) SetDNS(ctx context.Context, fromDHCP bool, searchDomain 
 	}
 
 	req := SetDNS{
-		Xmlns:        deviceNamespace,
+		Xmlns:        Namespace,
 		FromDHCP:     fromDHCP,
 		SearchDomain: searchDomain,
 	}
@@ -41,7 +45,7 @@ func (s *DeviceService) SetDNS(ctx context.Context, fromDHCP bool, searchDomain 
 		})
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetDNS failed: %w", err)
 	}
 
@@ -49,7 +53,7 @@ func (s *DeviceService) SetDNS(ctx context.Context, fromDHCP bool, searchDomain 
 }
 
 // SetNTP sets the NTP settings on a device.
-func (s *DeviceService) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkHost) error {
+func (s *Service) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []NetworkHost) error {
 	type SetNTP struct {
 		XMLName   xml.Name `xml:"tds:SetNTP"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -63,7 +67,7 @@ func (s *DeviceService) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []N
 	}
 
 	req := SetNTP{
-		Xmlns:    deviceNamespace,
+		Xmlns:    Namespace,
 		FromDHCP: fromDHCP,
 	}
 
@@ -81,7 +85,7 @@ func (s *DeviceService) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []N
 		})
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetNTP failed: %w", err)
 	}
 
@@ -89,7 +93,7 @@ func (s *DeviceService) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []N
 }
 
 // SetHostnameFromDHCP controls whether the hostname is set manually or retrieved via DHCP.
-func (s *DeviceService) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, error) {
+func (s *Service) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) (bool, error) {
 	type SetHostnameFromDHCP struct {
 		XMLName  xml.Name `xml:"tds:SetHostnameFromDHCP"`
 		Xmlns    string   `xml:"xmlns:tds,attr"`
@@ -102,13 +106,13 @@ func (s *DeviceService) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) 
 	}
 
 	req := SetHostnameFromDHCP{
-		Xmlns:    deviceNamespace,
+		Xmlns:    Namespace,
 		FromDHCP: fromDHCP,
 	}
 
 	var resp SetHostnameFromDHCPResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return false, fmt.Errorf("SetHostnameFromDHCP failed: %w", err)
 	}
 
@@ -116,7 +120,7 @@ func (s *DeviceService) SetHostnameFromDHCP(ctx context.Context, fromDHCP bool) 
 }
 
 // FixedGetSystemDateAndTime retrieves the device's system date and time with proper typing.
-func (s *DeviceService) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime, error) {
+func (s *Service) FixedGetSystemDateAndTime(ctx context.Context) (*SystemDateTime, error) {
 	type GetSystemDateAndTime struct {
 		XMLName xml.Name `xml:"tds:GetSystemDateAndTime"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -158,12 +162,12 @@ func (s *DeviceService) FixedGetSystemDateAndTime(ctx context.Context) (*SystemD
 	}
 
 	req := GetSystemDateAndTime{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetSystemDateAndTimeResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
 	}
 
@@ -201,7 +205,7 @@ func (s *DeviceService) FixedGetSystemDateAndTime(ctx context.Context) (*SystemD
 }
 
 // SetSystemDateAndTime sets the device system date and time.
-func (s *DeviceService) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateTime) error {
+func (s *Service) SetSystemDateAndTime(ctx context.Context, dateTime *SystemDateTime) error {
 	type SetSystemDateAndTime struct {
 		XMLName         xml.Name `xml:"tds:SetSystemDateAndTime"`
 		Xmlns           string   `xml:"xmlns:tds,attr"`
@@ -225,7 +229,7 @@ func (s *DeviceService) SetSystemDateAndTime(ctx context.Context, dateTime *Syst
 	}
 
 	req := SetSystemDateAndTime{
-		Xmlns:           deviceNamespace,
+		Xmlns:           Namespace,
 		DateTimeType:    string(dateTime.DateTimeType),
 		DaylightSavings: dateTime.DaylightSavings,
 	}
@@ -259,7 +263,7 @@ func (s *DeviceService) SetSystemDateAndTime(ctx context.Context, dateTime *Syst
 		req.UTCDateTime.Date.Day = dateTime.UTCDateTime.Date.Day
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetSystemDateAndTime failed: %w", err)
 	}
 
@@ -267,7 +271,7 @@ func (s *DeviceService) SetSystemDateAndTime(ctx context.Context, dateTime *Syst
 }
 
 // AddScopes adds new configurable scope parameters to a device.
-func (s *DeviceService) AddScopes(ctx context.Context, scopeItems []string) error {
+func (s *Service) AddScopes(ctx context.Context, scopeItems []string) error {
 	type AddScopes struct {
 		XMLName   xml.Name `xml:"tds:AddScopes"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -275,11 +279,11 @@ func (s *DeviceService) AddScopes(ctx context.Context, scopeItems []string) erro
 	}
 
 	req := AddScopes{
-		Xmlns:     deviceNamespace,
+		Xmlns:     Namespace,
 		ScopeItem: scopeItems,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("AddScopes failed: %w", err)
 	}
 
@@ -287,7 +291,7 @@ func (s *DeviceService) AddScopes(ctx context.Context, scopeItems []string) erro
 }
 
 // RemoveScopes deletes scope-configurable scope parameters from a device.
-func (s *DeviceService) RemoveScopes(ctx context.Context, scopeItems []string) ([]string, error) {
+func (s *Service) RemoveScopes(ctx context.Context, scopeItems []string) ([]string, error) {
 	type RemoveScopes struct {
 		XMLName   xml.Name `xml:"tds:RemoveScopes"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -300,13 +304,13 @@ func (s *DeviceService) RemoveScopes(ctx context.Context, scopeItems []string) (
 	}
 
 	req := RemoveScopes{
-		Xmlns:     deviceNamespace,
+		Xmlns:     Namespace,
 		ScopeItem: scopeItems,
 	}
 
 	var resp RemoveScopesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("RemoveScopes failed: %w", err)
 	}
 
@@ -314,7 +318,7 @@ func (s *DeviceService) RemoveScopes(ctx context.Context, scopeItems []string) (
 }
 
 // SetScopes sets the scope parameters of a device.
-func (s *DeviceService) SetScopes(ctx context.Context, scopes []string) error {
+func (s *Service) SetScopes(ctx context.Context, scopes []string) error {
 	type SetScopes struct {
 		XMLName xml.Name `xml:"tds:SetScopes"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -322,132 +326,37 @@ func (s *DeviceService) SetScopes(ctx context.Context, scopes []string) error {
 	}
 
 	req := SetScopes{
-		Xmlns:  deviceNamespace,
+		Xmlns:  Namespace,
 		Scopes: scopes,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetScopes failed: %w", err)
 	}
 
 	return nil
 }
 
-// GetRelayOutputs gets a list of all available relay outputs and their settings.
-func (s *DeviceService) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
-	type GetRelayOutputs struct {
-		XMLName xml.Name `xml:"tds:GetRelayOutputs"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-	}
-
-	type GetRelayOutputsResponse struct {
-		XMLName      xml.Name `xml:"GetRelayOutputsResponse"`
-		RelayOutputs []struct {
-			Token      string `xml:"token,attr"`
-			Properties struct {
-				Mode      string `xml:"Mode"`
-				DelayTime string `xml:"DelayTime"`
-				IdleState string `xml:"IdleState"`
-			} `xml:"Properties"`
-		} `xml:"RelayOutputs"`
-	}
-
-	req := GetRelayOutputs{
-		Xmlns: deviceNamespace,
-	}
-
-	var resp GetRelayOutputsResponse
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
-		return nil, fmt.Errorf("GetRelayOutputs failed: %w", err)
-	}
-
-	relays := make([]*RelayOutput, len(resp.RelayOutputs))
-	for i, relay := range resp.RelayOutputs {
-		relays[i] = &RelayOutput{
-			Token: relay.Token,
-			Properties: RelayOutputSettings{
-				Mode:      RelayMode(relay.Properties.Mode),
-				IdleState: RelayIdleState(relay.Properties.IdleState),
-				// DelayTime parsing would require duration parsing
-			},
-		}
-	}
-
-	return relays, nil
-}
-
-// SetRelayOutputSettings sets the settings of a relay output.
-func (s *DeviceService) SetRelayOutputSettings(ctx context.Context, token string, settings *RelayOutputSettings) error {
-	type SetRelayOutputSettings struct {
-		XMLName          xml.Name `xml:"tds:SetRelayOutputSettings"`
-		Xmlns            string   `xml:"xmlns:tds,attr"`
-		RelayOutputToken string   `xml:"tds:RelayOutputToken"`
-		Properties       struct {
-			Mode      string `xml:"tt:Mode"`
-			DelayTime string `xml:"tt:DelayTime"`
-			IdleState string `xml:"tt:IdleState"`
-		} `xml:"tds:Properties"`
-	}
-
-	req := SetRelayOutputSettings{
-		Xmlns:            deviceNamespace,
-		RelayOutputToken: token,
-	}
-	req.Properties.Mode = string(settings.Mode)
-	req.Properties.IdleState = string(settings.IdleState)
-	// DelayTime would need duration formatting
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("SetRelayOutputSettings failed: %w", err)
-	}
-
-	return nil
-}
-
-// SetRelayOutputState sets the state of a relay output.
-func (s *DeviceService) SetRelayOutputState(ctx context.Context, token string, state RelayLogicalState) error {
-	type SetRelayOutputState struct {
-		XMLName          xml.Name          `xml:"tds:SetRelayOutputState"`
-		Xmlns            string            `xml:"xmlns:tds,attr"`
-		RelayOutputToken string            `xml:"tds:RelayOutputToken"`
-		LogicalState     RelayLogicalState `xml:"tds:LogicalState"`
-	}
-
-	req := SetRelayOutputState{
-		Xmlns:            deviceNamespace,
-		RelayOutputToken: token,
-		LogicalState:     state,
-	}
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("SetRelayOutputState failed: %w", err)
-	}
-
-	return nil
-}
-
-// SendAuxiliaryCommand sends an auxiliary command to the device.
-func (s *DeviceService) SendAuxiliaryCommand(ctx context.Context, command AuxiliaryData) (AuxiliaryData, error) {
+func (s *Service) SendAuxiliaryCommand(ctx context.Context, command ptz.AuxiliaryData) (ptz.AuxiliaryData, error) {
 	type SendAuxiliaryCommand struct {
-		XMLName          xml.Name      `xml:"tds:SendAuxiliaryCommand"`
-		Xmlns            string        `xml:"xmlns:tds,attr"`
-		AuxiliaryCommand AuxiliaryData `xml:"tds:AuxiliaryCommand"`
+		XMLName          xml.Name          `xml:"tds:SendAuxiliaryCommand"`
+		Xmlns            string            `xml:"xmlns:tds,attr"`
+		AuxiliaryCommand ptz.AuxiliaryData `xml:"tds:AuxiliaryCommand"`
 	}
 
 	type SendAuxiliaryCommandResponse struct {
-		XMLName                  xml.Name      `xml:"SendAuxiliaryCommandResponse"`
-		AuxiliaryCommandResponse AuxiliaryData `xml:"AuxiliaryCommandResponse"`
+		XMLName                  xml.Name          `xml:"SendAuxiliaryCommandResponse"`
+		AuxiliaryCommandResponse ptz.AuxiliaryData `xml:"AuxiliaryCommandResponse"`
 	}
 
 	req := SendAuxiliaryCommand{
-		Xmlns:            deviceNamespace,
+		Xmlns:            Namespace,
 		AuxiliaryCommand: command,
 	}
 
 	var resp SendAuxiliaryCommandResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", fmt.Errorf("SendAuxiliaryCommand failed: %w", err)
 	}
 
@@ -455,7 +364,7 @@ func (s *DeviceService) SendAuxiliaryCommand(ctx context.Context, command Auxili
 }
 
 // GetSystemLog gets a system log from the device.
-func (s *DeviceService) GetSystemLog(ctx context.Context, logType SystemLogType) (*SystemLog, error) {
+func (s *Service) GetSystemLog(ctx context.Context, logType SystemLogType) (*SystemLog, error) {
 	type GetSystemLog struct {
 		XMLName xml.Name      `xml:"tds:GetSystemLog"`
 		Xmlns   string        `xml:"xmlns:tds,attr"`
@@ -473,13 +382,13 @@ func (s *DeviceService) GetSystemLog(ctx context.Context, logType SystemLogType)
 	}
 
 	req := GetSystemLog{
-		Xmlns:   deviceNamespace,
+		Xmlns:   Namespace,
 		LogType: logType,
 	}
 
 	var resp GetSystemLogResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemLog failed: %w", err)
 	}
 
@@ -497,7 +406,7 @@ func (s *DeviceService) GetSystemLog(ctx context.Context, logType SystemLogType)
 }
 
 // GetSystemBackup retrieves system backup configuration files from a device.
-func (s *DeviceService) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
+func (s *Service) GetSystemBackup(ctx context.Context) ([]*BackupFile, error) {
 	type GetSystemBackup struct {
 		XMLName xml.Name `xml:"tds:GetSystemBackup"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -514,12 +423,12 @@ func (s *DeviceService) GetSystemBackup(ctx context.Context) ([]*BackupFile, err
 	}
 
 	req := GetSystemBackup{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetSystemBackupResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemBackup failed: %w", err)
 	}
 
@@ -537,7 +446,7 @@ func (s *DeviceService) GetSystemBackup(ctx context.Context) ([]*BackupFile, err
 }
 
 // RestoreSystem restores the system backup configuration files.
-func (s *DeviceService) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) error {
+func (s *Service) RestoreSystem(ctx context.Context, backupFiles []*BackupFile) error {
 	type RestoreSystem struct {
 		XMLName     xml.Name `xml:"tds:RestoreSystem"`
 		Xmlns       string   `xml:"xmlns:tds,attr"`
@@ -550,7 +459,7 @@ func (s *DeviceService) RestoreSystem(ctx context.Context, backupFiles []*Backup
 	}
 
 	req := RestoreSystem{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	for _, file := range backupFiles {
@@ -569,7 +478,7 @@ func (s *DeviceService) RestoreSystem(ctx context.Context, backupFiles []*Backup
 		})
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("RestoreSystem failed: %w", err)
 	}
 
@@ -577,7 +486,7 @@ func (s *DeviceService) RestoreSystem(ctx context.Context, backupFiles []*Backup
 }
 
 // GetSystemUris retrieves URIs from which system information may be downloaded.
-func (s *DeviceService) GetSystemUris(
+func (s *Service) GetSystemUris(
 	ctx context.Context,
 ) (uriList *SystemLogURIList, systemBackupURI, systemLogURI string, err error) {
 	type GetSystemUris struct {
@@ -598,12 +507,12 @@ func (s *DeviceService) GetSystemUris(
 	}
 
 	req := GetSystemUris{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetSystemUrisResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, "", "", fmt.Errorf("GetSystemUris failed: %w", err)
 	}
 
@@ -622,7 +531,7 @@ func (s *DeviceService) GetSystemUris(
 }
 
 // GetSystemSupportInformation gets arbitrary device diagnostics information.
-func (s *DeviceService) GetSystemSupportInformation(ctx context.Context) (*SupportInformation, error) {
+func (s *Service) GetSystemSupportInformation(ctx context.Context) (*SupportInformation, error) {
 	type GetSystemSupportInformation struct {
 		XMLName xml.Name `xml:"tds:GetSystemSupportInformation"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -639,12 +548,12 @@ func (s *DeviceService) GetSystemSupportInformation(ctx context.Context) (*Suppo
 	}
 
 	req := GetSystemSupportInformation{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetSystemSupportInformationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemSupportInformation failed: %w", err)
 	}
 
@@ -662,7 +571,7 @@ func (s *DeviceService) GetSystemSupportInformation(ctx context.Context) (*Suppo
 }
 
 // SetSystemFactoryDefault reloads the parameters on the device to their factory default values.
-func (s *DeviceService) SetSystemFactoryDefault(ctx context.Context, factoryDefault FactoryDefaultType) error {
+func (s *Service) SetSystemFactoryDefault(ctx context.Context, factoryDefault FactoryDefaultType) error {
 	type SetSystemFactoryDefault struct {
 		XMLName        xml.Name           `xml:"tds:SetSystemFactoryDefault"`
 		Xmlns          string             `xml:"xmlns:tds,attr"`
@@ -670,11 +579,11 @@ func (s *DeviceService) SetSystemFactoryDefault(ctx context.Context, factoryDefa
 	}
 
 	req := SetSystemFactoryDefault{
-		Xmlns:          deviceNamespace,
+		Xmlns:          Namespace,
 		FactoryDefault: factoryDefault,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetSystemFactoryDefault failed: %w", err)
 	}
 
@@ -682,7 +591,7 @@ func (s *DeviceService) SetSystemFactoryDefault(ctx context.Context, factoryDefa
 }
 
 // StartFirmwareUpgrade initiates a firmware upgrade using the HTTP POST mechanism.
-func (s *DeviceService) StartFirmwareUpgrade(
+func (s *Service) StartFirmwareUpgrade(
 	ctx context.Context,
 ) (uploadURI, uploadDelay, expectedDownTime string, err error) {
 	type StartFirmwareUpgrade struct {
@@ -698,12 +607,12 @@ func (s *DeviceService) StartFirmwareUpgrade(
 	}
 
 	req := StartFirmwareUpgrade{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp StartFirmwareUpgradeResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", "", "", fmt.Errorf("StartFirmwareUpgrade failed: %w", err)
 	}
 
@@ -711,7 +620,7 @@ func (s *DeviceService) StartFirmwareUpgrade(
 }
 
 // StartSystemRestore initiates a system restore from backed up configuration data.
-func (s *DeviceService) StartSystemRestore(ctx context.Context) (uploadURI, expectedDownTime string, err error) {
+func (s *Service) StartSystemRestore(ctx context.Context) (uploadURI, expectedDownTime string, err error) {
 	type StartSystemRestore struct {
 		XMLName xml.Name `xml:"tds:StartSystemRestore"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -724,12 +633,12 @@ func (s *DeviceService) StartSystemRestore(ctx context.Context) (uploadURI, expe
 	}
 
 	req := StartSystemRestore{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp StartSystemRestoreResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", "", fmt.Errorf("StartSystemRestore failed: %w", err)
 	}
 
@@ -757,18 +666,18 @@ type NetworkInterfaceConfig struct {
 // interface token (the ONVIF operation is per-interface despite its plural
 // name). NOTE: most devices apply interface changes only after a reboot —
 // check the returned rebootNeeded flag and call SystemReboot accordingly.
-func (s *DeviceService) SetNetworkInterfaces(
+func (s *Service) SetNetworkInterfaces(
 	ctx context.Context,
 	token string,
 	cfg NetworkInterfaceConfig,
 ) (rebootNeeded bool, err error) {
 	if token == "" {
-		return false, fmt.Errorf("SetNetworkInterfaces: %w: interface token is empty", ErrInvalidParameter)
+		return false, fmt.Errorf("SetNetworkInterfaces: %w: interface token is empty", types.ErrInvalidParameter)
 	}
 
 	if !cfg.DHCP && cfg.ManualAddress == "" {
 		return false, fmt.Errorf("SetNetworkInterfaces: %w: static configuration needs a manual address",
-			ErrInvalidParameter)
+			types.ErrInvalidParameter)
 	}
 
 	type manualEntry struct {
@@ -805,7 +714,7 @@ func (s *DeviceService) SetNetworkInterfaces(
 	}
 
 	req := SetNetworkInterfaces{
-		Xmlns:          deviceNamespace,
+		Xmlns:          Namespace,
 		Xmlnst:         "http://www.onvif.org/ver10/schema",
 		InterfaceToken: token,
 		NetworkInterface: networkInterface{
@@ -826,7 +735,7 @@ func (s *DeviceService) SetNetworkInterfaces(
 
 	var resp SetNetworkInterfacesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return false, fmt.Errorf("SetNetworkInterfaces failed: %w", err)
 	}
 

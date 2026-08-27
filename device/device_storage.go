@@ -1,13 +1,15 @@
-package onvif
+package device
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 )
 
 // GetStorageConfigurations retrieves storage configurations. ONVIF Specification: GetStorageConfigurations operation.
-func (s *DeviceService) GetStorageConfigurations(ctx context.Context) ([]*StorageConfiguration, error) {
+func (s *Service) GetStorageConfigurations(ctx context.Context) ([]*StorageConfiguration, error) {
 	type GetStorageConfigurationsBody struct {
 		XMLName xml.Name `xml:"tds:GetStorageConfigurations"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -19,11 +21,11 @@ func (s *DeviceService) GetStorageConfigurations(ctx context.Context) ([]*Storag
 	}
 
 	request := GetStorageConfigurationsBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 	var response GetStorageConfigurationsResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfigurations failed: %w", err)
 	}
 
@@ -31,7 +33,7 @@ func (s *DeviceService) GetStorageConfigurations(ctx context.Context) ([]*Storag
 }
 
 // GetStorageConfiguration retrieves a storage configuration. ONVIF Specification: GetStorageConfiguration operation.
-func (s *DeviceService) GetStorageConfiguration(ctx context.Context, token string) (*StorageConfiguration, error) {
+func (s *Service) GetStorageConfiguration(ctx context.Context, token string) (*StorageConfiguration, error) {
 	type GetStorageConfigurationBody struct {
 		XMLName xml.Name `xml:"tds:GetStorageConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -44,12 +46,12 @@ func (s *DeviceService) GetStorageConfiguration(ctx context.Context, token strin
 	}
 
 	request := GetStorageConfigurationBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 		Token: token,
 	}
 	var response GetStorageConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetStorageConfiguration failed: %w", err)
 	}
 
@@ -58,7 +60,7 @@ func (s *DeviceService) GetStorageConfiguration(ctx context.Context, token strin
 
 // CreateStorageConfiguration creates a storage configuration.
 // ONVIF Specification: CreateStorageConfiguration operation.
-func (s *DeviceService) CreateStorageConfiguration(ctx context.Context, config *StorageConfiguration) (string, error) {
+func (s *Service) CreateStorageConfiguration(ctx context.Context, config *StorageConfiguration) (string, error) {
 	type CreateStorageConfigurationBody struct {
 		XMLName              xml.Name              `xml:"tds:CreateStorageConfiguration"`
 		Xmlns                string                `xml:"xmlns:tds,attr"`
@@ -71,12 +73,12 @@ func (s *DeviceService) CreateStorageConfiguration(ctx context.Context, config *
 	}
 
 	request := CreateStorageConfigurationBody{
-		Xmlns:                deviceNamespace,
+		Xmlns:                Namespace,
 		StorageConfiguration: config,
 	}
 	var response CreateStorageConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return "", fmt.Errorf("CreateStorageConfiguration failed: %w", err)
 	}
 
@@ -84,7 +86,7 @@ func (s *DeviceService) CreateStorageConfiguration(ctx context.Context, config *
 }
 
 // SetStorageConfiguration sets a storage configuration. ONVIF Specification: SetStorageConfiguration operation.
-func (s *DeviceService) SetStorageConfiguration(ctx context.Context, config *StorageConfiguration) error {
+func (s *Service) SetStorageConfiguration(ctx context.Context, config *StorageConfiguration) error {
 	type SetStorageConfigurationBody struct {
 		XMLName              xml.Name              `xml:"tds:SetStorageConfiguration"`
 		Xmlns                string                `xml:"xmlns:tds,attr"`
@@ -96,12 +98,12 @@ func (s *DeviceService) SetStorageConfiguration(ctx context.Context, config *Sto
 	}
 
 	request := SetStorageConfigurationBody{
-		Xmlns:                deviceNamespace,
+		Xmlns:                Namespace,
 		StorageConfiguration: config,
 	}
 	var response SetStorageConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetStorageConfiguration failed: %w", err)
 	}
 
@@ -110,7 +112,7 @@ func (s *DeviceService) SetStorageConfiguration(ctx context.Context, config *Sto
 
 // DeleteStorageConfiguration deletes a storage configuration.
 // ONVIF Specification: DeleteStorageConfiguration operation.
-func (s *DeviceService) DeleteStorageConfiguration(ctx context.Context, token string) error {
+func (s *Service) DeleteStorageConfiguration(ctx context.Context, token string) error {
 	type DeleteStorageConfigurationBody struct {
 		XMLName xml.Name `xml:"tds:DeleteStorageConfiguration"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -122,12 +124,12 @@ func (s *DeviceService) DeleteStorageConfiguration(ctx context.Context, token st
 	}
 
 	request := DeleteStorageConfigurationBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 		Token: token,
 	}
 	var response DeleteStorageConfigurationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("DeleteStorageConfiguration failed: %w", err)
 	}
 
@@ -135,7 +137,7 @@ func (s *DeviceService) DeleteStorageConfiguration(ctx context.Context, token st
 }
 
 // SetHashingAlgorithm sets the hashing algorithm. ONVIF Specification: SetHashingAlgorithm operation.
-func (s *DeviceService) SetHashingAlgorithm(ctx context.Context, algorithm string) error {
+func (s *Service) SetHashingAlgorithm(ctx context.Context, algorithm string) error {
 	type SetHashingAlgorithmBody struct {
 		XMLName   xml.Name `xml:"tds:SetHashingAlgorithm"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
@@ -147,12 +149,12 @@ func (s *DeviceService) SetHashingAlgorithm(ctx context.Context, algorithm strin
 	}
 
 	request := SetHashingAlgorithmBody{
-		Xmlns:     deviceNamespace,
+		Xmlns:     Namespace,
 		Algorithm: algorithm,
 	}
 	var response SetHashingAlgorithmResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetHashingAlgorithm failed: %w", err)
 	}
 

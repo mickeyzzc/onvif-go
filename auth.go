@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/device"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
 )
 
 // authSkewThreshold is the clock divergence beyond which digest auth is
@@ -101,7 +103,7 @@ func (r *clockResponse) deviceUTCTime() (time.Time, error) {
 // does), and the local reference is the midpoint of the request round trip,
 // so network latency does not pollute the measurement.
 func (c *Client) MeasureClockSkew(ctx context.Context) (time.Duration, error) {
-	req := clockRequest{Xmlns: deviceNamespace}
+	req := clockRequest{Xmlns: device.Namespace}
 	var resp clockResponse
 
 	localStart := time.Now()
@@ -137,7 +139,7 @@ func (c *Client) DiagnoseAuth(ctx context.Context) (*AuthDiagnosis, error) {
 		req := struct {
 			XMLName xml.Name `xml:"tds:GetDeviceInformation"`
 			Xmlns   string   `xml:"xmlns:tds,attr"`
-		}{Xmlns: deviceNamespace}
+		}{Xmlns: device.Namespace}
 
 		var resp struct {
 			XMLName      xml.Name `xml:"GetDeviceInformationResponse"`

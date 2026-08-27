@@ -1,9 +1,12 @@
-package onvif
+package media
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // Request/response types hoisted from method bodies.
@@ -222,10 +225,10 @@ type GetVideoSourceConfigurationOptionsResponse struct {
 	XMLName xml.Name `xml:"GetVideoSourceConfigurationOptionsResponse"`
 	Options struct {
 		BoundsRange *struct {
-			X      *IntRange `xml:"X"`
-			Y      *IntRange `xml:"Y"`
-			Width  *IntRange `xml:"Width"`
-			Height *IntRange `xml:"Height"`
+			X      *types.IntRange `xml:"X"`
+			Y      *types.IntRange `xml:"Y"`
+			Width  *types.IntRange `xml:"Width"`
+			Height *types.IntRange `xml:"Height"`
 		} `xml:"BoundsRange"`
 		VideoSourceTokensAvailable []string `xml:"VideoSourceTokensAvailable"`
 	} `xml:"Options"`
@@ -364,20 +367,20 @@ type SetVideoSourceMode struct {
 	ModeToken        string   `xml:"trt:ModeToken"`
 }
 
-func (s *MediaService) GetVideoEncoderConfiguration(
+func (s *Service) GetVideoEncoderConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*VideoEncoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoEncoderConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetVideoEncoderConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfiguration failed: %w", err)
 	}
 
@@ -407,16 +410,16 @@ func (s *MediaService) GetVideoEncoderConfiguration(
 	return config, nil
 }
 
-func (s *MediaService) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetVideoSources(ctx context.Context) ([]*VideoSource, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoSources{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetVideoSourcesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSources failed: %w", err)
 	}
 
@@ -435,15 +438,15 @@ func (s *MediaService) GetVideoSources(ctx context.Context) ([]*VideoSource, err
 	return sources, nil
 }
 
-func (s *MediaService) SetVideoEncoderConfiguration(
+func (s *Service) SetVideoEncoderConfiguration(
 	ctx context.Context,
 	config *VideoEncoderConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetVideoEncoderConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -479,20 +482,20 @@ func (s *MediaService) SetVideoEncoderConfiguration(
 		}
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoEncoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetVideoEncoderConfigurationOptions(
+func (s *Service) GetVideoEncoderConfigurationOptions(
 	ctx context.Context, configurationToken string,
 ) (*VideoEncoderConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoEncoderConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -500,14 +503,14 @@ func (s *MediaService) GetVideoEncoderConfigurationOptions(
 
 	var resp GetVideoEncoderConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurationOptions failed: %w", err)
 	}
 
 	options := &VideoEncoderConfigurationOptions{}
 
 	if resp.Options.QualityRange != nil {
-		options.QualityRange = &FloatRange{
+		options.QualityRange = &types.FloatRange{
 			Min: resp.Options.QualityRange.Min,
 			Max: resp.Options.QualityRange.Max,
 		}
@@ -516,13 +519,13 @@ func (s *MediaService) GetVideoEncoderConfigurationOptions(
 	if resp.Options.JPEG != nil {
 		jpegOpts := &JPEGOptions{}
 		if resp.Options.JPEG.FrameRateRange != nil {
-			jpegOpts.FrameRateRange = &FloatRange{
+			jpegOpts.FrameRateRange = &types.FloatRange{
 				Min: resp.Options.JPEG.FrameRateRange.Min,
 				Max: resp.Options.JPEG.FrameRateRange.Max,
 			}
 		}
 		if resp.Options.JPEG.EncodingIntervalRange != nil {
-			jpegOpts.EncodingIntervalRange = &IntRange{
+			jpegOpts.EncodingIntervalRange = &types.IntRange{
 				Min: resp.Options.JPEG.EncodingIntervalRange.Min,
 				Max: resp.Options.JPEG.EncodingIntervalRange.Max,
 			}
@@ -539,19 +542,19 @@ func (s *MediaService) GetVideoEncoderConfigurationOptions(
 	if resp.Options.H264 != nil {
 		h264Opts := &H264Options{}
 		if resp.Options.H264.FrameRateRange != nil {
-			h264Opts.FrameRateRange = &FloatRange{
+			h264Opts.FrameRateRange = &types.FloatRange{
 				Min: resp.Options.H264.FrameRateRange.Min,
 				Max: resp.Options.H264.FrameRateRange.Max,
 			}
 		}
 		if resp.Options.H264.GovLengthRange != nil {
-			h264Opts.GovLengthRange = &IntRange{
+			h264Opts.GovLengthRange = &types.IntRange{
 				Min: resp.Options.H264.GovLengthRange.Min,
 				Max: resp.Options.H264.GovLengthRange.Max,
 			}
 		}
 		if resp.Options.H264.EncodingIntervalRange != nil {
-			h264Opts.EncodingIntervalRange = &IntRange{
+			h264Opts.EncodingIntervalRange = &types.IntRange{
 				Min: resp.Options.H264.EncodingIntervalRange.Min,
 				Max: resp.Options.H264.EncodingIntervalRange.Max,
 			}
@@ -569,17 +572,17 @@ func (s *MediaService) GetVideoEncoderConfigurationOptions(
 	return options, nil
 }
 
-func (s *MediaService) GetVideoSourceModes(ctx context.Context, videoSourceToken string) ([]*VideoSourceMode, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetVideoSourceModes(ctx context.Context, videoSourceToken string) ([]*VideoSourceMode, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoSourceModes{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
 	var resp GetVideoSourceModesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceModes failed: %w", err)
 	}
 
@@ -598,98 +601,98 @@ func (s *MediaService) GetVideoSourceModes(ctx context.Context, videoSourceToken
 	return modes, nil
 }
 
-func (s *MediaService) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetVideoSourceMode(ctx context.Context, videoSourceToken, modeToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetVideoSourceMode{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 		ModeToken:        modeToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceMode failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddVideoEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddVideoEncoderConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddVideoEncoderConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoEncoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveVideoEncoderConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveVideoEncoderConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveVideoEncoderConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoEncoderConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) AddVideoSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) AddVideoSourceConfiguration(ctx context.Context, profileToken, configurationToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := AddVideoSourceConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ProfileToken:       profileToken,
 		ConfigurationToken: configurationToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("AddVideoSourceConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) RemoveVideoSourceConfiguration(ctx context.Context, profileToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) RemoveVideoSourceConfiguration(ctx context.Context, profileToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := RemoveVideoSourceConfiguration{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("RemoveVideoSourceConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetGuaranteedNumberOfVideoEncoderInstances(
+func (s *Service) GetGuaranteedNumberOfVideoEncoderInstances(
 	ctx context.Context,
 	configurationToken string,
 ) (*GuaranteedNumberOfVideoEncoderInstances, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetGuaranteedNumberOfVideoEncoderInstances{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetGuaranteedNumberOfVideoEncoderInstancesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetGuaranteedNumberOfVideoEncoderInstances failed: %w", err)
 	}
 
@@ -701,16 +704,16 @@ func (s *MediaService) GetGuaranteedNumberOfVideoEncoderInstances(
 	}, nil
 }
 
-func (s *MediaService) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSourceConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetVideoSourceConfigurations(ctx context.Context) ([]*VideoSourceConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoSourceConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetVideoSourceConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurations failed: %w", err)
 	}
 
@@ -723,7 +726,7 @@ func (s *MediaService) GetVideoSourceConfigurations(ctx context.Context) ([]*Vid
 			SourceToken: cfg.SourceToken,
 		}
 		if cfg.Bounds != nil {
-			config.Bounds = &IntRectangle{
+			config.Bounds = &types.IntRectangle{
 				X:      cfg.Bounds.X,
 				Y:      cfg.Bounds.Y,
 				Width:  cfg.Bounds.Width,
@@ -736,16 +739,16 @@ func (s *MediaService) GetVideoSourceConfigurations(ctx context.Context) ([]*Vid
 	return configs, nil
 }
 
-func (s *MediaService) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEncoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetVideoEncoderConfigurations(ctx context.Context) ([]*VideoEncoderConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoEncoderConfigurations{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetVideoEncoderConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoEncoderConfigurations failed: %w", err)
 	}
 
@@ -795,7 +798,7 @@ func (s *MediaService) GetVideoEncoderConfigurations(ctx context.Context) ([]*Vi
 				AutoStart: cfg.Multicast.AutoStart,
 			}
 			if cfg.Multicast.Address != nil {
-				config.Multicast.Address = &IPAddress{
+				config.Multicast.Address = &types.IPAddress{
 					Type:        cfg.Multicast.Address.Type,
 					IPv4Address: cfg.Multicast.Address.IPv4Address,
 					IPv6Address: cfg.Multicast.Address.IPv6Address,
@@ -809,20 +812,20 @@ func (s *MediaService) GetVideoEncoderConfigurations(ctx context.Context) ([]*Vi
 	return configs, nil
 }
 
-func (s *MediaService) GetVideoSourceConfiguration(
+func (s *Service) GetVideoSourceConfiguration(
 	ctx context.Context,
 	configurationToken string,
 ) (*VideoSourceConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoSourceConfiguration{
-		Xmlns:              mediaNamespace,
+		Xmlns:              Namespace,
 		ConfigurationToken: configurationToken,
 	}
 
 	var resp GetVideoSourceConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfiguration failed: %w", err)
 	}
 
@@ -834,7 +837,7 @@ func (s *MediaService) GetVideoSourceConfiguration(
 	}
 
 	if resp.Configuration.Bounds != nil {
-		config.Bounds = &IntRectangle{
+		config.Bounds = &types.IntRectangle{
 			X:      resp.Configuration.Bounds.X,
 			Y:      resp.Configuration.Bounds.Y,
 			Width:  resp.Configuration.Bounds.Width,
@@ -845,14 +848,14 @@ func (s *MediaService) GetVideoSourceConfiguration(
 	return config, nil
 }
 
-func (s *MediaService) GetVideoSourceConfigurationOptions(
+func (s *Service) GetVideoSourceConfigurationOptions(
 	ctx context.Context,
 	configurationToken, profileToken string,
 ) (*VideoSourceConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetVideoSourceConfigurationOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -863,7 +866,7 @@ func (s *MediaService) GetVideoSourceConfigurationOptions(
 
 	var resp GetVideoSourceConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoSourceConfigurationOptions failed: %w", err)
 	}
 
@@ -881,15 +884,15 @@ func (s *MediaService) GetVideoSourceConfigurationOptions(
 	return options, nil
 }
 
-func (s *MediaService) SetVideoSourceConfiguration(
+func (s *Service) SetVideoSourceConfiguration(
 	ctx context.Context,
 	config *VideoSourceConfiguration,
 	forcePersistence bool,
 ) error {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetVideoSourceConfiguration{
-		Xmlns:            mediaNamespace,
+		Xmlns:            Namespace,
 		Xmlnst:           "http://www.onvif.org/ver10/schema",
 		ForcePersistence: forcePersistence,
 	}
@@ -913,27 +916,27 @@ func (s *MediaService) SetVideoSourceConfiguration(
 		}
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetVideoSourceConfiguration failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetCompatibleVideoEncoderConfigurations(
+func (s *Service) GetCompatibleVideoEncoderConfigurations(
 	ctx context.Context,
 	profileToken string,
 ) ([]*VideoEncoderConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleVideoEncoderConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleVideoEncoderConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoEncoderConfigurations failed: %w", err)
 	}
 
@@ -968,20 +971,20 @@ func (s *MediaService) GetCompatibleVideoEncoderConfigurations(
 	return configs, nil
 }
 
-func (s *MediaService) GetCompatibleVideoSourceConfigurations(
+func (s *Service) GetCompatibleVideoSourceConfigurations(
 	ctx context.Context,
 	profileToken string,
 ) ([]*VideoSourceConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetCompatibleVideoSourceConfigurations{
-		Xmlns:        mediaNamespace,
+		Xmlns:        Namespace,
 		ProfileToken: profileToken,
 	}
 
 	var resp GetCompatibleVideoSourceConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCompatibleVideoSourceConfigurations failed: %w", err)
 	}
 
@@ -994,7 +997,7 @@ func (s *MediaService) GetCompatibleVideoSourceConfigurations(
 			SourceToken: cfg.SourceToken,
 		}
 		if cfg.Bounds != nil {
-			config.Bounds = &IntRectangle{
+			config.Bounds = &types.IntRectangle{
 				X:      cfg.Bounds.X,
 				Y:      cfg.Bounds.Y,
 				Width:  cfg.Bounds.Width,

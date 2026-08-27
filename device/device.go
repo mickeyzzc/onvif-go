@@ -1,19 +1,22 @@
 // Device service operations: identity, capabilities, scopes, users,
 // geo/access policy, miscellaneous tds operations.
 
-package onvif
+package device
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // Device service namespace.
-const deviceNamespace = "http://www.onvif.org/ver10/device/wsdl"
+const Namespace = "http://www.onvif.org/ver10/device/wsdl"
 
 // GetDeviceInformation retrieves device information.
-func (s *DeviceService) GetDeviceInformation(ctx context.Context) (*DeviceInformation, error) {
+func (s *Service) GetDeviceInformation(ctx context.Context) (*DeviceInformation, error) {
 	type GetDeviceInformation struct {
 		XMLName xml.Name `xml:"tds:GetDeviceInformation"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -29,12 +32,12 @@ func (s *DeviceService) GetDeviceInformation(ctx context.Context) (*DeviceInform
 	}
 
 	req := GetDeviceInformation{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetDeviceInformationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceInformation failed: %w", err)
 	}
 
@@ -50,7 +53,7 @@ func (s *DeviceService) GetDeviceInformation(ctx context.Context) (*DeviceInform
 // GetCapabilities retrieves device capabilities.
 //
 //nolint:funlen // GetCapabilities has many statements due to parsing multiple service capabilities
-func (s *DeviceService) GetCapabilities(ctx context.Context) (*Capabilities, error) {
+func (s *Service) GetCapabilities(ctx context.Context) (*Capabilities, error) {
 	type GetCapabilities struct {
 		XMLName  xml.Name `xml:"tds:GetCapabilities"`
 		Xmlns    string   `xml:"xmlns:tds,attr"`
@@ -121,13 +124,13 @@ func (s *DeviceService) GetCapabilities(ctx context.Context) (*Capabilities, err
 	}
 
 	req := GetCapabilities{
-		Xmlns:    deviceNamespace,
+		Xmlns:    Namespace,
 		Category: []string{"All"},
 	}
 
 	var resp GetCapabilitiesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetCapabilities failed: %w", err)
 	}
 
@@ -228,7 +231,7 @@ func (s *DeviceService) GetCapabilities(ctx context.Context) (*Capabilities, err
 }
 
 // SystemReboot reboots the device.
-func (s *DeviceService) SystemReboot(ctx context.Context) (string, error) {
+func (s *Service) SystemReboot(ctx context.Context) (string, error) {
 	type SystemReboot struct {
 		XMLName xml.Name `xml:"tds:SystemReboot"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -240,12 +243,12 @@ func (s *DeviceService) SystemReboot(ctx context.Context) (string, error) {
 	}
 
 	req := SystemReboot{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp SystemRebootResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", fmt.Errorf("SystemReboot failed: %w", err)
 	}
 
@@ -253,19 +256,19 @@ func (s *DeviceService) SystemReboot(ctx context.Context) (string, error) {
 }
 
 // GetSystemDateAndTime retrieves the device's system date and time.
-func (s *DeviceService) GetSystemDateAndTime(ctx context.Context) (interface{}, error) {
+func (s *Service) GetSystemDateAndTime(ctx context.Context) (interface{}, error) {
 	type GetSystemDateAndTime struct {
 		XMLName xml.Name `xml:"tds:GetSystemDateAndTime"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
 	}
 
 	req := GetSystemDateAndTime{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp interface{}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSystemDateAndTime failed: %w", err)
 	}
 
@@ -273,7 +276,7 @@ func (s *DeviceService) GetSystemDateAndTime(ctx context.Context) (interface{}, 
 }
 
 // GetHostname retrieves the device's hostname.
-func (s *DeviceService) GetHostname(ctx context.Context) (*HostnameInformation, error) {
+func (s *Service) GetHostname(ctx context.Context) (*HostnameInformation, error) {
 	type GetHostname struct {
 		XMLName xml.Name `xml:"tds:GetHostname"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -288,12 +291,12 @@ func (s *DeviceService) GetHostname(ctx context.Context) (*HostnameInformation, 
 	}
 
 	req := GetHostname{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetHostnameResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetHostname failed: %w", err)
 	}
 
@@ -304,7 +307,7 @@ func (s *DeviceService) GetHostname(ctx context.Context) (*HostnameInformation, 
 }
 
 // SetHostname sets the device's hostname.
-func (s *DeviceService) SetHostname(ctx context.Context, name string) error {
+func (s *Service) SetHostname(ctx context.Context, name string) error {
 	type SetHostname struct {
 		XMLName xml.Name `xml:"tds:SetHostname"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -312,11 +315,11 @@ func (s *DeviceService) SetHostname(ctx context.Context, name string) error {
 	}
 
 	req := SetHostname{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 		Name:  name,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetHostname failed: %w", err)
 	}
 
@@ -324,7 +327,7 @@ func (s *DeviceService) SetHostname(ctx context.Context, name string) error {
 }
 
 // GetDNS retrieves DNS configuration.
-func (s *DeviceService) GetDNS(ctx context.Context) (*DNSInformation, error) {
+func (s *Service) GetDNS(ctx context.Context) (*DNSInformation, error) {
 	type GetDNS struct {
 		XMLName xml.Name `xml:"tds:GetDNS"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -347,12 +350,12 @@ func (s *DeviceService) GetDNS(ctx context.Context) (*DNSInformation, error) {
 	}
 
 	req := GetDNS{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetDNSResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDNS failed: %w", err)
 	}
 
@@ -362,14 +365,14 @@ func (s *DeviceService) GetDNS(ctx context.Context) (*DNSInformation, error) {
 	}
 
 	for _, d := range resp.DNSInformation.DNSFromDHCP {
-		dns.DNSFromDHCP = append(dns.DNSFromDHCP, IPAddress{
+		dns.DNSFromDHCP = append(dns.DNSFromDHCP, types.IPAddress{
 			Type:        d.Type,
 			IPv4Address: d.IPv4Address,
 		})
 	}
 
 	for _, d := range resp.DNSInformation.DNSManual {
-		dns.DNSManual = append(dns.DNSManual, IPAddress{
+		dns.DNSManual = append(dns.DNSManual, types.IPAddress{
 			Type:        d.Type,
 			IPv4Address: d.IPv4Address,
 		})
@@ -379,7 +382,7 @@ func (s *DeviceService) GetDNS(ctx context.Context) (*DNSInformation, error) {
 }
 
 // GetNTP retrieves NTP configuration.
-func (s *DeviceService) GetNTP(ctx context.Context) (*NTPInformation, error) {
+func (s *Service) GetNTP(ctx context.Context) (*NTPInformation, error) {
 	type GetNTP struct {
 		XMLName xml.Name `xml:"tds:GetNTP"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -403,12 +406,12 @@ func (s *DeviceService) GetNTP(ctx context.Context) (*NTPInformation, error) {
 	}
 
 	req := GetNTP{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetNTPResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNTP failed: %w", err)
 	}
 
@@ -436,7 +439,7 @@ func (s *DeviceService) GetNTP(ctx context.Context) (*NTPInformation, error) {
 }
 
 // GetNetworkInterfaces retrieves network interface configuration.
-func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface, error) {
+func (s *Service) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInterface, error) {
 	type GetNetworkInterfaces struct {
 		XMLName xml.Name `xml:"tds:GetNetworkInterfaces"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -466,12 +469,12 @@ func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInt
 	}
 
 	req := GetNetworkInterfaces{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetNetworkInterfacesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkInterfaces failed: %w", err)
 	}
 
@@ -496,7 +499,7 @@ func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInt
 			}
 
 			for _, m := range iface.IPv4.Config.Manual {
-				ni.IPv4.Config.Manual = append(ni.IPv4.Config.Manual, PrefixedIPv4Address{
+				ni.IPv4.Config.Manual = append(ni.IPv4.Config.Manual, types.PrefixedIPv4Address{
 					Address:      m.Address,
 					PrefixLength: m.PrefixLength,
 					Netmask:      NetmaskFromPrefixLength(m.PrefixLength),
@@ -511,7 +514,7 @@ func (s *DeviceService) GetNetworkInterfaces(ctx context.Context) ([]*NetworkInt
 }
 
 // GetScopes retrieves configured scopes.
-func (s *DeviceService) GetScopes(ctx context.Context) ([]*Scope, error) {
+func (s *Service) GetScopes(ctx context.Context) ([]*Scope, error) {
 	type GetScopes struct {
 		XMLName xml.Name `xml:"tds:GetScopes"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -526,12 +529,12 @@ func (s *DeviceService) GetScopes(ctx context.Context) ([]*Scope, error) {
 	}
 
 	req := GetScopes{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetScopesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetScopes failed: %w", err)
 	}
 
@@ -546,127 +549,7 @@ func (s *DeviceService) GetScopes(ctx context.Context) ([]*Scope, error) {
 	return scopes, nil
 }
 
-// GetUsers retrieves user accounts.
-func (s *DeviceService) GetUsers(ctx context.Context) ([]*User, error) {
-	type GetUsers struct {
-		XMLName xml.Name `xml:"tds:GetUsers"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-	}
-
-	type GetUsersResponse struct {
-		XMLName xml.Name `xml:"GetUsersResponse"`
-		User    []struct {
-			Username  string `xml:"Username"`
-			UserLevel string `xml:"UserLevel"`
-		} `xml:"User"`
-	}
-
-	req := GetUsers{
-		Xmlns: deviceNamespace,
-	}
-
-	var resp GetUsersResponse
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
-		return nil, fmt.Errorf("GetUsers failed: %w", err)
-	}
-
-	users := make([]*User, len(resp.User))
-	for i, u := range resp.User {
-		users[i] = &User{
-			Username:  u.Username,
-			UserLevel: u.UserLevel,
-		}
-	}
-
-	return users, nil
-}
-
-// CreateUsers creates new user accounts.
-func (s *DeviceService) CreateUsers(ctx context.Context, users []*User) error {
-	type CreateUsers struct {
-		XMLName xml.Name `xml:"tds:CreateUsers"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-		User    []struct {
-			Username  string `xml:"tds:Username"`
-			Password  string `xml:"tds:Password"`
-			UserLevel string `xml:"tds:UserLevel"`
-		} `xml:"tds:User"`
-	}
-
-	req := CreateUsers{
-		Xmlns: deviceNamespace,
-	}
-
-	for _, user := range users {
-		req.User = append(req.User, struct {
-			Username  string `xml:"tds:Username"`
-			Password  string `xml:"tds:Password"`
-			UserLevel string `xml:"tds:UserLevel"`
-		}{
-			Username:  user.Username,
-			Password:  user.Password,
-			UserLevel: user.UserLevel,
-		})
-	}
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("CreateUsers failed: %w", err)
-	}
-
-	return nil
-}
-
-// DeleteUsers deletes user accounts.
-func (s *DeviceService) DeleteUsers(ctx context.Context, usernames []string) error {
-	type DeleteUsers struct {
-		XMLName  xml.Name `xml:"tds:DeleteUsers"`
-		Xmlns    string   `xml:"xmlns:tds,attr"`
-		Username []string `xml:"tds:Username"`
-	}
-
-	req := DeleteUsers{
-		Xmlns:    deviceNamespace,
-		Username: usernames,
-	}
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("DeleteUsers failed: %w", err)
-	}
-
-	return nil
-}
-
-// SetUser modifies an existing user account.
-func (s *DeviceService) SetUser(ctx context.Context, user *User) error {
-	type SetUser struct {
-		XMLName xml.Name `xml:"tds:SetUser"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-		User    struct {
-			Username  string  `xml:"tds:Username"`
-			Password  *string `xml:"tds:Password,omitempty"`
-			UserLevel string  `xml:"tds:UserLevel"`
-		} `xml:"tds:User"`
-	}
-
-	req := SetUser{
-		Xmlns: deviceNamespace,
-	}
-	req.User.Username = user.Username
-	if user.Password != "" {
-		req.User.Password = &user.Password
-	}
-	req.User.UserLevel = user.UserLevel
-
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
-		return fmt.Errorf("SetUser failed: %w", err)
-	}
-
-	return nil
-}
-
-// GetServices returns information about services on the device.
-func (s *DeviceService) GetServices(ctx context.Context, includeCapability bool) ([]*Service, error) {
+func (s *Service) GetServices(ctx context.Context, includeCapability bool) ([]*ServiceEntry, error) {
 	type GetServices struct {
 		XMLName           xml.Name `xml:"tds:GetServices"`
 		Xmlns             string   `xml:"xmlns:tds,attr"`
@@ -687,19 +570,19 @@ func (s *DeviceService) GetServices(ctx context.Context, includeCapability bool)
 	}
 
 	req := GetServices{
-		Xmlns:             deviceNamespace,
+		Xmlns:             Namespace,
 		IncludeCapability: includeCapability,
 	}
 
 	var resp GetServicesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetServices failed: %w", err)
 	}
 
-	services := make([]*Service, len(resp.Service))
+	services := make([]*ServiceEntry, len(resp.Service))
 	for i, svc := range resp.Service {
-		services[i] = &Service{
+		services[i] = &ServiceEntry{
 			Namespace:    svc.Namespace,
 			XAddr:        svc.XAddr,
 			Capabilities: svc.Capabilities,
@@ -713,8 +596,8 @@ func (s *DeviceService) GetServices(ctx context.Context, includeCapability bool)
 	return services, nil
 }
 
-// GetServiceCapabilities returns the capabilities of the device service.
-func (s *DeviceService) GetServiceCapabilities(ctx context.Context) (*DeviceServiceCapabilities, error) {
+// GetDeviceServiceCapabilities returns the capabilities of the device service.
+func (s *Service) GetDeviceServiceCapabilities(ctx context.Context) (*DeviceServiceCapabilities, error) {
 	type GetServiceCapabilities struct {
 		XMLName xml.Name `xml:"tds:GetServiceCapabilities"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -748,13 +631,13 @@ func (s *DeviceService) GetServiceCapabilities(ctx context.Context) (*DeviceServ
 	}
 
 	req := GetServiceCapabilities{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetServiceCapabilitiesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
-		return nil, fmt.Errorf("GetServiceCapabilities failed: %w", err)
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetDeviceServiceCapabilities failed: %w", err)
 	}
 
 	return &DeviceServiceCapabilities{
@@ -782,7 +665,7 @@ func (s *DeviceService) GetServiceCapabilities(ctx context.Context) (*DeviceServ
 }
 
 // GetDiscoveryMode gets the discovery mode of a device.
-func (s *DeviceService) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
+func (s *Service) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 	type GetDiscoveryMode struct {
 		XMLName xml.Name `xml:"tds:GetDiscoveryMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -794,12 +677,12 @@ func (s *DeviceService) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, er
 	}
 
 	req := GetDiscoveryMode{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetDiscoveryModeResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetDiscoveryMode failed: %w", err)
 	}
 
@@ -807,7 +690,7 @@ func (s *DeviceService) GetDiscoveryMode(ctx context.Context) (DiscoveryMode, er
 }
 
 // SetDiscoveryMode sets the discovery mode of a device.
-func (s *DeviceService) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
+func (s *Service) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
 	type SetDiscoveryMode struct {
 		XMLName       xml.Name      `xml:"tds:SetDiscoveryMode"`
 		Xmlns         string        `xml:"xmlns:tds,attr"`
@@ -815,11 +698,11 @@ func (s *DeviceService) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode
 	}
 
 	req := SetDiscoveryMode{
-		Xmlns:         deviceNamespace,
+		Xmlns:         Namespace,
 		DiscoveryMode: mode,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetDiscoveryMode failed: %w", err)
 	}
 
@@ -827,7 +710,7 @@ func (s *DeviceService) SetDiscoveryMode(ctx context.Context, mode DiscoveryMode
 }
 
 // GetRemoteDiscoveryMode gets the remote discovery mode.
-func (s *DeviceService) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
+func (s *Service) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMode, error) {
 	type GetRemoteDiscoveryMode struct {
 		XMLName xml.Name `xml:"tds:GetRemoteDiscoveryMode"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -839,12 +722,12 @@ func (s *DeviceService) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMo
 	}
 
 	req := GetRemoteDiscoveryMode{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetRemoteDiscoveryModeResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetRemoteDiscoveryMode failed: %w", err)
 	}
 
@@ -852,7 +735,7 @@ func (s *DeviceService) GetRemoteDiscoveryMode(ctx context.Context) (DiscoveryMo
 }
 
 // SetRemoteDiscoveryMode sets the remote discovery mode.
-func (s *DeviceService) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
+func (s *Service) SetRemoteDiscoveryMode(ctx context.Context, mode DiscoveryMode) error {
 	type SetRemoteDiscoveryMode struct {
 		XMLName             xml.Name      `xml:"tds:SetRemoteDiscoveryMode"`
 		Xmlns               string        `xml:"xmlns:tds,attr"`
@@ -860,11 +743,11 @@ func (s *DeviceService) SetRemoteDiscoveryMode(ctx context.Context, mode Discove
 	}
 
 	req := SetRemoteDiscoveryMode{
-		Xmlns:               deviceNamespace,
+		Xmlns:               Namespace,
 		RemoteDiscoveryMode: mode,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetRemoteDiscoveryMode failed: %w", err)
 	}
 
@@ -872,7 +755,7 @@ func (s *DeviceService) SetRemoteDiscoveryMode(ctx context.Context, mode Discove
 }
 
 // GetEndpointReference gets the endpoint reference GUID.
-func (s *DeviceService) GetEndpointReference(ctx context.Context) (string, error) {
+func (s *Service) GetEndpointReference(ctx context.Context) (string, error) {
 	type GetEndpointReference struct {
 		XMLName xml.Name `xml:"tds:GetEndpointReference"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -884,12 +767,12 @@ func (s *DeviceService) GetEndpointReference(ctx context.Context) (string, error
 	}
 
 	req := GetEndpointReference{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetEndpointReferenceResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return "", fmt.Errorf("GetEndpointReference failed: %w", err)
 	}
 
@@ -897,7 +780,7 @@ func (s *DeviceService) GetEndpointReference(ctx context.Context) (string, error
 }
 
 // GetNetworkProtocols gets defined network protocols from a device.
-func (s *DeviceService) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, error) {
+func (s *Service) GetNetworkProtocols(ctx context.Context) ([]*NetworkProtocol, error) {
 	type GetNetworkProtocols struct {
 		XMLName xml.Name `xml:"tds:GetNetworkProtocols"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -913,12 +796,12 @@ func (s *DeviceService) GetNetworkProtocols(ctx context.Context) ([]*NetworkProt
 	}
 
 	req := GetNetworkProtocols{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetNetworkProtocolsResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkProtocols failed: %w", err)
 	}
 
@@ -935,7 +818,7 @@ func (s *DeviceService) GetNetworkProtocols(ctx context.Context) ([]*NetworkProt
 }
 
 // SetNetworkProtocols configures defined network protocols on a device.
-func (s *DeviceService) SetNetworkProtocols(ctx context.Context, protocols []*NetworkProtocol) error {
+func (s *Service) SetNetworkProtocols(ctx context.Context, protocols []*NetworkProtocol) error {
 	type SetNetworkProtocols struct {
 		XMLName          xml.Name `xml:"tds:SetNetworkProtocols"`
 		Xmlns            string   `xml:"xmlns:tds,attr"`
@@ -947,7 +830,7 @@ func (s *DeviceService) SetNetworkProtocols(ctx context.Context, protocols []*Ne
 	}
 
 	req := SetNetworkProtocols{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	for _, proto := range protocols {
@@ -962,7 +845,7 @@ func (s *DeviceService) SetNetworkProtocols(ctx context.Context, protocols []*Ne
 		})
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkProtocols failed: %w", err)
 	}
 
@@ -970,7 +853,7 @@ func (s *DeviceService) SetNetworkProtocols(ctx context.Context, protocols []*Ne
 }
 
 // GetNetworkDefaultGateway gets the default gateway settings from a device.
-func (s *DeviceService) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway, error) {
+func (s *Service) GetNetworkDefaultGateway(ctx context.Context) (*NetworkGateway, error) {
 	type GetNetworkDefaultGateway struct {
 		XMLName xml.Name `xml:"tds:GetNetworkDefaultGateway"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -985,12 +868,12 @@ func (s *DeviceService) GetNetworkDefaultGateway(ctx context.Context) (*NetworkG
 	}
 
 	req := GetNetworkDefaultGateway{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 
 	var resp GetNetworkDefaultGatewayResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetNetworkDefaultGateway failed: %w", err)
 	}
 
@@ -1001,7 +884,7 @@ func (s *DeviceService) GetNetworkDefaultGateway(ctx context.Context) (*NetworkG
 }
 
 // SetNetworkDefaultGateway sets the default gateway settings on a device.
-func (s *DeviceService) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkGateway) error {
+func (s *Service) SetNetworkDefaultGateway(ctx context.Context, gateway *NetworkGateway) error {
 	type SetNetworkDefaultGateway struct {
 		XMLName     xml.Name `xml:"tds:SetNetworkDefaultGateway"`
 		Xmlns       string   `xml:"xmlns:tds,attr"`
@@ -1010,12 +893,12 @@ func (s *DeviceService) SetNetworkDefaultGateway(ctx context.Context, gateway *N
 	}
 
 	req := SetNetworkDefaultGateway{
-		Xmlns:       deviceNamespace,
+		Xmlns:       Namespace,
 		IPv4Address: gateway.IPv4Address,
 		IPv6Address: gateway.IPv6Address,
 	}
 
-	if err := s.client.call(ctx, s.client.endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
 		return fmt.Errorf("SetNetworkDefaultGateway failed: %w", err)
 	}
 
@@ -1023,7 +906,7 @@ func (s *DeviceService) SetNetworkDefaultGateway(ctx context.Context, gateway *N
 }
 
 // GetGeoLocation retrieves geographic location information. ONVIF Specification: GetGeoLocation operation.
-func (s *DeviceService) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
+func (s *Service) GetGeoLocation(ctx context.Context) ([]LocationEntity, error) {
 	type GetGeoLocationBody struct {
 		XMLName xml.Name `xml:"tds:GetGeoLocation"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -1035,11 +918,11 @@ func (s *DeviceService) GetGeoLocation(ctx context.Context) ([]LocationEntity, e
 	}
 
 	request := GetGeoLocationBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 	var response GetGeoLocationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetGeoLocation failed: %w", err)
 	}
 
@@ -1047,7 +930,7 @@ func (s *DeviceService) GetGeoLocation(ctx context.Context) ([]LocationEntity, e
 }
 
 // SetGeoLocation sets geographic location information. ONVIF Specification: SetGeoLocation operation.
-func (s *DeviceService) SetGeoLocation(ctx context.Context, location []LocationEntity) error {
+func (s *Service) SetGeoLocation(ctx context.Context, location []LocationEntity) error {
 	type SetGeoLocationBody struct {
 		XMLName  xml.Name         `xml:"tds:SetGeoLocation"`
 		Xmlns    string           `xml:"xmlns:tds,attr"`
@@ -1059,12 +942,12 @@ func (s *DeviceService) SetGeoLocation(ctx context.Context, location []LocationE
 	}
 
 	request := SetGeoLocationBody{
-		Xmlns:    deviceNamespace,
+		Xmlns:    Namespace,
 		Location: location,
 	}
 	var response SetGeoLocationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetGeoLocation failed: %w", err)
 	}
 
@@ -1072,7 +955,7 @@ func (s *DeviceService) SetGeoLocation(ctx context.Context, location []LocationE
 }
 
 // DeleteGeoLocation deletes geographic location information. ONVIF Specification: DeleteGeoLocation operation.
-func (s *DeviceService) DeleteGeoLocation(ctx context.Context, location []LocationEntity) error {
+func (s *Service) DeleteGeoLocation(ctx context.Context, location []LocationEntity) error {
 	type DeleteGeoLocationBody struct {
 		XMLName  xml.Name         `xml:"tds:DeleteGeoLocation"`
 		Xmlns    string           `xml:"xmlns:tds,attr"`
@@ -1084,12 +967,12 @@ func (s *DeviceService) DeleteGeoLocation(ctx context.Context, location []Locati
 	}
 
 	request := DeleteGeoLocationBody{
-		Xmlns:    deviceNamespace,
+		Xmlns:    Namespace,
 		Location: location,
 	}
 	var response DeleteGeoLocationResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("DeleteGeoLocation failed: %w", err)
 	}
 
@@ -1097,7 +980,7 @@ func (s *DeviceService) DeleteGeoLocation(ctx context.Context, location []Locati
 }
 
 // GetDPAddresses retrieves DP (Device Provisioning) addresses. ONVIF Specification: GetDPAddresses operation.
-func (s *DeviceService) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
+func (s *Service) GetDPAddresses(ctx context.Context) ([]NetworkHost, error) {
 	type GetDPAddressesBody struct {
 		XMLName xml.Name `xml:"tds:GetDPAddresses"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -1109,11 +992,11 @@ func (s *DeviceService) GetDPAddresses(ctx context.Context) ([]NetworkHost, erro
 	}
 
 	request := GetDPAddressesBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 	var response GetDPAddressesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return nil, fmt.Errorf("GetDPAddresses failed: %w", err)
 	}
 
@@ -1121,7 +1004,7 @@ func (s *DeviceService) GetDPAddresses(ctx context.Context) ([]NetworkHost, erro
 }
 
 // SetDPAddresses sets DP (Device Provisioning) addresses. ONVIF Specification: SetDPAddresses operation.
-func (s *DeviceService) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) error {
+func (s *Service) SetDPAddresses(ctx context.Context, dpAddress []NetworkHost) error {
 	type SetDPAddressesBody struct {
 		XMLName   xml.Name      `xml:"tds:SetDPAddresses"`
 		Xmlns     string        `xml:"xmlns:tds,attr"`
@@ -1133,69 +1016,19 @@ func (s *DeviceService) SetDPAddresses(ctx context.Context, dpAddress []NetworkH
 	}
 
 	request := SetDPAddressesBody{
-		Xmlns:     deviceNamespace,
+		Xmlns:     Namespace,
 		DPAddress: dpAddress,
 	}
 	var response SetDPAddressesResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return fmt.Errorf("SetDPAddresses failed: %w", err)
 	}
 
 	return nil
 }
 
-// GetAccessPolicy retrieves access policy information. ONVIF Specification: GetAccessPolicy operation.
-func (s *DeviceService) GetAccessPolicy(ctx context.Context) (*AccessPolicy, error) {
-	type GetAccessPolicyBody struct {
-		XMLName xml.Name `xml:"tds:GetAccessPolicy"`
-		Xmlns   string   `xml:"xmlns:tds,attr"`
-	}
-
-	type GetAccessPolicyResponse struct {
-		XMLName    xml.Name    `xml:"GetAccessPolicyResponse"`
-		PolicyFile *BinaryData `xml:"PolicyFile"`
-	}
-
-	request := GetAccessPolicyBody{
-		Xmlns: deviceNamespace,
-	}
-	var response GetAccessPolicyResponse
-
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
-		return nil, fmt.Errorf("GetAccessPolicy failed: %w", err)
-	}
-
-	return &AccessPolicy{PolicyFile: response.PolicyFile}, nil
-}
-
-// SetAccessPolicy sets access policy information. ONVIF Specification: SetAccessPolicy operation.
-func (s *DeviceService) SetAccessPolicy(ctx context.Context, policy *AccessPolicy) error {
-	type SetAccessPolicyBody struct {
-		XMLName    xml.Name    `xml:"tds:SetAccessPolicy"`
-		Xmlns      string      `xml:"xmlns:tds,attr"`
-		PolicyFile *BinaryData `xml:"tds:PolicyFile"`
-	}
-
-	type SetAccessPolicyResponse struct {
-		XMLName xml.Name `xml:"SetAccessPolicyResponse"`
-	}
-
-	request := SetAccessPolicyBody{
-		Xmlns:      deviceNamespace,
-		PolicyFile: policy.PolicyFile,
-	}
-	var response SetAccessPolicyResponse
-
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
-		return fmt.Errorf("SetAccessPolicy failed: %w", err)
-	}
-
-	return nil
-}
-
-// GetWsdlURL retrieves the WSDL URL (deprecated). ONVIF Specification: GetWsdlUrl operation.
-func (s *DeviceService) GetWsdlURL(ctx context.Context) (string, error) {
+func (s *Service) GetWsdlURL(ctx context.Context) (string, error) {
 	type GetWsdlURLBody struct {
 		XMLName xml.Name `xml:"tds:GetWsdlUrl"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
@@ -1207,11 +1040,11 @@ func (s *DeviceService) GetWsdlURL(ctx context.Context) (string, error) {
 	}
 
 	request := GetWsdlURLBody{
-		Xmlns: deviceNamespace,
+		Xmlns: Namespace,
 	}
 	var response GetWsdlURLResponse
 
-	if err := s.client.call(ctx, s.client.endpoint, "", request, &response); err != nil {
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", request, &response); err != nil {
 		return "", fmt.Errorf("GetWsdlURL failed: %w", err)
 	}
 

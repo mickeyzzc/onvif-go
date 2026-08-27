@@ -19,8 +19,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go"
-	onviftesting "github.com/mickeyzzc/onvif-go/testing"
+	"github.com/mickeyzzc/onvif-go/v2"
+	onviftesting "github.com/mickeyzzc/onvif-go/v2/testing"
 )
 
 const (
@@ -1017,20 +1017,20 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 			return fmt.Errorf("GetNetworkDefaultGateway: %w", err)
 		}},
 		{"GetScopes", func() error { _, err := client.Device().GetScopes(ctx); return err }},
-		{"GetUsers", func() error { _, err := client.Device().GetUsers(ctx); return err }},
+		{"GetUsers", func() error { _, err := client.Security().GetUsers(ctx); return err }},
 		{"GetDiscoveryMode", func() error { _, err := client.Device().GetDiscoveryMode(ctx); return err }},
 		{"GetRemoteDiscoveryMode", func() error { _, err := client.Device().GetRemoteDiscoveryMode(ctx); return err }},
 		{"GetEndpointReference", func() error { _, err := client.Device().GetEndpointReference(ctx); return err }},
-		{"GetRelayOutputs", func() error { _, err := client.Device().GetRelayOutputs(ctx); return err }},
+		{"GetRelayOutputs", func() error { _, err := client.DeviceIO().GetRelayOutputs(ctx); return err }},
 		{"GetRemoteUser", func() error { _, err := client.Security().GetRemoteUser(ctx); return err }},
 		{"GetIPAddressFilter", func() error { _, err := client.Security().GetIPAddressFilter(ctx); return err }},
-		{"GetZeroConfiguration", func() error { _, err := client.Security().GetZeroConfiguration(ctx); return err }},
+		{"GetZeroConfiguration", func() error { _, err := client.Device().GetZeroConfiguration(ctx); return err }},
 		{"GetServices", func() error { _, err := client.Device().GetServices(ctx, true); return err }},
-		{"GetServiceCapabilities", func() error { _, err := client.Device().GetServiceCapabilities(ctx); return err }},
+		{"GetServiceCapabilities", func() error { _, err := client.Device().GetDeviceServiceCapabilities(ctx); return err }},
 		{"GetStorageConfigurations", func() error { _, err := client.Device().GetStorageConfigurations(ctx); return err }},
 		{"GetGeoLocation", func() error { _, err := client.Device().GetGeoLocation(ctx); return err }},
 		{"GetDPAddresses", func() error { _, err := client.Device().GetDPAddresses(ctx); return err }},
-		{"GetAccessPolicy", func() error { _, err := client.Device().GetAccessPolicy(ctx); return err }},
+		{"GetAccessPolicy", func() error { _, err := client.Security().GetAccessPolicy(ctx); return err }},
 		{"GetWsdlURL", func() error { _, err := client.Device().GetWsdlURL(ctx); return err }},
 		{"GetPasswordComplexityConfiguration", func() error { _, err := client.Security().GetPasswordComplexityConfiguration(ctx); return err }},
 		{"GetPasswordHistoryConfiguration", func() error { _, err := client.Security().GetPasswordHistoryConfiguration(ctx); return err }},
@@ -1290,10 +1290,10 @@ func runComprehensiveCapture(ctx context.Context, client *onvif.Client, report *
 		name string
 		fn   func() error
 	}{
-		{"GetCertificates", func() error { _, err := client.Device().GetCertificates(ctx); return err }},
-		{"GetCACertificates", func() error { _, err := client.Device().GetCACertificates(ctx); return err }},
-		{"GetCertificatesStatus", func() error { _, err := client.Device().GetCertificatesStatus(ctx); return err }},
-		{"GetClientCertificateMode", func() error { _, err := client.Device().GetClientCertificateMode(ctx); return err }},
+		{"GetCertificates", func() error { _, err := client.Security().GetCertificates(ctx); return err }},
+		{"GetCACertificates", func() error { _, err := client.Security().GetCACertificates(ctx); return err }},
+		{"GetCertificatesStatus", func() error { _, err := client.Security().GetCertificatesStatus(ctx); return err }},
+		{"GetClientCertificateMode", func() error { _, err := client.Security().GetClientCertificateMode(ctx); return err }},
 	}
 
 	for _, op := range certOps {

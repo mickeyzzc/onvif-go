@@ -38,30 +38,54 @@ flowchart TD
     sim --> soap
 ```
 
-## 文件地图
+## 包布局（v2）
 
-根包刻意保持为单一 Go 包——门面 API（`client.Media().GetProfiles(ctx)`）
-只有在服务类型与其方法同包时才成立——因此架构由文件布局来表达：
+v1 的单包门面让根目录平铺。v2（issue #20）按域拆分——`internal/api.Caller`
+接口解开了此前无法拆包的导入环：
 
-| 文件 | 职责 |
+| 包 | 职责 |
 |---|---|
-| `client.go` | `Client`、函数式选项、单一调用调度器、端点/XAddr 修复 |
-| `auth.go` | 鉴权策略（模式、梯队记忆）、时钟偏差测量、`DiagnoseAuth` |
-| `capabilities.go` | 能力缓存（single-flight + 弱设备降级） |
-| `services.go` | 七个服务门面类型及其访问器 |
-| `errors.go` | 包级哨兵错误与 `ONVIFError` |
-| `types.go` | 共享 ONVIF 数据类型 |
-| `device.go` | 设备身份、能力、scope、用户、杂项 `tds` 操作 |
-| `device_mgmt.go` | 系统日期/时间、DNS/NTP、网络接口与网关 |
-| `device_security.go` | 用户/远程用户、访问策略、证书 |
-| `device_storage.go`、`device_wifi.go` | 存储与 WiFi 子系统 |
-| `deviceio.go` | 继电器输出、数字 I/O |
-| `media_profiles.go` | profile 列表/解析 + 主/子码流选择 |
-| `media_stream.go` | 流与快照 URI、`StreamSetup` 传输选择 |
-| `media_encoder.go`、`media_audio.go`、`media_osd.go` | 编码、音频、OSD 配置 |
-| `ptz.go`、`imaging.go` | PTZ 与成像服务 |
-| `event.go` | 原始 PullPoint 原语 + 托管订阅循环 |
-| `download.go` | 快照/媒体文件下载（basic + digest） |
+| 根包（`onvif`） | `Client`（实现 `api.Caller`）、鉴权策略/梯队/诊断、下载、v1 兼容 alias |
+| `types/` | 共享数据模型 leaf（IPAddress、IntRectangle、区间、SimpleItem、共享哨兵） |
+| `device/` | tds：身份、能力（+缓存）、系统、网络、DNS/NTP、存储、WiFi |
+| `security/` | 用户、访问策略、证书、IP 过滤 |
+| `deviceio/` | tmd：继电器、数字 I/O、串口 |
+| `media/` | trt：profile、主/子码流选择、StreamSetup、编码/音频/OSD |
+| `ptz/`、`imaging/` | tptz / timg 域 |
+| `events/` | tev：PullPoint 原语 + 托管订阅 |
+| `discovery/` | 客户端发现（探测/监听/定向/后处理） |
+| `server/` | 设备端框架（传输、handler、模拟器） |
+| `internal/api` | Client 与服务之间的 `Caller` 接口 |
+| `internal/soap`、`internal/httpdigest` | SOAP 传输 + WS-Security；HTTP Digest RoundTripper |
+
+```mermaid
+flowchart TD
+    subgraph rootpkg["根包 — Client 实现 api.Caller"]
+        client["NewClient + 鉴权梯队 + 时钟偏差"]
+    end
+    subgraph svcs["服务包"]
+        device["device"]
+        media["media"]
+        others["ptz · imaging · events · deviceio · security"]
+    end
+    apileaf["internal/api — Caller 接口"]
+    subgraph leaves["共享 leaf"]
+        types["types/"]
+        soap["internal/soap · internal/httpdigest"]
+    end
+    client --> apileaf
+    device --> apileaf
+    media --> apileaf
+    others --> apileaf
+    device --> types
+    media --> types
+    client --> soap
+    media --> ptz
+```
+
+v1 风格的调用面通过根包 alias 继续可编译（`type Profile = media.Profile`、
+门面访问器不变）；迁移映射见 [v2-architecture.md](v2-architecture.md)。
+
 
 ## 服务门面模型
 

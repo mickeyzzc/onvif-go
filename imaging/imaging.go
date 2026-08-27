@@ -1,37 +1,21 @@
-package onvif
+package imaging
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // Imaging service namespace.
-const imagingNamespace = "http://www.onvif.org/ver20/imaging/wsdl"
+const Namespace = "http://www.onvif.org/ver20/imaging/wsdl"
 
-// GetImagingSettings retrieves imaging settings for a video source.
-//
-// getEndpoint returns the service endpoint, falling back to the device
-// endpoint when Initialize has not resolved (or the device does not
-// advertise) a service-specific address. The read is lock-guarded: the
-// client may be initialized concurrently with calls (issue #12).
-//
-//nolint:funlen // GetImagingSettings has many statements due to parsing complex imaging settings
-func (s *ImagingService) getEndpoint() string {
-	s.client.mu.RLock()
-	defer s.client.mu.RUnlock()
-
-	if s.client.imagingEndpoint != "" {
-		return s.client.imagingEndpoint
-	}
-
-	return s.client.endpoint
-}
-
-func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		endpoint = s.client.endpoint
+		endpoint = s.c.EndpointFor(api.ServiceImaging)
 	}
 
 	type GetImagingSettings struct {
@@ -84,13 +68,13 @@ func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToke
 	}
 
 	req := GetImagingSettings{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
 	var resp GetImagingSettingsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetImagingSettings failed: %w", err)
 	}
 
@@ -155,12 +139,12 @@ func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToke
 // SetImagingSettings sets imaging settings for a video source.
 //
 //nolint:funlen // SetImagingSettings has many statements due to building complex imaging settings request
-func (s *ImagingService) SetImagingSettings(
+func (s *Service) SetImagingSettings(
 	ctx context.Context, videoSourceToken string, settings *ImagingSettings, forcePersistence bool,
 ) error {
-	endpoint := s.getEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		endpoint = s.client.endpoint
+		endpoint = s.c.EndpointFor(api.ServiceImaging)
 	}
 
 	type SetImagingSettings struct {
@@ -210,7 +194,7 @@ func (s *ImagingService) SetImagingSettings(
 	}
 
 	req := SetImagingSettings{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 		ForcePersistence: forcePersistence,
 	}
@@ -296,7 +280,7 @@ func (s *ImagingService) SetImagingSettings(
 		}
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetImagingSettings failed: %w", err)
 	}
 
@@ -304,10 +288,10 @@ func (s *ImagingService) SetImagingSettings(
 }
 
 // Move performs a focus move operation.
-func (s *ImagingService) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
-	endpoint := s.getEndpoint()
+func (s *Service) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		endpoint = s.client.endpoint
+		endpoint = s.c.EndpointFor(api.ServiceImaging)
 	}
 
 	type Move struct {
@@ -330,7 +314,7 @@ func (s *ImagingService) Move(ctx context.Context, videoSourceToken string, focu
 	}
 
 	req := Move{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
@@ -351,7 +335,7 @@ func (s *ImagingService) Move(ctx context.Context, videoSourceToken string, focu
 		// Implementation would add specific focus move types here
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Move failed: %w", err)
 	}
 
@@ -364,10 +348,10 @@ type FocusMove struct {
 }
 
 // GetOptions retrieves imaging options for a video source.
-func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string) (*ImagingOptions, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetOptions(ctx context.Context, videoSourceToken string) (*ImagingOptions, error) {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetOptions struct {
@@ -421,34 +405,34 @@ func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string
 	}
 
 	req := GetOptions{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
 	var resp GetOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOptions failed: %w", err)
 	}
 
 	options := &ImagingOptions{}
 
 	if resp.ImagingOptions.Brightness != nil {
-		options.Brightness = &FloatRange{
+		options.Brightness = &types.FloatRange{
 			Min: resp.ImagingOptions.Brightness.Min,
 			Max: resp.ImagingOptions.Brightness.Max,
 		}
 	}
 
 	if resp.ImagingOptions.ColorSaturation != nil {
-		options.ColorSaturation = &FloatRange{
+		options.ColorSaturation = &types.FloatRange{
 			Min: resp.ImagingOptions.ColorSaturation.Min,
 			Max: resp.ImagingOptions.ColorSaturation.Max,
 		}
 	}
 
 	if resp.ImagingOptions.Contrast != nil {
-		options.Contrast = &FloatRange{
+		options.Contrast = &types.FloatRange{
 			Min: resp.ImagingOptions.Contrast.Min,
 			Max: resp.ImagingOptions.Contrast.Max,
 		}
@@ -458,10 +442,10 @@ func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string
 }
 
 // GetMoveOptions retrieves imaging move options for focus.
-func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken string) (*MoveOptions, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetMoveOptions(ctx context.Context, videoSourceToken string) (*MoveOptions, error) {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetMoveOptions struct {
@@ -503,13 +487,13 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 	}
 
 	req := GetMoveOptions{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
 	var resp GetMoveOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetMoveOptions failed: %w", err)
 	}
 
@@ -517,11 +501,11 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 
 	if resp.MoveOptions.Absolute != nil {
 		options.Absolute = &AbsoluteFocusOptions{
-			Position: FloatRange{
+			Position: types.FloatRange{
 				Min: resp.MoveOptions.Absolute.Position.Min,
 				Max: resp.MoveOptions.Absolute.Position.Max,
 			},
-			Speed: FloatRange{
+			Speed: types.FloatRange{
 				Min: resp.MoveOptions.Absolute.Speed.Min,
 				Max: resp.MoveOptions.Absolute.Speed.Max,
 			},
@@ -530,11 +514,11 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 
 	if resp.MoveOptions.Relative != nil {
 		options.Relative = &RelativeFocusOptions{
-			Distance: FloatRange{
+			Distance: types.FloatRange{
 				Min: resp.MoveOptions.Relative.Distance.Min,
 				Max: resp.MoveOptions.Relative.Distance.Max,
 			},
-			Speed: FloatRange{
+			Speed: types.FloatRange{
 				Min: resp.MoveOptions.Relative.Speed.Min,
 				Max: resp.MoveOptions.Relative.Speed.Max,
 			},
@@ -543,7 +527,7 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 
 	if resp.MoveOptions.Continuous != nil {
 		options.Continuous = &ContinuousFocusOptions{
-			Speed: FloatRange{
+			Speed: types.FloatRange{
 				Min: resp.MoveOptions.Continuous.Speed.Min,
 				Max: resp.MoveOptions.Continuous.Speed.Max,
 			},
@@ -554,10 +538,10 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 }
 
 // StopFocus stops focus movement.
-func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string) error {
-	endpoint := s.getEndpoint()
+func (s *Service) StopFocus(ctx context.Context, videoSourceToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		return ErrServiceNotSupported
+		return types.ErrServiceNotSupported
 	}
 
 	type Stop struct {
@@ -567,11 +551,11 @@ func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string)
 	}
 
 	req := Stop{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("Stop failed: %w", err)
 	}
 
@@ -579,10 +563,10 @@ func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string)
 }
 
 // GetImagingStatus retrieves imaging status.
-func (s *ImagingService) GetImagingStatus(ctx context.Context, videoSourceToken string) (*ImagingStatus, error) {
-	endpoint := s.getEndpoint()
+func (s *Service) GetImagingStatus(ctx context.Context, videoSourceToken string) (*ImagingStatus, error) {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
-		return nil, ErrServiceNotSupported
+		return nil, types.ErrServiceNotSupported
 	}
 
 	type GetStatus struct {
@@ -603,13 +587,13 @@ func (s *ImagingService) GetImagingStatus(ctx context.Context, videoSourceToken 
 	}
 
 	req := GetStatus{
-		Xmlns:            imagingNamespace,
+		Xmlns:            Namespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
 	var resp GetStatusResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetStatus failed: %w", err)
 	}
 

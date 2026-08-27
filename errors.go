@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mickeyzzc/onvif-go/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
 )
 
 var (
@@ -25,9 +25,6 @@ var (
 	// ErrAuthenticationFailed is returned when authentication fails.
 	ErrAuthenticationFailed = errors.New("authentication failed")
 
-	// ErrServiceNotSupported is returned when a service is not supported by the device.
-	ErrServiceNotSupported = errors.New("service not supported")
-
 	// ErrInvalidResponse is returned when the response is invalid.
 	ErrInvalidResponse = errors.New("invalid response")
 
@@ -36,9 +33,6 @@ var (
 
 	// ErrConnectionFailed is returned when connection to the device fails.
 	ErrConnectionFailed = errors.New("connection failed")
-
-	// ErrInvalidParameter is returned when a parameter is invalid.
-	ErrInvalidParameter = errors.New("invalid parameter")
 
 	// ErrNotInitialized is returned when the client is not initialized.
 	ErrNotInitialized = errors.New("client not initialized")

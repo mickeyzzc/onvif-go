@@ -1,9 +1,11 @@
-package onvif
+package media
 
 import (
 	"context"
 	"encoding/xml"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 )
 
 // Request/response types hoisted from method bodies.
@@ -79,11 +81,11 @@ type SetOSD struct {
 	} `xml:"trt:OSD"`
 }
 
-func (s *MediaService) GetOSDs(ctx context.Context, configurationToken string) ([]*OSDConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetOSDs(ctx context.Context, configurationToken string) ([]*OSDConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetOSDs{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -91,7 +93,7 @@ func (s *MediaService) GetOSDs(ctx context.Context, configurationToken string) (
 
 	var resp GetOSDsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDs failed: %w", err)
 	}
 
@@ -105,17 +107,17 @@ func (s *MediaService) GetOSDs(ctx context.Context, configurationToken string) (
 	return osds, nil
 }
 
-func (s *MediaService) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetOSD(ctx context.Context, osdToken string) (*OSDConfiguration, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetOSD{
-		Xmlns:    mediaNamespace,
+		Xmlns:    Namespace,
 		OSDToken: osdToken,
 	}
 
 	var resp GetOSDResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSD failed: %w", err)
 	}
 
@@ -124,31 +126,31 @@ func (s *MediaService) GetOSD(ctx context.Context, osdToken string) (*OSDConfigu
 	}, nil
 }
 
-func (s *MediaService) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) SetOSD(ctx context.Context, osd *OSDConfiguration) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := SetOSD{
-		Xmlns:  mediaNamespace,
+		Xmlns:  Namespace,
 		Xmlnst: "http://www.onvif.org/ver10/schema",
 	}
 	req.OSD.Token = osd.Token
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("SetOSD failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) CreateOSD(
+func (s *Service) CreateOSD(
 	ctx context.Context,
 	videoSourceConfigurationToken string,
 	osd *OSDConfiguration,
 ) (*OSDConfiguration, error) {
-	endpoint := s.getMediaEndpoint()
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := CreateOSD{
-		Xmlns:                         mediaNamespace,
+		Xmlns:                         Namespace,
 		Xmlnst:                        "http://www.onvif.org/ver10/schema",
 		VideoSourceConfigurationToken: videoSourceConfigurationToken,
 	}
@@ -158,7 +160,7 @@ func (s *MediaService) CreateOSD(
 
 	var resp CreateOSDResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("CreateOSD failed: %w", err)
 	}
 
@@ -167,26 +169,26 @@ func (s *MediaService) CreateOSD(
 	}, nil
 }
 
-func (s *MediaService) DeleteOSD(ctx context.Context, osdToken string) error {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) DeleteOSD(ctx context.Context, osdToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := DeleteOSD{
-		Xmlns:    mediaNamespace,
+		Xmlns:    Namespace,
 		OSDToken: osdToken,
 	}
 
-	if err := s.client.call(ctx, endpoint, "", req, nil); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
 		return fmt.Errorf("DeleteOSD failed: %w", err)
 	}
 
 	return nil
 }
 
-func (s *MediaService) GetOSDOptions(ctx context.Context, configurationToken string) (*OSDConfigurationOptions, error) {
-	endpoint := s.getMediaEndpoint()
+func (s *Service) GetOSDOptions(ctx context.Context, configurationToken string) (*OSDConfigurationOptions, error) {
+	endpoint := s.c.EndpointFor(api.ServiceMedia)
 
 	req := GetOSDOptions{
-		Xmlns: mediaNamespace,
+		Xmlns: Namespace,
 	}
 	if configurationToken != "" {
 		req.ConfigurationToken = configurationToken
@@ -194,7 +196,7 @@ func (s *MediaService) GetOSDOptions(ctx context.Context, configurationToken str
 
 	var resp GetOSDOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetOSDOptions failed: %w", err)
 	}
 

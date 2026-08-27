@@ -10,7 +10,14 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/device"
+	"github.com/mickeyzzc/onvif-go/v2/deviceio"
+	"github.com/mickeyzzc/onvif-go/v2/events"
+	"github.com/mickeyzzc/onvif-go/v2/imaging"
+	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/media"
+	"github.com/mickeyzzc/onvif-go/v2/ptz"
+	"github.com/mickeyzzc/onvif-go/v2/security"
 )
 
 // Default client configuration constants.
@@ -110,13 +117,19 @@ type Client struct {
 	// before its first authenticated call (WithAutoClockSkew).
 	autoClockSkew bool
 
-	// Capabilities cache (issue #11): the GetCapabilities response is
-	// constant for a device's runtime; capsReady single-flights concurrent
-	// first fetchers so weak devices are not hammered.
-	capsCache           *Capabilities
-	capsCached          bool
-	capsFetching        bool
-	capsReady           chan struct{}
+	// Long-lived service instances (v2): accessors return the same pointers,
+	// so services may hold their own state — the capabilities cache lives on
+	// the device service.
+	deviceSvc   *device.Service
+	mediaSvc    *media.Service
+	ptzSvc      *ptz.Service
+	imagingSvc  *imaging.Service
+	eventsSvc   *events.Service
+	deviceioSvc *deviceio.Service
+	securitySvc *security.Service
+
+	// minimalCapsFallback configures the device service's cached-capabilities
+	// degradation (WithMinimalCapsFallback).
 	minimalCapsFallback bool
 
 	// clockSkew is the offset (deviceTime - localTime) applied to WS-Security
@@ -153,6 +166,19 @@ func WithInsecureSkipVerify() ClientOption {
 			}
 			transport.TLSClientConfig.InsecureSkipVerify = true
 		}
+	}
+}
+
+// WithMinimalCapsFallback makes the cached capabilities accessor degrade
+// gracefully: when GetCapabilities fails (minimal embedded devices can fault
+// on it), a minimal all-off capability set is returned AND cached instead of
+// an error. Callers gate advanced calls on it (no PTZ capability → no PTZ
+// calls), and a weak device is never hammered with retries. Without this
+// option the conservative default applies: failures surface as errors and
+// are not cached.
+func WithMinimalCapsFallback() ClientOption {
+	return func(c *Client) {
+		c.minimalCapsFallback = true
 	}
 }
 
@@ -223,6 +249,14 @@ func NewClient(endpoint string, opts ...ClientOption) (*Client, error) {
 	if err := client.validateAuthConfig(); err != nil {
 		return nil, err
 	}
+
+	client.deviceSvc = device.NewWithFallback(client, client.minimalCapsFallback)
+	client.mediaSvc = media.New(client)
+	client.ptzSvc = ptz.New(client)
+	client.imagingSvc = imaging.New(client)
+	client.eventsSvc = events.New(client)
+	client.deviceioSvc = deviceio.New(client)
+	client.securitySvc = security.New(client)
 
 	return client, nil
 }
@@ -400,6 +434,13 @@ func (c *Client) Initialize(ctx context.Context) error {
 	return nil
 }
 
+// InvalidateCapabilitiesCache drops the cached capabilities so the next
+// GetCapabilitiesCached call re-fetches them. Call after a firmware upgrade
+// or any change that could alter the device's advertised services.
+func (c *Client) InvalidateCapabilitiesCache() {
+	c.deviceSvc.InvalidateCapsCache()
+}
+
 // Endpoint returns the device endpoint.
 func (c *Client) Endpoint() string {
 	return c.endpoint
@@ -466,14 +507,14 @@ func (c *Client) SetClockSkew(skew time.Duration) {
 	c.mu.Unlock()
 }
 
-// call performs a SOAP call through the client's auth configuration: it
+// Call performs a SOAP call through the client's auth configuration: it
 // applies the configured mode, retries through the fallback ladder on
 // auth-class errors, and remembers the first working mode. All service
 // operations go through this single audited path (issue #12).
 //
 // Auth-class failures are wrapped so errors.Is(err, ErrUnauthorized) holds
 // regardless of how many modes were tried; other failures propagate unchanged.
-func (c *Client) call(ctx context.Context, endpoint, action string, request, response interface{}) error {
+func (c *Client) Call(ctx context.Context, endpoint, action string, request, response interface{}) error {
 	modes := c.authLadder()
 
 	var lastErr error

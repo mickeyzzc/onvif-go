@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/mickeyzzc/onvif-go/discovery"
+	"github.com/mickeyzzc/onvif-go/v2/discovery"
 )
 
 const defaultDiscoveryTimeout = 10 * time.Second

@@ -1,8 +1,8 @@
 # onvif-go
 
 [![CI](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml/badge.svg)](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml)
-[![Go Reference](https://pkg.go.dev/badge/github.com/mickeyzzc/onvif-go.svg)](https://pkg.go.dev/github.com/mickeyzzc/onvif-go)
-[![Go Report Card](https://goreportcard.com/badge/github.com/mickeyzzc/onvif-go)](https://goreportcard.com/report/github.com/mickeyzzc/onvif-go)
+[![Go Reference](https://pkg.go.dev/badge/github.com/mickeyzzc/onvif-go/v2.svg)](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mickeyzzc/onvif-go/v2)](https://goreportcard.com/report/github.com/mickeyzzc/onvif-go/v2)
 [![License](https://img.shields.io/github/license/mickeyzzc/onvif-go)](LICENSE)
 [![Go Version](https://img.shields.io/badge/go-1.26-00ADD8.svg)](https://go.dev/)
 
@@ -56,7 +56,7 @@ HTTP Basic / 不鉴权；`WithAuthFallback` 提供自动回退梯队，并记住
 ## 安装
 
 ```bash
-go get github.com/mickeyzzc/onvif-go
+go get github.com/mickeyzzc/onvif-go/v2
 ```
 
 要求 Go **1.26+**。库模块零第三方依赖。
@@ -71,7 +71,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/mickeyzzc/onvif-go"
+    "github.com/mickeyzzc/onvif-go/v2"
 )
 
 func main() {
@@ -165,13 +165,15 @@ diag, _ := client.DiagnoseAuth(ctx)
 | 测试 | [测试](docs/zh/testing.md) | [testing.md](docs/en/testing.md) |
 | CLI 工具 | [CLI 工具](docs/zh/cli.md) | [cli.md](docs/en/cli.md) |
 
-API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go)。
+API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
 
 ## 项目结构
 
 | 路径 | 用途 |
 |---|---|
-| `*.go`（根目录） | 客户端库——按服务拆分的门面文件（`media*.go`、`device*.go`、`ptz.go` 等） |
+| `client.go` 等（根目录） | `Client`（鉴权梯队、时钟偏差、下载）+ v1 兼容 alias |
+| `device/` `security/` `deviceio/` `media/` `ptz/` `imaging/` `events/` | 域服务包（v2 拆分，issue #20） |
+| `types/` | 共享数据模型 leaf |
 | `discovery/` | WS-Discovery：主动探测、被动监听、定向 HTTP 探测、后处理 |
 | `internal/soap/` | SOAP 传输 + WS-Security（digest/明文模式、Fault 检测） |
 | `server/` | 虚拟 ONVIF 相机服务器（测试用模拟器） |

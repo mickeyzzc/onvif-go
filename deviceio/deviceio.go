@@ -1,11 +1,17 @@
-package onvif
+package deviceio
 
 import (
 	"context"
 	"encoding/xml"
 	"errors"
 	"fmt"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/media"
 )
+
+// Namespace is the device IO service WSDL namespace (tmd).
+const Namespace = "http://www.onvif.org/ver10/deviceIO/wsdl"
 
 // Device IO service namespace.
 const deviceIONamespace = "http://www.onvif.org/ver10/deviceIO/wsdl"
@@ -62,7 +68,7 @@ const (
 type VideoOutput struct {
 	Token       string
 	Layout      *Layout
-	Resolution  *VideoResolution
+	Resolution  *media.VideoResolution
 	RefreshRate float64
 	AspectRatio string
 }
@@ -170,13 +176,13 @@ type RelayOutputOptions struct {
 }
 
 // getDeviceIOEndpoint returns the device IO endpoint.
-func (s *DeviceIOService) getDeviceIOEndpoint() string {
+func (s *Service) getDeviceIOEndpoint() string {
 	// Device IO typically uses the main device endpoint.
-	return s.client.endpoint
+	return s.c.EndpointFor(api.ServiceDevice)
 }
 
 // GetDeviceIOServiceCapabilities retrieves the capabilities of the device IO service.
-func (s *DeviceIOService) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOServiceCapabilities, error) {
+func (s *Service) GetDeviceIOServiceCapabilities(ctx context.Context) (*DeviceIOServiceCapabilities, error) {
 	endpoint := s.getDeviceIOEndpoint()
 
 	type GetServiceCapabilities struct {
@@ -185,7 +191,8 @@ func (s *DeviceIOService) GetDeviceIOServiceCapabilities(ctx context.Context) (*
 	}
 
 	type GetServiceCapabilitiesResponse struct {
-		XMLName      xml.Name `xml:"GetServiceCapabilitiesResponse"`
+		XMLName xml.Name `xml:"GetServiceCapabilitiesResponse"`
+
 		Capabilities struct {
 			VideoSources            int  `xml:"VideoSources,attr"`
 			VideoOutputs            int  `xml:"VideoOutputs,attr"`
@@ -205,7 +212,7 @@ func (s *DeviceIOService) GetDeviceIOServiceCapabilities(ctx context.Context) (*
 
 	var resp GetServiceCapabilitiesResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDeviceIOServiceCapabilities failed: %w", err)
 	}
 
@@ -223,7 +230,7 @@ func (s *DeviceIOService) GetDeviceIOServiceCapabilities(ctx context.Context) (*
 }
 
 // GetDigitalInputs retrieves all digital inputs.
-func (s *DeviceIOService) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) {
+func (s *Service) GetDigitalInputs(ctx context.Context) ([]*DigitalInput, error) {
 	endpoint := s.getDeviceIOEndpoint()
 
 	type GetDigitalInputs struct {
@@ -245,7 +252,7 @@ func (s *DeviceIOService) GetDigitalInputs(ctx context.Context) ([]*DigitalInput
 
 	var resp GetDigitalInputsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDigitalInputs failed: %w", err)
 	}
 
@@ -261,7 +268,7 @@ func (s *DeviceIOService) GetDigitalInputs(ctx context.Context) ([]*DigitalInput
 }
 
 // GetDigitalInputConfigurationOptions retrieves digital input configuration options.
-func (s *DeviceIOService) GetDigitalInputConfigurationOptions(ctx context.Context, token string) (*DigitalInputConfigurationOptions, error) {
+func (s *Service) GetDigitalInputConfigurationOptions(ctx context.Context, token string) (*DigitalInputConfigurationOptions, error) {
 	if token == "" {
 		return nil, ErrInvalidDigitalInputToken
 	}
@@ -288,7 +295,7 @@ func (s *DeviceIOService) GetDigitalInputConfigurationOptions(ctx context.Contex
 
 	var resp GetDigitalInputConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetDigitalInputConfigurationOptions failed: %w", err)
 	}
 
@@ -304,7 +311,7 @@ func (s *DeviceIOService) GetDigitalInputConfigurationOptions(ctx context.Contex
 }
 
 // SetDigitalInputConfigurations sets digital input configurations.
-func (s *DeviceIOService) SetDigitalInputConfigurations(ctx context.Context, inputs []*DigitalInput) error {
+func (s *Service) SetDigitalInputConfigurations(ctx context.Context, inputs []*DigitalInput) error {
 	if len(inputs) == 0 {
 		return ErrDigitalInputConfigNil
 	}
@@ -345,7 +352,7 @@ func (s *DeviceIOService) SetDigitalInputConfigurations(ctx context.Context, inp
 
 	var resp SetDigitalInputConfigurationsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetDigitalInputConfigurations failed: %w", err)
 	}
 
@@ -353,7 +360,7 @@ func (s *DeviceIOService) SetDigitalInputConfigurations(ctx context.Context, inp
 }
 
 // GetVideoOutputs retrieves all video outputs.
-func (s *DeviceIOService) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
+func (s *Service) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, error) {
 	endpoint := s.getDeviceIOEndpoint()
 
 	type GetVideoOutputs struct {
@@ -391,7 +398,7 @@ func (s *DeviceIOService) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, 
 
 	var resp GetVideoOutputsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputs failed: %w", err)
 	}
 
@@ -404,7 +411,7 @@ func (s *DeviceIOService) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, 
 		}
 
 		if vo.Resolution != nil {
-			output.Resolution = &VideoResolution{
+			output.Resolution = &media.VideoResolution{
 				Width:  vo.Resolution.Width,
 				Height: vo.Resolution.Height,
 			}
@@ -435,7 +442,7 @@ func (s *DeviceIOService) GetVideoOutputs(ctx context.Context) ([]*VideoOutput, 
 }
 
 // GetSerialPorts retrieves all serial ports.
-func (s *DeviceIOService) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
+func (s *Service) GetSerialPorts(ctx context.Context) ([]*SerialPort, error) {
 	endpoint := s.getDeviceIOEndpoint()
 
 	type GetSerialPorts struct {
@@ -457,7 +464,7 @@ func (s *DeviceIOService) GetSerialPorts(ctx context.Context) ([]*SerialPort, er
 
 	var resp GetSerialPortsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPorts failed: %w", err)
 	}
 
@@ -473,7 +480,7 @@ func (s *DeviceIOService) GetSerialPorts(ctx context.Context) ([]*SerialPort, er
 }
 
 // GetSerialPortConfiguration retrieves a serial port configuration.
-func (s *DeviceIOService) GetSerialPortConfiguration(ctx context.Context, serialPortToken string) (*SerialPortConfiguration, error) {
+func (s *Service) GetSerialPortConfiguration(ctx context.Context, serialPortToken string) (*SerialPortConfiguration, error) {
 	if serialPortToken == "" {
 		return nil, ErrInvalidSerialPortToken
 	}
@@ -505,7 +512,7 @@ func (s *DeviceIOService) GetSerialPortConfiguration(ctx context.Context, serial
 
 	var resp GetSerialPortConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPortConfiguration failed: %w", err)
 	}
 
@@ -520,7 +527,7 @@ func (s *DeviceIOService) GetSerialPortConfiguration(ctx context.Context, serial
 }
 
 // GetSerialPortConfigurationOptions retrieves serial port configuration options.
-func (s *DeviceIOService) GetSerialPortConfigurationOptions(ctx context.Context, serialPortToken string) (*SerialPortConfigurationOptions, error) {
+func (s *Service) GetSerialPortConfigurationOptions(ctx context.Context, serialPortToken string) (*SerialPortConfigurationOptions, error) {
 	if serialPortToken == "" {
 		return nil, ErrInvalidSerialPortToken
 	}
@@ -551,7 +558,7 @@ func (s *DeviceIOService) GetSerialPortConfigurationOptions(ctx context.Context,
 
 	var resp GetSerialPortConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetSerialPortConfigurationOptions failed: %w", err)
 	}
 
@@ -572,7 +579,7 @@ func (s *DeviceIOService) GetSerialPortConfigurationOptions(ctx context.Context,
 }
 
 // SetSerialPortConfiguration sets a serial port configuration.
-func (s *DeviceIOService) SetSerialPortConfiguration(ctx context.Context, config *SerialPortConfiguration) error {
+func (s *Service) SetSerialPortConfiguration(ctx context.Context, config *SerialPortConfiguration) error {
 	if config == nil {
 		return ErrSerialPortConfigNil
 	}
@@ -616,7 +623,7 @@ func (s *DeviceIOService) SetSerialPortConfiguration(ctx context.Context, config
 
 	var resp SetSerialPortConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetSerialPortConfiguration failed: %w", err)
 	}
 
@@ -624,7 +631,7 @@ func (s *DeviceIOService) SetSerialPortConfiguration(ctx context.Context, config
 }
 
 // SendReceiveSerialCommand sends a serial command and receives a response.
-func (s *DeviceIOService) SendReceiveSerialCommand(ctx context.Context, serialPortToken string, data []byte, timeoutSeconds, dataLength int) ([]byte, error) {
+func (s *Service) SendReceiveSerialCommand(ctx context.Context, serialPortToken string, data []byte, timeoutSeconds, dataLength int) ([]byte, error) {
 	if serialPortToken == "" {
 		return nil, ErrInvalidSerialPortToken
 	}
@@ -672,7 +679,7 @@ func (s *DeviceIOService) SendReceiveSerialCommand(ctx context.Context, serialPo
 
 	var resp SendReceiveSerialCommandResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("SendReceiveSerialCommand failed: %w", err)
 	}
 
@@ -680,7 +687,7 @@ func (s *DeviceIOService) SendReceiveSerialCommand(ctx context.Context, serialPo
 }
 
 // GetVideoOutputConfiguration retrieves a video output configuration.
-func (s *DeviceIOService) GetVideoOutputConfiguration(ctx context.Context, videoOutputToken string) (*VideoOutputConfiguration, error) {
+func (s *Service) GetVideoOutputConfiguration(ctx context.Context, videoOutputToken string) (*VideoOutputConfiguration, error) {
 	if videoOutputToken == "" {
 		return nil, ErrInvalidVideoOutputToken
 	}
@@ -710,7 +717,7 @@ func (s *DeviceIOService) GetVideoOutputConfiguration(ctx context.Context, video
 
 	var resp GetVideoOutputConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputConfiguration failed: %w", err)
 	}
 
@@ -723,7 +730,7 @@ func (s *DeviceIOService) GetVideoOutputConfiguration(ctx context.Context, video
 }
 
 // GetVideoOutputConfigurationOptions retrieves video output configuration options.
-func (s *DeviceIOService) GetVideoOutputConfigurationOptions(ctx context.Context, videoOutputToken string) (*VideoOutputConfigurationOptions, error) {
+func (s *Service) GetVideoOutputConfigurationOptions(ctx context.Context, videoOutputToken string) (*VideoOutputConfigurationOptions, error) {
 	if videoOutputToken == "" {
 		return nil, ErrInvalidVideoOutputToken
 	}
@@ -754,7 +761,7 @@ func (s *DeviceIOService) GetVideoOutputConfigurationOptions(ctx context.Context
 
 	var resp GetVideoOutputConfigurationOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetVideoOutputConfigurationOptions failed: %w", err)
 	}
 
@@ -768,7 +775,7 @@ func (s *DeviceIOService) GetVideoOutputConfigurationOptions(ctx context.Context
 }
 
 // SetVideoOutputConfiguration sets a video output configuration.
-func (s *DeviceIOService) SetVideoOutputConfiguration(ctx context.Context, config *VideoOutputConfiguration) error {
+func (s *Service) SetVideoOutputConfiguration(ctx context.Context, config *VideoOutputConfiguration) error {
 	if config == nil {
 		return ErrVideoOutputConfigNil
 	}
@@ -812,7 +819,7 @@ func (s *DeviceIOService) SetVideoOutputConfiguration(ctx context.Context, confi
 
 	var resp SetVideoOutputConfigurationResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return fmt.Errorf("SetVideoOutputConfiguration failed: %w", err)
 	}
 
@@ -820,7 +827,7 @@ func (s *DeviceIOService) SetVideoOutputConfiguration(ctx context.Context, confi
 }
 
 // GetRelayOutputOptions retrieves relay output options.
-func (s *DeviceIOService) GetRelayOutputOptions(ctx context.Context, relayOutputToken string) (*RelayOutputOptions, error) {
+func (s *Service) GetRelayOutputOptions(ctx context.Context, relayOutputToken string) (*RelayOutputOptions, error) {
 	if relayOutputToken == "" {
 		return nil, ErrInvalidRelayOutputToken
 	}
@@ -850,7 +857,7 @@ func (s *DeviceIOService) GetRelayOutputOptions(ctx context.Context, relayOutput
 
 	var resp GetRelayOutputOptionsResponse
 
-	if err := s.client.call(ctx, endpoint, "", req, &resp); err != nil {
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
 		return nil, fmt.Errorf("GetRelayOutputOptions failed: %w", err)
 	}
 
@@ -866,3 +873,101 @@ func (s *DeviceIOService) GetRelayOutputOptions(ctx context.Context, relayOutput
 		Discrete:   resp.RelayOutputOptions.Discrete,
 	}, nil
 }
+
+// GetRelayOutputs gets a list of all available relay outputs and their settings.
+func (s *Service) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
+	type GetRelayOutputs struct {
+		XMLName xml.Name `xml:"tds:GetRelayOutputs"`
+		Xmlns   string   `xml:"xmlns:tds,attr"`
+	}
+
+	type GetRelayOutputsResponse struct {
+		XMLName      xml.Name `xml:"GetRelayOutputsResponse"`
+		RelayOutputs []struct {
+			Token      string `xml:"token,attr"`
+			Properties struct {
+				Mode      string `xml:"Mode"`
+				DelayTime string `xml:"DelayTime"`
+				IdleState string `xml:"IdleState"`
+			} `xml:"Properties"`
+		} `xml:"RelayOutputs"`
+	}
+
+	req := GetRelayOutputs{
+		Xmlns: Namespace,
+	}
+
+	var resp GetRelayOutputsResponse
+
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetRelayOutputs failed: %w", err)
+	}
+
+	relays := make([]*RelayOutput, len(resp.RelayOutputs))
+	for i, relay := range resp.RelayOutputs {
+		relays[i] = &RelayOutput{
+			Token: relay.Token,
+			Properties: RelayOutputSettings{
+				Mode:      RelayMode(relay.Properties.Mode),
+				IdleState: RelayIdleState(relay.Properties.IdleState),
+				// DelayTime parsing would require duration parsing
+			},
+		}
+	}
+
+	return relays, nil
+}
+
+// SetRelayOutputSettings sets the settings of a relay output.
+// SetRelayOutputSettings sets the settings of a relay output.
+func (s *Service) SetRelayOutputSettings(ctx context.Context, token string, settings *RelayOutputSettings) error {
+	type SetRelayOutputSettings struct {
+		XMLName          xml.Name `xml:"tds:SetRelayOutputSettings"`
+		Xmlns            string   `xml:"xmlns:tds,attr"`
+		RelayOutputToken string   `xml:"tds:RelayOutputToken"`
+		Properties       struct {
+			Mode      string `xml:"tt:Mode"`
+			DelayTime string `xml:"tt:DelayTime"`
+			IdleState string `xml:"tt:IdleState"`
+		} `xml:"tds:Properties"`
+	}
+
+	req := SetRelayOutputSettings{
+		Xmlns:            Namespace,
+		RelayOutputToken: token,
+	}
+	req.Properties.Mode = string(settings.Mode)
+	req.Properties.IdleState = string(settings.IdleState)
+	// DelayTime would need duration formatting
+
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
+		return fmt.Errorf("SetRelayOutputSettings failed: %w", err)
+	}
+
+	return nil
+}
+
+// SetRelayOutputState sets the state of a relay output.
+// SetRelayOutputState sets the state of a relay output.
+func (s *Service) SetRelayOutputState(ctx context.Context, token string, state RelayLogicalState) error {
+	type SetRelayOutputState struct {
+		XMLName          xml.Name          `xml:"tds:SetRelayOutputState"`
+		Xmlns            string            `xml:"xmlns:tds,attr"`
+		RelayOutputToken string            `xml:"tds:RelayOutputToken"`
+		LogicalState     RelayLogicalState `xml:"tds:LogicalState"`
+	}
+
+	req := SetRelayOutputState{
+		Xmlns:            Namespace,
+		RelayOutputToken: token,
+		LogicalState:     state,
+	}
+
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceDevice), "", req, nil); err != nil {
+		return fmt.Errorf("SetRelayOutputState failed: %w", err)
+	}
+
+	return nil
+}
+
+// SendAuxiliaryCommand sends an auxiliary command to the device.
