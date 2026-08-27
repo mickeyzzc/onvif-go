@@ -67,8 +67,23 @@ func convertToPTZSpeedXML(s *PTZSpeed) *ptzSpeedXML {
 }
 
 // ContinuousMove starts continuous PTZ movement.
+// getEndpoint returns the service endpoint, falling back to the device
+// endpoint when Initialize has not resolved (or the device does not
+// advertise) a service-specific address. The read is lock-guarded: the
+// client may be initialized concurrently with calls (issue #12).
+func (s *PTZService) getEndpoint() string {
+	s.client.mu.RLock()
+	defer s.client.mu.RUnlock()
+
+	if s.client.ptzEndpoint != "" {
+		return s.client.ptzEndpoint
+	}
+
+	return s.client.endpoint
+}
+
 func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, velocity *PTZSpeed, timeout *string) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -97,7 +112,7 @@ func (s *PTZService) ContinuousMove(ctx context.Context, profileToken string, ve
 
 // AbsoluteMove moves PTZ to an absolute position.
 func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, position *PTZVector, speed *PTZSpeed) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -126,7 +141,7 @@ func (s *PTZService) AbsoluteMove(ctx context.Context, profileToken string, posi
 
 // RelativeMove moves PTZ relative to current position.
 func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, translation *PTZVector, speed *PTZSpeed) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -155,7 +170,7 @@ func (s *PTZService) RelativeMove(ctx context.Context, profileToken string, tran
 
 // Stop stops PTZ movement.
 func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoom bool) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -189,7 +204,7 @@ func (s *PTZService) Stop(ctx context.Context, profileToken string, panTilt, zoo
 
 // GetStatus retrieves PTZ status.
 func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZStatus, error) {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -267,7 +282,7 @@ func (s *PTZService) GetStatus(ctx context.Context, profileToken string) (*PTZSt
 
 // GetPresets retrieves PTZ presets.
 func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PTZPreset, error) {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -340,7 +355,7 @@ func (s *PTZService) GetPresets(ctx context.Context, profileToken string) ([]*PT
 
 // GotoPreset moves PTZ to a preset position.
 func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken string, speed *PTZSpeed) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -369,7 +384,7 @@ func (s *PTZService) GotoPreset(ctx context.Context, profileToken, presetToken s
 
 // SetPreset sets a preset position.
 func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, presetToken string) (string, error) {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return "", ErrServiceNotSupported
 	}
@@ -410,7 +425,7 @@ func (s *PTZService) SetPreset(ctx context.Context, profileToken, presetName, pr
 
 // RemovePreset removes a preset.
 func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken string) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -437,7 +452,7 @@ func (s *PTZService) RemovePreset(ctx context.Context, profileToken, presetToken
 
 // GotoHomePosition moves PTZ to home position.
 func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, speed *PTZSpeed) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -464,7 +479,7 @@ func (s *PTZService) GotoHomePosition(ctx context.Context, profileToken string, 
 
 // SetHomePosition sets the current position as home position.
 func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) error {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -489,7 +504,7 @@ func (s *PTZService) SetHomePosition(ctx context.Context, profileToken string) e
 
 // GetConfiguration retrieves PTZ configuration.
 func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken string) (*PTZConfiguration, error) {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -531,7 +546,7 @@ func (s *PTZService) GetConfiguration(ctx context.Context, configurationToken st
 
 // GetConfigurations retrieves all PTZ configurations.
 func (s *PTZService) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, error) {
-	endpoint := s.client.ptzEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}

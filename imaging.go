@@ -11,9 +11,25 @@ const imagingNamespace = "http://www.onvif.org/ver20/imaging/wsdl"
 
 // GetImagingSettings retrieves imaging settings for a video source.
 //
+// getEndpoint returns the service endpoint, falling back to the device
+// endpoint when Initialize has not resolved (or the device does not
+// advertise) a service-specific address. The read is lock-guarded: the
+// client may be initialized concurrently with calls (issue #12).
+//
 //nolint:funlen // GetImagingSettings has many statements due to parsing complex imaging settings
+func (s *ImagingService) getEndpoint() string {
+	s.client.mu.RLock()
+	defer s.client.mu.RUnlock()
+
+	if s.client.imagingEndpoint != "" {
+		return s.client.imagingEndpoint
+	}
+
+	return s.client.endpoint
+}
+
 func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		endpoint = s.client.endpoint
 	}
@@ -142,7 +158,7 @@ func (s *ImagingService) GetImagingSettings(ctx context.Context, videoSourceToke
 func (s *ImagingService) SetImagingSettings(
 	ctx context.Context, videoSourceToken string, settings *ImagingSettings, forcePersistence bool,
 ) error {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		endpoint = s.client.endpoint
 	}
@@ -289,7 +305,7 @@ func (s *ImagingService) SetImagingSettings(
 
 // Move performs a focus move operation.
 func (s *ImagingService) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		endpoint = s.client.endpoint
 	}
@@ -349,7 +365,7 @@ type FocusMove struct {
 
 // GetOptions retrieves imaging options for a video source.
 func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string) (*ImagingOptions, error) {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -443,7 +459,7 @@ func (s *ImagingService) GetOptions(ctx context.Context, videoSourceToken string
 
 // GetMoveOptions retrieves imaging move options for focus.
 func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken string) (*MoveOptions, error) {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}
@@ -539,7 +555,7 @@ func (s *ImagingService) GetMoveOptions(ctx context.Context, videoSourceToken st
 
 // StopFocus stops focus movement.
 func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string) error {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return ErrServiceNotSupported
 	}
@@ -564,7 +580,7 @@ func (s *ImagingService) StopFocus(ctx context.Context, videoSourceToken string)
 
 // GetImagingStatus retrieves imaging status.
 func (s *ImagingService) GetImagingStatus(ctx context.Context, videoSourceToken string) (*ImagingStatus, error) {
-	endpoint := s.client.imagingEndpoint
+	endpoint := s.getEndpoint()
 	if endpoint == "" {
 		return nil, ErrServiceNotSupported
 	}

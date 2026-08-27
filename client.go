@@ -77,6 +77,13 @@ func (m AuthMode) soapMode() soap.AuthMode {
 }
 
 // Client represents an ONVIF client for communicating with IP cameras.
+//
+// A Client is safe for concurrent use by multiple goroutines: every mutable
+// field (credentials, clock skew, auth ladder state, capabilities cache,
+// service endpoints) is guarded by an internal mutex, and each operation
+// builds its own stateless SOAP exchange over the shared *http.Client. Callers
+// sharing one Client across goroutines (recording, snapshot, PTZ components)
+// do not need external locking.
 type Client struct {
 	endpoint   string
 	username   string
@@ -371,7 +378,12 @@ func (c *Client) Initialize(ctx context.Context) error {
 	}
 
 	// Extract service endpoints and fix incorrect addresses (localhost or stale
-	// advertised IPs after the camera roamed to a new address).
+	// advertised IPs after the camera roamed to a new address). The writes are
+	// lock-guarded so Initialize is safe to run while other goroutines call
+	// through the same client (issue #12).
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
 	if capabilities.Media != nil && capabilities.Media.XAddr != "" {
 		c.mediaEndpoint = c.fixServiceURL(capabilities.Media.XAddr)
 	}

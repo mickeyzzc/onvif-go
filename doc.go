@@ -12,6 +12,15 @@
 //   - Discovery: Automatic device discovery via WS-Discovery
 //   - Security: WS-Security authentication with password digest
 //
+// # Concurrency
+//
+// A Client is safe for concurrent use by multiple goroutines. All mutable
+// state (credentials, clock skew, auth-ladder stickiness, the capabilities
+// cache, service endpoints) is guarded internally, and every operation runs
+// as an independent SOAP exchange. Sharing one Client across components
+// (recording, snapshots, PTZ, events) is the intended usage; no external
+// serialization is needed.
+//
 // # Basic Usage
 //
 // Create a client and connect to a camera:

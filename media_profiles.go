@@ -238,6 +238,9 @@ type SetVideoAnalyticsConfiguration struct {
 }
 
 func (s *MediaService) getMediaEndpoint() string {
+	s.client.mu.RLock()
+	defer s.client.mu.RUnlock()
+
 	if s.client.mediaEndpoint != "" {
 		return s.client.mediaEndpoint
 	}
