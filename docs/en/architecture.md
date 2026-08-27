@@ -6,30 +6,65 @@ describes how the pieces fit together.
 
 ## Layering
 
+```mermaid
+flowchart TD
+    subgraph tools["cmd/ · examples/"]
+        clis["helper CLIs & runnable examples"]
+    end
+
+    subgraph rootpkg["root package — Client"]
+        facades["service facades<br/>Device · Media · PTZ · Imaging<br/>Events · DeviceIO · Security"]
+        dispatcher["auth dispatcher Client.call<br/>ladder + sticky memory"]
+        state["shared state, mutex-guarded<br/>credentials · clock skew ·<br/>capabilities cache · endpoints"]
+    end
+
+    subgraph internals["internal/"]
+        soap["internal/soap<br/>envelope build/parse · WS-Security ·<br/>fault detection · auth modes"]
+        digest["internal/httpdigest<br/>HTTP Digest round-tripper<br/>(snapshot downloads)"]
+    end
+
+    subgraph disc["discovery/ — self-contained, imports neither the root package nor internal/"]
+        discbox["active probe · passive listener ·<br/>directed HTTP probing · post-processing"]
+    end
+
+    subgraph testbed["server/ · testing/ · testdata/captures/"]
+        sim["virtual camera · mock server · real-camera fixtures"]
+    end
+
+    clis --> facades
+    facades --> dispatcher
+    dispatcher --> state
+    dispatcher --> soap
+    dispatcher --> digest
+    sim --> soap
 ```
-┌────────────────────────────────────────────────────────────┐
-│  cmd/            helper CLIs (discover, diagnostics, …)    │
-│  examples/       runnable examples                          │
-├────────────────────────────────────────────────────────────┤
-│  Client (root package)                                      │
-│  ├─ service facades: Device() Media() PTZ() Imaging()      │
-│  │   Events() DeviceIO() Security()                        │
-│  ├─ auth dispatcher: Client.call (ladder + sticky memory)  │
-│  └─ shared state: credentials, clock skew, caps cache,     │
-│     service endpoints (all mutex-guarded, issue #12)       │
-├──────────────────────┬─────────────────────────────────────┤
-│  internal/soap/      │  discovery/                          │
-│  transport: envelope │  active probe, passive listener,    │
-│  build/parse, WS-    │  directed HTTP probing, post-        │
-│  Security header,    │  processing (filter/scopes/enrich). │
-│  fault detection,    │  Self-contained: no dependency on   │
-│  auth modes          │  the root package.                   │
-├──────────────────────┴─────────────────────────────────────┤
-│  server/          virtual ONVIF camera (simulator)         │
-│  testing/         mock server, capture replay, goldens     │
-│  testdata/captures/  real-camera SOAP fixtures             │
-└────────────────────────────────────────────────────────────┘
-```
+
+## File map
+
+The root package is deliberately a single Go package — the facade API
+(`client.Media().GetProfiles(ctx)`) only works when the service types and
+their methods share one package — so the architecture is expressed in the
+file layout instead:
+
+| File | Domain |
+|---|---|
+| `client.go` | `Client`, functional options, the single call dispatcher, endpoint/XAddr repair |
+| `auth.go` | auth strategy (modes, ladder stickiness), clock-skew measurement, `DiagnoseAuth` |
+| `capabilities.go` | capabilities cache with single-flight and minimal-device fallback |
+| `services.go` | the seven service facade types and their accessors |
+| `errors.go` | package sentinels and `ONVIFError` |
+| `types.go` | shared ONVIF data types |
+| `device.go` | device identity, capabilities, scopes, users, misc `tds` operations |
+| `device_mgmt.go` | system date/time, DNS/NTP, network interfaces & gateway |
+| `device_security.go` | users/remote user, access policy, certificates |
+| `device_storage.go`, `device_wifi.go` | storage and WiFi subsystems |
+| `deviceio.go` | relay outputs, digital I/O |
+| `media_profiles.go` | profile listing/parsing + main/sub stream selection |
+| `media_stream.go` | stream & snapshot URIs, `StreamSetup` transport selection |
+| `media_encoder.go`, `media_audio.go`, `media_osd.go` | encoder, audio, and OSD configuration |
+| `ptz.go`, `imaging.go` | PTZ and imaging services |
+| `event.go` | raw pull-point primitives + the managed subscription loop |
+| `download.go` | snapshot/media file download (basic + digest) |
 
 ## The service-facade model
 
