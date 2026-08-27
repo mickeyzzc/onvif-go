@@ -11,6 +11,8 @@
 > PTZ / media / events / imaging. Zero third-party dependencies.
 > Maintained by [@mickeyzzc](https://github.com/mickeyzzc).
 
+> [**中文**](README.zh.md) — [English](README.md)
+
 A production-hardened Go library for communicating with ONVIF-compliant IP
 cameras, NVRs and surveillance devices. Its device compatibility comes from
 real deployments: Hikvision, Axis, Dahua, Bosch, Amcrest, HiSilicon-OEM
@@ -169,10 +171,27 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `discovery/` | WS-Discovery: active probe, passive listener, directed HTTP probing, post-processing |
 | `internal/soap/` | SOAP transport + WS-Security (digest/text modes, fault detection) |
 | `server/` | Virtual ONVIF camera server (simulator for testing) |
-| `testing/` | Test helpers: mock server, capture replay, golden files |
+| `docs/{en,zh}/` | Topic documentation (architecture, auth, discovery, media, events, concurrency, testing, CLI) |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` |
 | `examples/` | Runnable examples per feature area |
+
+## Documentation
+
+Topic guides, English and Chinese:
+
+| Topic | English | 中文 |
+|---|---|---|
+| Architecture | [architecture.md](docs/en/architecture.md) | [架构](docs/zh/architecture.md) |
+| Authentication & security | [authentication.md](docs/en/authentication.md) | [鉴权与安全](docs/zh/authentication.md) |
+| Device discovery | [discovery.md](docs/en/discovery.md) | [设备发现](docs/zh/discovery.md) |
+| Media & streaming | [media.md](docs/en/media.md) | [媒体与码流](docs/zh/media.md) |
+| Events | [events.md](docs/en/events.md) | [事件](docs/zh/events.md) |
+| Concurrency model | [concurrency.md](docs/en/concurrency.md) | [并发模型](docs/zh/concurrency.md) |
+| Testing | [testing.md](docs/en/testing.md) | [测试](docs/zh/testing.md) |
+| CLI tools | [cli.md](docs/en/cli.md) | [CLI 工具](docs/zh/cli.md) |
+
+API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go).
 
 ## Development
 

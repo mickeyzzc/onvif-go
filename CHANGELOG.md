@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Bilingual documentation set**: topic guides under `docs/{en,zh}/`
+  (architecture, authentication, discovery, media, events, concurrency,
+  testing, CLI) and a full Chinese README (`README.zh.md`), mirroring the
+  MiBeeNvr documentation standard.
 - **Auth ladder** (#1): `WithAuthMode` (digest / password-text / HTTP Basic /
   none), `WithAuthFallback` with sticky first-working-mode memory, and the
   `errors.Is(err, onvif.ErrUnauthorized)` sentinel covering HTTP 401/403,

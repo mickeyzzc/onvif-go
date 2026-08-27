@@ -1,125 +1,76 @@
 # Contributing to onvif-go
 
-First off, thank you for considering contributing to onvif-go! It's people like you that make onvif-go such a great tool.
+Thanks for your interest in contributing! This document covers the workflow,
+the quality bar, and what makes a good bug report for an ONVIF library.
 
-## Code of Conduct
+## Workflow: pull requests only
 
-This project and everyone participating in it is governed by our Code of Conduct. By participating, you are expected to uphold this code.
+The `main` branch is protected: all three CI jobs (lint, test, build) are
+required status checks, **direct pushes are rejected — everything merges
+through a pull request**, including changes by the maintainer.
 
-## How Can I Contribute?
-
-### Reporting Bugs
-
-Before creating bug reports, please check the existing issues as you might find out that you don't need to create one. When you are creating a bug report, please include as many details as possible:
-
-* **Use a clear and descriptive title**
-* **Describe the exact steps to reproduce the problem**
-* **Provide specific examples to demonstrate the steps**
-* **Describe the behavior you observed and what behavior you expected**
-* **Include camera model and firmware version if relevant**
-* **Include Go version and OS information**
-
-### Suggesting Enhancements
-
-Enhancement suggestions are tracked as GitHub issues. When creating an enhancement suggestion, please include:
-
-* **Use a clear and descriptive title**
-* **Provide a detailed description of the suggested enhancement**
-* **Provide specific examples to demonstrate the enhancement**
-* **Explain why this enhancement would be useful**
-
-### Pull Requests
-
-1. Fork the repo and create your branch from `main`
-2. If you've added code that should be tested, add tests
-3. If you've changed APIs, update the documentation
-4. Ensure the test suite passes
-5. Make sure your code follows the existing style
-6. Issue that pull request!
-
-## Development Setup
+1. Fork the repo and create a branch from `main`
+2. Make your change with tests
+3. Ensure the full check suite passes locally:
 
 ```bash
-# Clone your fork
-git clone https://github.com/YOUR_USERNAME/onvif-go.git
-cd onvif-go
-
-# Add upstream remote
-git remote add upstream https://github.com/0x524a/onvif-go.git
-
-# Create a branch
-git checkout -b feature/my-new-feature
-
-# Install dependencies
-go mod download
-
-# Run tests
-go test ./...
-
-# Run tests with coverage
-go test -cover ./...
-
-# Run linter (if installed)
-golangci-lint run
+make check   # lint + test
+make fmt     # gofumpt + goimports via golangci-lint fmt — run before committing
 ```
 
-## Coding Standards
+4. Open a pull request; CI must be green before merge
 
-* Follow standard Go conventions and idioms
-* Use `gofmt` to format your code
-* Write clear, self-documenting code with comments where necessary
-* Add tests for new functionality
-* Keep functions focused and modular
-* Use meaningful variable and function names
-
-## Commit Messages
-
-* Use the present tense ("Add feature" not "Added feature")
-* Use the imperative mood ("Move cursor to..." not "Moves cursor to...")
-* Limit the first line to 72 characters or less
-* Reference issues and pull requests liberally after the first line
+Commit messages: imperative mood, first line ≤ 72 characters, reference
+issues after the first line (`Fixes #123`).
 
 Example:
 ```
-Add support for Analytics service
+Add GetAnalyticsConfiguration
 
-- Implement GetAnalyticsConfiguration
-- Add rule engine support
-- Update documentation
+- Implement the Analytics service facade
+- Add mock-device tests
+- Update media docs (en/zh)
 
 Closes #123
 ```
 
-## Testing
+## Quality bar
 
-* Write unit tests for new functionality
-* Ensure all tests pass before submitting PR
-* Add integration tests for new ONVIF services
-* Test with real cameras when possible
+- **Zero lint findings.** `golangci-lint run` (v2) must report nothing;
+  exemptions require a written rationale in `.golangci.yml`.
+- **Formatting** is gofumpt + goimports (enforced by `make fmt` and checked
+  in CI).
+- **Tests**: behavioral tests run against `httptest` mock devices — see
+  [docs/en/testing.md](docs/en/testing.md) for the layers and conventions.
+  Real-camera tests are environment-gated and never run in CI.
+- **Zero third-party dependencies** in the library module (stdlib only).
+  This is a deliberate constraint; propose changes accordingly.
+- Go 1.26; standard Go idioms, self-documenting names, comments where the
+  code cannot speak for itself.
 
-```bash
-# Run all tests
-go test ./...
+## Reporting bugs
 
-# Run with race detector
-go test -race ./...
+Beyond the basics (reproduction steps, Go version, OS), the two things that
+matter most for this library:
 
-# Run with coverage
-go test -cover ./...
+- **Camera model and firmware version** — ONVIF quirks are almost always
+  firmware-specific.
+- **Raw SOAP exchange** when possible — run `cmd/onvif-diagnostics` with
+  `-capture-xml` (see [docs/en/cli.md](docs/en/cli.md)) and attach the
+  output **after redacting credentials**. Captured responses can become
+  `testdata/captures/` fixtures so the regression outlives the camera.
 
-# Run specific test
-go test -run TestGetDeviceInformation
-```
+Never include real credentials in issues, examples, or test fixtures.
 
 ## Documentation
 
-* Update README.md for user-facing changes
-* Add godoc comments for exported types and functions
-* Update examples if API changes
-* Add changelog entry for significant changes
+User-facing behavior changes should update the topic docs — both languages:
+`docs/en/*.md` and its `docs/zh/*.md` mirror. API additions go into the
+[README](README.md) quick-start only when they are primary-surface features,
+and significant changes get a [CHANGELOG](CHANGELOG.md) entry.
 
-## Questions?
+## Attribution
 
-Feel free to open an issue with your question or reach out to the maintainers.
-
-Thank you for contributing! 🎉
+This project continues [0x524a/onvif-go](https://github.com/0x524a/onvif-go)
+(MIT). Keep the existing copyright lines intact; contributions land under
+the same MIT license.
