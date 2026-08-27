@@ -1,6 +1,6 @@
 # v2 Architecture (Breaking)
 
-> Status: planned — being implemented across milestones [#21](https://github.com/mickeyzzc/onvif-go/issues/21)–[#25](https://github.com/mickeyzzc/onvif-go/issues/25), tracked by the [v2 epic](https://github.com/mickeyzzc/onvif-go/issues/20). This document is the plan of record.
+> Status: implemented — M1–M4 landed (#21 #22 #23 #24), finalization in [#25](https://github.com/mickeyzzc/onvif-go/issues/25), tracked by the [v2 epic](https://github.com/mickeyzzc/onvif-go/issues/20). This document is the plan of record.
 
 v2 is a deliberately breaking release. Two forces drive it:
 
@@ -104,7 +104,7 @@ Breaking is allowed, but wasteful breaking is not:
 | M2 | #22 | ✅ done — `server/soap` transport: context, auth policy, XML writer (#17 #16 #18) |
 | M3 | #23 | ✅ provider interfaces + simulator extraction (#19) |
 | M4 | #24 | ✅ device-side discovery responder + shared codec (#15) |
-| M5 | #25 | docs, migration guide, CHANGELOG, `v2.0.0-rc1`, MiBeeNvr reference migration |
+| M5 | #25 | ✅ docs, migration guide, CHANGELOG, `v2.0.0-rc1`, MiBeeNvr reference migration |
 
 ## Process rules
 

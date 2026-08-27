@@ -1,6 +1,6 @@
 # v2 架构（破坏性版本）
 
-> 状态：规划落地中——按里程碑 [#21](https://github.com/mickeyzzc/onvif-go/issues/21)–[#25](https://github.com/mickeyzzc/onvif-go/issues/25) 实施，[v2 总跟踪 issue](https://github.com/mickeyzzc/onvif-go/issues/20) 统筹。本文是规划基准文档。
+> 状态：已实施——M1–M4 已落地（#21 #22 #23 #24），收尾见 [#25](https://github.com/mickeyzzc/onvif-go/issues/25)，由 [v2 总跟踪](https://github.com/mickeyzzc/onvif-go/issues/20)追踪。本文档是唯一权威计划。
 
 v2 是一次刻意为之的破坏性版本，两大动因：
 
@@ -94,7 +94,7 @@ github.com/mickeyzzc/onvif-go/v2
 | M2 | #22 | ✅ `server/soap` 传输层：上下文、鉴权策略、XML 写出器（#17 #16 #18） |
 | M3 | #23 | ✅ provider 接口 + 模拟器抽离（#19） |
 | M4 | #24 | ✅ 设备侧发现应答器 + 共享编解码（#15） |
-| M5 | #25 | 文档、迁移指南、CHANGELOG、`v2.0.0-rc1`、MiBeeNvr 参考迁移 |
+| M5 | #25 | ✅ 文档、迁移指南、CHANGELOG、`v2.0.0-rc1`、MiBeeNvr 参考迁移 |
 
 ## 流程规则
 
