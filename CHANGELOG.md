@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0-rc1] - 2026-08-27
+
+The v2 release candidate: module path `/v2`, client domain-package
+split (M1), rebuilt server SOAP transport (M2), pluggable provider
+architecture (M3), and the shared WS-Discovery codec with a device-side
+responder (M4). See `MIGRATION.md` for the complete v1→v2 mapping and
+`docs/{en,zh}/v2-architecture.md` for the plan of record.
+
 ### Changed
 - **v2 module path and package split** (#20/#21): the module is now
   `github.com/mickeyzzc/onvif-go/v2`. The client split into domain packages
@@ -66,6 +74,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exported surface are unchanged (one exception:
   `ProfileConfig.ToONVIFProfile()` became `server.ProfileToONVIF()` —
   methods cannot follow type aliases across packages).
+- **v2 finalization** (#25): full v1-path sweep across docs and READMEs,
+  `MIGRATION.md` (complete v1→v2 mapping incl. the server transport and
+  provider changes), architecture status updated to implemented, and
+  this release-candidate section.
 - **Shared WS-Discovery codec + device-side responder** (#24, closes
   #15): new `wsdiscovery` leaf package holds the wire codec for both
   sides of the protocol (`BuildProbe`/`ParseProbe`,

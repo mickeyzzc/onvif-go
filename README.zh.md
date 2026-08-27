@@ -162,11 +162,12 @@ diag, _ := client.DiagnoseAuth(ctx)
 | 媒体与码流 | [媒体与码流](docs/zh/media.md) | [media.md](docs/en/media.md) |
 | 事件 | [事件](docs/zh/events.md) | [events.md](docs/en/events.md) |
 | 服务端 | [服务端](docs/zh/server.md) | [server.md](docs/en/server.md) |
+| v1 → v2 迁移 | [迁移指南](MIGRATION.md) | [MIGRATION.md](MIGRATION.md) |
 | 并发模型 | [并发模型](docs/zh/concurrency.md) | [concurrency.md](docs/en/concurrency.md) |
 | 测试 | [测试](docs/zh/testing.md) | [testing.md](docs/en/testing.md) |
 | CLI 工具 | [CLI 工具](docs/zh/cli.md) | [cli.md](docs/en/cli.md) |
 
-API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
+API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
 
 ## 项目结构
 

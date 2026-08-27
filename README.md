@@ -190,11 +190,12 @@ Topic guides, English and Chinese:
 | Media & streaming | [media.md](docs/en/media.md) | [媒体与码流](docs/zh/media.md) |
 | Events | [events.md](docs/en/events.md) | [事件](docs/zh/events.md) |
 | ONVIF server | [server.md](docs/en/server.md) | [服务端](docs/zh/server.md) |
+| v1 → v2 migration | [MIGRATION.md](MIGRATION.md) | [迁移指南](MIGRATION.md) |
 | Concurrency model | [concurrency.md](docs/en/concurrency.md) | [并发模型](docs/zh/concurrency.md) |
 | Testing | [testing.md](docs/en/testing.md) | [测试](docs/zh/testing.md) |
 | CLI tools | [cli.md](docs/en/cli.md) | [CLI 工具](docs/zh/cli.md) |
 
-API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2).
+API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2).
 
 ## Development
 
