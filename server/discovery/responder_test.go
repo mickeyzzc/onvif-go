@@ -36,7 +36,7 @@ func TestResponderAnswersMulticastProbe(t *testing.T) {
 	src := &net.UDPAddr{IP: net.ParseIP("198.51.100.7"), Port: 52123}
 
 	capture := &captureSend{}
-	responder.handleDatagram(probe, src, capture.send)
+	responder.handleDatagram(t.Context(), probe, src, capture.send)
 
 	if len(capture.replies) != 1 {
 		t.Fatalf("replies = %d, want 1", len(capture.replies))
@@ -57,13 +57,87 @@ func TestResponderAnswersMulticastProbe(t *testing.T) {
 		t.Errorf("EndpointRef = %q", device.EndpointRef)
 	}
 
-	if len(device.XAddrs) != 1 || device.XAddrs[0] != "http://198.51.100.7:9090/onvif/device_service" {
-		t.Errorf("XAddrs = %v, want requester-IP echo", device.XAddrs)
+	// #38: derived XAddrs must point at THIS device (a local interface
+	// address), never echo the requester — an echoing XAddrs makes NVR
+	// consumers register themselves as the camera.
+	if len(device.XAddrs) != 1 {
+		t.Fatalf("XAddrs = %v, want exactly one", device.XAddrs)
+	}
+
+	xaddrHost := device.XAddrs[0]
+	if strings.Contains(xaddrHost, "198.51.100.7") {
+		t.Errorf("XAddrs = %q echoes the requester IP", xaddrHost)
+	}
+
+	if !isLocalAddress(t, xaddrHost) {
+		t.Errorf("XAddrs = %q does not point at a local device address", xaddrHost)
+	}
+
+	if !strings.Contains(xaddrHost, ":9090/onvif/device_service") {
+		t.Errorf("XAddrs = %q missing configured port/path", xaddrHost)
 	}
 
 	if device.Name != "TestCam" || device.Location != "Roof" {
 		t.Errorf("scopes not surfaced: name=%q location=%q", device.Name, device.Location)
 	}
+}
+
+// TestDerivedXAddrsNeverEchoRequester pins #38 at the derivation layer:
+// for any peer, an unset XAddrs config derives the device's own source
+// address toward that peer (loopback when the peer is loopback) — the
+// requester's address never appears.
+func TestDerivedXAddrsNeverEchoRequester(t *testing.T) {
+	responder := NewResponder(Config{Port: 8080, DevicePath: "/onvif/device_service"})
+
+	for _, peer := range []string{"198.51.100.7", "127.0.0.1"} {
+		match := responder.matchFor(t.Context(), peer)
+		if match.XAddrs == "" {
+			t.Fatalf("peer %s: empty derived XAddrs", peer)
+		}
+
+		if strings.Contains(match.XAddrs, peer) && peer != "127.0.0.1" {
+			t.Errorf("peer %s: XAddrs %q echoes the requester", peer, match.XAddrs)
+		}
+
+		if !isLocalAddress(t, match.XAddrs) {
+			t.Errorf("peer %s: XAddrs %q is not a local device address", peer, match.XAddrs)
+		}
+	}
+}
+
+// isLocalAddress reports whether the host part of an http://… XAddr (or
+// host:port token) belongs to one of this host's interface addresses.
+func isLocalAddress(t *testing.T, xaddr string) bool {
+	t.Helper()
+
+	u := strings.TrimPrefix(xaddr, "http://")
+	host := u
+
+	if h, _, err := net.SplitHostPort(strings.TrimSuffix(u, "/onvif/device_service")); err == nil {
+		host = h
+	} else if i := strings.IndexByte(u, '/'); i >= 0 {
+		host = u[:i]
+	} else if i := strings.LastIndexByte(u, ':'); i >= 0 {
+		host = u[:i]
+	}
+
+	ip := net.ParseIP(host)
+	if ip == nil {
+		t.Fatalf("cannot parse host out of %q", xaddr)
+	}
+
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		t.Fatalf("list interface addrs: %v", err)
+	}
+
+	for _, a := range addrs {
+		if ipnet, ok := a.(*net.IPNet); ok && ipnet.IP.Equal(ip) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func TestResponderIgnoresNonProbesAndTypeFilters(t *testing.T) {
@@ -73,12 +147,12 @@ func TestResponderIgnoresNonProbesAndTypeFilters(t *testing.T) {
 	capture := &captureSend{}
 
 	// Hello (someone else's announcement) — ignored.
-	responder.handleDatagram(wsdiscovery.BuildHello(wsdiscovery.Match{EndpointRef: "urn:uuid:x"}), src, capture.send)
+	responder.handleDatagram(t.Context(), wsdiscovery.BuildHello(wsdiscovery.Match{EndpointRef: "urn:uuid:x"}), src, capture.send)
 
 	// Probe for printers only — filtered out.
 	printerProbe := strings.Replace(string(wsdiscovery.BuildProbe("p1")),
 		"dp0:NetworkVideoTransmitter", "dn:NetworkPrinter", 1)
-	responder.handleDatagram([]byte(printerProbe), src, capture.send)
+	responder.handleDatagram(t.Context(), []byte(printerProbe), src, capture.send)
 
 	if len(capture.replies) != 0 {
 		t.Errorf("replies = %d, want 0 (ignored/filtered)", len(capture.replies))
@@ -93,7 +167,7 @@ func TestResponderStaticXAddrs(t *testing.T) {
 
 	src := &net.UDPAddr{IP: net.IPv4(10, 1, 2, 3), Port: 9}
 	capture := &captureSend{}
-	responder.handleDatagram(wsdiscovery.BuildProbe("fixed-id"), src, capture.send)
+	responder.handleDatagram(t.Context(), wsdiscovery.BuildProbe("fixed-id"), src, capture.send)
 
 	devices, err := parseClientDevices(capture.replies[0])
 	if err != nil {

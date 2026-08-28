@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"path"
 	"strconv"
@@ -104,29 +105,9 @@ func New(config *Config, opts ...Option) (*Server, error) {
 
 // Start starts the ONVIF server.
 func (s *Server) Start(ctx context.Context) error {
-	// Create HTTP server
-	mux := http.NewServeMux()
-
-	// Register service handlers
-	s.registerDeviceService(mux)
-	s.registerMediaService(mux)
-
-	if s.config.SupportPTZ {
-		s.registerPTZService(mux)
-	}
-
-	if s.config.SupportImaging {
-		s.registerImagingService(mux)
-	}
-
-	// Add snapshot endpoint (SnapshotPath; defaults to BasePath/snapshot)
-	mux.HandleFunc(s.config.SnapshotPath, s.handleSnapshot)
-
-	// Create HTTP server
-	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
 	httpServer := &http.Server{
-		Addr:         addr,
-		Handler:      mux,
+		Addr:         fmt.Sprintf("%s:%d", s.config.Host, s.config.Port),
+		Handler:      s.Handler(),
 		ReadTimeout:  s.config.Timeout,
 		WriteTimeout: s.config.Timeout,
 	}
@@ -134,30 +115,7 @@ func (s *Server) Start(ctx context.Context) error {
 	// Start server in goroutine
 	errChan := make(chan error, 1)
 	go func() {
-		fmt.Printf("🎥 ONVIF Server starting on %s\n", addr)
-		fmt.Printf("📡 Device Service: http://%s%s/device_service\n", addr, s.config.BasePath)
-		fmt.Printf("🎬 Media Service: http://%s%s/media_service\n", addr, s.config.BasePath)
-		if s.config.SupportPTZ {
-			fmt.Printf("🎮 PTZ Service: http://%s%s/ptz_service\n", addr, s.config.BasePath)
-		}
-		if s.config.SupportImaging {
-			fmt.Printf("📷 Imaging Service: http://%s%s/imaging_service\n", addr, s.config.BasePath)
-		}
-		fmt.Printf("\n🌐 Virtual Camera Profiles:\n")
-
-		for i, profile := range s.config.Profiles {
-			uri := ""
-			if info, err := s.stream.Stream(profile.Token); err == nil {
-				uri = s.deriveStreamURI(nil, info)
-			}
-
-			fmt.Printf("   [%d] %s - %s (%dx%d @ %dfps)\n",
-				i+1, profile.Name, uri,
-				profile.VideoEncoder.Resolution.Width,
-				profile.VideoEncoder.Resolution.Height,
-				profile.VideoEncoder.Framerate)
-		}
-		fmt.Printf("\n✅ Server is ready!\n\n")
+		s.logStartup(httpServer.Addr)
 
 		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errChan <- err
@@ -167,7 +125,8 @@ func (s *Server) Start(ctx context.Context) error {
 	// Wait for context cancellation or error
 	select {
 	case <-ctx.Done():
-		fmt.Println("\n🛑 Shutting down server...")
+		s.logger().Info("ONVIF server shutting down")
+
 		const shutdownTimeout = 5 // Server shutdown timeout in seconds
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout*time.Second)
 		defer cancel()
@@ -179,6 +138,77 @@ func (s *Server) Start(ctx context.Context) error {
 		return nil
 	case err := <-errChan:
 		return err
+	}
+}
+
+// RegisterServices mounts every ONVIF service handler plus the snapshot
+// endpoint onto mux. Embedding hosts own the http.Server and the mux,
+// add their own routes around the ONVIF endpoints, and never call
+// Start (#35).
+func (s *Server) RegisterServices(mux *http.ServeMux) {
+	s.registerDeviceService(mux)
+	s.registerMediaService(mux)
+
+	if s.config.SupportPTZ {
+		s.registerPTZService(mux)
+	}
+
+	if s.config.SupportImaging {
+		s.registerImagingService(mux)
+	}
+
+	// Snapshot endpoint (SnapshotPath; defaults to BasePath/snapshot)
+	mux.HandleFunc(s.config.SnapshotPath, s.handleSnapshot)
+}
+
+// Handler returns an http.Handler serving the ONVIF services and the
+// snapshot endpoint — the embedding entry point for hosts that mount it
+// behind their own router (#35).
+func (s *Server) Handler() http.Handler {
+	mux := http.NewServeMux()
+	s.RegisterServices(mux)
+
+	return mux
+}
+
+// logger returns the configured logger, or a discard logger when none
+// is set — embedded hosts get a silent server unless they opt in (#35).
+func (s *Server) logger() *slog.Logger {
+	if s.config.Logger != nil {
+		return s.config.Logger
+	}
+
+	return slog.New(slog.DiscardHandler)
+}
+
+// logStartup announces the service endpoints and profiles through the
+// configured logger — never stdout (#35).
+func (s *Server) logStartup(addr string) {
+	log := s.logger().WithGroup("onvif")
+
+	log.Info("server listening",
+		"addr", addr,
+		"device_service", "http://"+addr+s.config.BasePath+"/device_service",
+		"media_service", "http://"+addr+s.config.BasePath+"/media_service",
+		"ptz_service", s.config.SupportPTZ,
+		"imaging_service", s.config.SupportImaging,
+	)
+
+	for i, profile := range s.config.Profiles {
+		uri := ""
+		if info, err := s.stream.Stream(profile.Token); err == nil {
+			uri = s.deriveStreamURI(nil, info)
+		}
+
+		log.Info("profile",
+			"index", i+1,
+			"name", profile.Name,
+			"rtsp", uri,
+			"resolution", fmt.Sprintf("%dx%d",
+				profile.VideoEncoder.Resolution.Width,
+				profile.VideoEncoder.Resolution.Height),
+			"framerate", profile.VideoEncoder.Framerate,
+		)
 	}
 }
 
