@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (tests — client-service TDD backfill, second pass)
+- Wire-contract suites for the client service packages that were still
+  thin, all through the in-memory `internal/testutil.FakeCaller`:
+  `security` (IP filters, password policy/history, auth-failure
+  warning, full certificate lifecycle incl. PKCS#10, client-cert mode;
+  16.9%→82.7%), `device` (zero-configuration/dynamic-DNS, hostname/DNS/
+  NTP writers, scopes add/remove/set, system log/backup/URIs, factory
+  defaults, firmware upgrade/restore, network interfaces + validation,
+  discovery modes, protocols/gateway/geo/DP/WsdlURL, storage config
+  CRUD, hashing, full Dot11/Dot1X set, capabilities cache
+  fetch-once/invalidate; 20.4%→77.8%), `deviceio` (digital input
+  options/writers, video outputs, serial ports incl. send/receive,
+  video output config, relay outputs/settings/state; 28.6%→81.9%),
+  `media` (stream URI + options validation, multicast/sync controls,
+  encoder/source modes and config CRUD, profile/analytics management,
+  the full audio chain incl. compatible-configuration listings, OSD
+  lifecycle; 33.5%→71.7%), `testing` (v1 capture archive loader +
+  replay server round-trip incl. 404 path, operation extraction;
+  38.9%→49.5%), `internal/soap` (fault/status error classification,
+  `IsAuthFailure` chains, body truncation, `CreatedValue` precedence,
+  client setters; 54.3%→83.0%).
+
 ### Added (server + discovery, runtime address tracking)
 - **Dynamic advertised-host sources** (#45): `Config.AdvertiseHostProvider`
   / `Server.SetAdvertiseHostProvider(fn)` consult a dynamic host source on
