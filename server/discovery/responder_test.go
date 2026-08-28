@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -336,4 +337,37 @@ func lastSegment(s string) string {
 	parts := strings.Split(s, "/")
 
 	return parts[len(parts)-1]
+}
+
+// TestResponderXAddrsProviderDynamic pins #45's discovery half: an
+// XAddrsProvider is consulted per match so DHCP address changes are
+// reflected in subsequent ProbeMatches/Hello without restart; nil or
+// empty results fall back to the derived device-local address.
+func TestResponderXAddrsProviderDynamic(t *testing.T) {
+	var current atomic.Value
+	current.Store([]string{"http://192.0.2.1:80/onvif/device_service"})
+
+	responder := NewResponder(Config{
+		XAddrsProvider: func() []string { return current.Load().([]string) },
+	})
+
+	match := responder.matchFor(t.Context(), "198.51.100.7")
+	if match.XAddrs != "http://192.0.2.1:80/onvif/device_service" {
+		t.Fatalf("XAddrs = %q, want provider value", match.XAddrs)
+	}
+
+	current.Store([]string{"http://192.0.2.2:8080/onvif/device_service"})
+
+	match = responder.matchFor(t.Context(), "198.51.100.7")
+	if match.XAddrs != "http://192.0.2.2:8080/onvif/device_service" {
+		t.Fatalf("XAddrs after change = %q, want immediate provider update", match.XAddrs)
+	}
+
+	// Empty provider result falls back to the derived device-local address.
+	current.Store([]string{})
+
+	match = responder.matchFor(t.Context(), "198.51.100.7")
+	if strings.Contains(match.XAddrs, "198.51.100.7") || !isLocalAddress(t, match.XAddrs) {
+		t.Fatalf("empty provider fallback = %q, want derived device address", match.XAddrs)
+	}
 }

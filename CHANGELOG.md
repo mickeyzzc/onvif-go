@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (server + discovery, runtime address tracking)
+- **Dynamic advertised-host sources** (#45): `Config.AdvertiseHostProvider`
+  / `Server.SetAdvertiseHostProvider(fn)` consult a dynamic host source on
+  every advertised-URL construction (DHCP renewals take effect
+  immediately, no restart); `Server.SetAdvertiseHost(host)` pins a
+  runtime value. Provider results beat the static `Config.AdvertiseHost`;
+  empty results fall through to the previous resolution order.
+  `discovery.Config.XAddrsProvider` brings the same dynamics to
+  ProbeMatches/Hello XAddrs.
+
 ## [v2.0.0-rc3] - 2026-08-28
 
 ### Added (server, embedding + discovery)

@@ -87,13 +87,14 @@ func New(config *Config, opts ...Option) (*Server, error) {
 	sim := simulator.New(config.Profiles, config.DeviceInfo)
 
 	server := &Server{
-		config:     config,
-		deviceInfo: sim,
-		stream:     sim,
-		snapshot:   sim,
-		imaging:    sim,
-		ptz:        sim,
-		systemTime: time.Now(),
+		config:      config,
+		deviceInfo:  sim,
+		stream:      sim,
+		snapshot:    sim,
+		imaging:     sim,
+		ptz:         sim,
+		systemTime:  time.Now(),
+		advertiseFn: config.AdvertiseHostProvider,
 	}
 
 	for _, opt := range opts {
@@ -229,9 +230,16 @@ func (s *Server) newSOAPHandler() *soap.Handler {
 }
 
 // advertiseHost returns the host to publish in XAddr responses and
-// stream/snapshot URIs: the configured override, else the requesting
-// client's IP, else the bind address.
+// stream/snapshot URIs: the dynamic source (runtime setter or
+// Config.AdvertiseHostProvider — #45), else the configured static
+// override, else the requesting client's IP, else the bind address.
 func (s *Server) advertiseHost(rc *soap.RequestContext) string {
+	if fn := s.currentAdvertiseFn(); fn != nil {
+		if host := fn(); host != "" {
+			return host
+		}
+	}
+
 	if s.config.AdvertiseHost != "" {
 		return s.config.AdvertiseHost
 	}
@@ -246,6 +254,35 @@ func (s *Server) advertiseHost(rc *soap.RequestContext) string {
 	}
 
 	return host
+}
+
+// currentAdvertiseFn snapshots the dynamic host source.
+func (s *Server) currentAdvertiseFn() func() string {
+	s.advertiseMu.RLock()
+	defer s.advertiseMu.RUnlock()
+
+	return s.advertiseFn
+}
+
+// SetAdvertiseHost pins the advertised host at runtime (#45): DHCP
+// renewals can be followed by calling this with the new address. It
+// replaces any installed provider until SetAdvertiseHostProvider is
+// called again.
+func (s *Server) SetAdvertiseHost(host string) {
+	s.advertiseMu.Lock()
+	defer s.advertiseMu.Unlock()
+
+	s.advertiseFn = func() string { return host }
+}
+
+// SetAdvertiseHostProvider installs (or, with nil, removes) a dynamic
+// advertised-host source. The function may be called concurrently and
+// must be safe for it.
+func (s *Server) SetAdvertiseHostProvider(fn func() string) {
+	s.advertiseMu.Lock()
+	defer s.advertiseMu.Unlock()
+
+	s.advertiseFn = fn
 }
 
 // deriveStreamURI renders a StreamInfo into the URI GetStreamUri
