@@ -120,7 +120,9 @@ func (h *Handler) authenticate(header *originsoap.Header) bool {
 	}
 
 	// Default (and absent Type): PasswordDigest =
-	// Base64(SHA1(nonce + created + password)).
+	// Base64(SHA1(nonce + created + password)). The created timestamp is
+	// read via CreatedValue so clients using the misspelled utility
+	// namespace still authenticate (issue #40).
 	nonce, err := base64.StdEncoding.DecodeString(token.Nonce.Nonce)
 	if err != nil {
 		return false
@@ -128,7 +130,7 @@ func (h *Handler) authenticate(header *originsoap.Header) bool {
 
 	hash := sha1.New() //nolint:gosec // SHA1 required by the ONVIF digest formula
 	hash.Write(nonce)
-	hash.Write([]byte(token.Created))
+	hash.Write([]byte(token.CreatedValue()))
 	hash.Write([]byte(h.password))
 
 	got, err := base64.StdEncoding.DecodeString(token.Password.Password)

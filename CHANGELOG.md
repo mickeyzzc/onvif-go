@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (server, embedded-host interop)
+- **WS-Security digest auth now accepts the misspelled utility namespace**:
+  many community clients emit `wsu:Created` under
+  `oasis-200401-wss-wssecurity-utility-1.0.xsd` instead of the canonical
+  `oasis-200401-wss-utility-1.0.xsd`; the strict namespace match silently
+  decoded an empty timestamp and every digest failed with a misleading
+  "invalid password" fault. Both variants now authenticate (#40).
+- **New `soap.RawEnvelope` response channel**: a handler returning
+  `RawEnvelope` has its bytes served as the complete response document —
+  no wrapping, no re-serialization. Unblocks serving WS-Discovery
+  ProbeMatches (with WS-Addressing RelatesTo) from inside the SOAP
+  handler (#39).
+
 ## [v2.0.0-rc2] - 2026-08-27
 
 ### Changed (breaking vs rc1 — import path only)

@@ -91,6 +91,24 @@ type UsernameToken struct {
 	Password Password `xml:"Password"`
 	Nonce    Nonce    `xml:"Nonce"`
 	Created  string   `xml:"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-utility-1.0.xsd Created"`
+
+	// CreatedVariant captures wsu:Created sent under the common
+	// misspelled utility namespace (oasis-200401-wss-wssecurity-utility-…)
+	// used by many community clients; encoding/xml namespace-qualifies
+	// field matching, so the variant needs its own field. Emission always
+	// uses the canonical Created above (omitempty keeps this one off the
+	// wire when empty).
+	CreatedVariant string `xml:"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd Created,omitempty"` //nolint:lll // Long XML namespace
+}
+
+// CreatedValue returns the token's creation timestamp, accepting either
+// the canonical or the misspelled utility namespace on decode.
+func (t *UsernameToken) CreatedValue() string {
+	if t.Created != "" {
+		return t.Created
+	}
+
+	return t.CreatedVariant
 }
 
 // Password represents a WS-Security password.
