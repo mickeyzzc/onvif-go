@@ -64,6 +64,7 @@ const (
 	defaultWidth      = 1920
 	defaultHeight     = 1080
 	defaultFramerate  = 30
+	defaultRTSPPort   = 8554
 	defaultQuality    = 80
 	defaultBitrate    = 4096
 	maxPan            = 180
@@ -115,6 +116,23 @@ type Config struct {
 
 	// Camera profiles (supports multi-lens cameras)
 	Profiles []ProfileConfig
+
+	// Scopes answered by the Device-service GetScopes action. Hosts
+	// advertising WS-Discovery should set the same values on the
+	// discovery Responder config so ProbeMatches and GetScopes agree.
+	// Empty → DefaultScopes (#37).
+	Scopes []string
+
+	// SnapshotPath is the HTTP path of the snapshot endpoint. Empty →
+	// BasePath + "/snapshot" (the historical form); a value like "/snap"
+	// is used verbatim as an absolute path (#36).
+	SnapshotPath string
+
+	// SnapshotURIParameterless makes GetSnapshotUri advertise the bare
+	// SnapshotPath without the ?profile=<token> query, and the endpoint
+	// serves the default profile for parameterless requests (#36). The
+	// default (false) keeps the historical query form.
+	SnapshotURIParameterless bool
 
 	// Capabilities
 	SupportPTZ     bool

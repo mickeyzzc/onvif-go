@@ -88,12 +88,17 @@ func TestGetConfig(t *testing.T) {
 	config := createTestConfig()
 	server, _ := New(config)
 
+	// New normalizes a shallow copy (SnapshotPath default), so pointer
+	// identity is not preserved — content is.
 	got := server.GetConfig()
-	if got != config {
+	if got.Host != config.Host || got.Port != config.Port || got.BasePath != config.BasePath {
 		t.Error("GetConfig() returned different config")
 	}
 	if got.Profiles[0].Name != config.Profiles[0].Name {
 		t.Errorf("GetConfig() profile name mismatch: %s != %s", got.Profiles[0].Name, config.Profiles[0].Name)
+	}
+	if got.SnapshotPath != "/onvif/snapshot" {
+		t.Errorf("GetConfig() SnapshotPath = %q, want /onvif/snapshot default", got.SnapshotPath)
 	}
 }
 

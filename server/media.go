@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/xml"
 	"fmt"
+	"net/url"
 
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
@@ -271,20 +272,16 @@ func (s *Server) HandleGetStreamUri(rc *soap.RequestContext, body []byte) (inter
 	}
 
 	// Resolve the stream through the provider; a pinned override wins,
-	// otherwise the URI is derived from the advertised host.
+	// otherwise the URI is derived from the advertised host and the
+	// stream's RTSP port (#34).
 	streamInfo, err := s.stream.Stream(req.ProfileToken)
 	if err != nil {
 		return nil, err
 	}
 
-	uri := streamInfo.OverrideURI
-	if uri == "" {
-		uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(rc), streamInfo.RTSPPath)
-	}
-
 	return &GetStreamUriResponse{
 		MediaUri: MediaUri{
-			URI:                 uri,
+			URI:                 s.deriveStreamURI(rc, streamInfo),
 			InvalidAfterConnect: false,
 			InvalidAfterReboot:  true,
 			Timeout:             "PT60S",
@@ -320,10 +317,13 @@ func (s *Server) HandleGetSnapshotUri(rc *soap.RequestContext, body []byte) (int
 		return nil, fmt.Errorf("%w: %s", ErrSnapshotNotSupported, req.ProfileToken)
 	}
 
-	// Build snapshot URI
+	// Build the snapshot URI: SnapshotPath, with the ?profile= query
+	// unless the parameterless form is configured (#36).
 	host := s.advertiseHost(rc)
-	uri := fmt.Sprintf("http://%s:%d%s/snapshot?profile=%s",
-		host, s.config.Port, s.config.BasePath, req.ProfileToken)
+	uri := fmt.Sprintf("http://%s:%d%s", host, s.config.Port, s.config.SnapshotPath)
+	if !s.config.SnapshotURIParameterless {
+		uri += "?profile=" + url.QueryEscape(req.ProfileToken)
+	}
 
 	return &GetSnapshotUriResponse{
 		MediaUri: MediaUri{

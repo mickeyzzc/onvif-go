@@ -301,3 +301,41 @@ func (s *Server) HandleSystemReboot(rc *soap.RequestContext, body []byte) (inter
 		Message: "Device rebooting",
 	}, nil
 }
+
+// DefaultScopes is the scope set GetScopes serves when Config.Scopes is
+// empty — the conventional ONVIF device scope URIs. Hosts advertising
+// WS-Discovery should mirror their Responder Scopes into Config.Scopes
+// so ProbeMatches and GetScopes agree (#37).
+var DefaultScopes = []string{
+	"onvif://www.onvif.org/type/NetworkVideoTransmitter",
+	"onvif://www.onvif.org/type/video_encoder",
+}
+
+// GetScopesResponse represents the GetScopes response.
+type GetScopesResponse struct {
+	XMLName xml.Name          `xml:"http://www.onvif.org/ver10/device/wsdl GetScopesResponse"`
+	Scopes  []ScopeDefinition `xml:"Scopes"`
+}
+
+// ScopeDefinition carries one advertised scope. The ONVIF schema spells
+// the attribute Scopeitem (lowercase i); the wire form preserves it.
+type ScopeDefinition struct {
+	XMLName   xml.Name `xml:"http://www.onvif.org/ver10/schema ScopeDefinition"`
+	ScopeItem string   `xml:"Scopeitem,attr"`
+}
+
+// HandleGetScopes handles the GetScopes request (#37): the configured
+// scope list, or DefaultScopes when none is configured.
+func (s *Server) HandleGetScopes(_ *soap.RequestContext, _ []byte) (interface{}, error) {
+	scopes := s.config.Scopes
+	if len(scopes) == 0 {
+		scopes = DefaultScopes
+	}
+
+	resp := &GetScopesResponse{Scopes: make([]ScopeDefinition, len(scopes))}
+	for i, scope := range scopes {
+		resp.Scopes[i] = ScopeDefinition{ScopeItem: scope}
+	}
+
+	return resp, nil
+}

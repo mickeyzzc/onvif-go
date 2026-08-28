@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -72,6 +73,14 @@ func WithPTZProvider(p provider.PTZProvider) Option {
 func New(config *Config, opts ...Option) (*Server, error) {
 	if config == nil {
 		config = DefaultConfig()
+	} else {
+		// Normalize on a shallow copy so callers keep their own struct.
+		cfg := *config
+		config = &cfg
+	}
+
+	if config.SnapshotPath == "" {
+		config.SnapshotPath = path.Join(config.BasePath, "snapshot")
 	}
 
 	sim := simulator.New(config.Profiles, config.DeviceInfo)
@@ -110,8 +119,8 @@ func (s *Server) Start(ctx context.Context) error {
 		s.registerImagingService(mux)
 	}
 
-	// Add snapshot endpoint
-	mux.HandleFunc(s.config.BasePath+"/snapshot", s.handleSnapshot)
+	// Add snapshot endpoint (SnapshotPath; defaults to BasePath/snapshot)
+	mux.HandleFunc(s.config.SnapshotPath, s.handleSnapshot)
 
 	// Create HTTP server
 	addr := fmt.Sprintf("%s:%d", s.config.Host, s.config.Port)
@@ -139,10 +148,7 @@ func (s *Server) Start(ctx context.Context) error {
 		for i, profile := range s.config.Profiles {
 			uri := ""
 			if info, err := s.stream.Stream(profile.Token); err == nil {
-				uri = info.OverrideURI
-				if uri == "" {
-					uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(nil), info.RTSPPath)
-				}
+				uri = s.deriveStreamURI(nil, info)
 			}
 
 			fmt.Printf("   [%d] %s - %s (%dx%d @ %dfps)\n",
@@ -212,6 +218,39 @@ func (s *Server) advertiseHost(rc *soap.RequestContext) string {
 	return host
 }
 
+// deriveStreamURI renders a StreamInfo into the URI GetStreamUri
+// returns: a pinned override verbatim, else
+// rtsp://<advertised host>:<RTSPPort|8554><RTSPPath> (#34).
+func (s *Server) deriveStreamURI(rc *soap.RequestContext, info provider.StreamInfo) string {
+	if info.OverrideURI != "" {
+		return info.OverrideURI
+	}
+
+	port := info.RTSPPort
+	if port == 0 {
+		port = defaultRTSPPort
+	}
+
+	return fmt.Sprintf("rtsp://%s:%d%s", s.advertiseHost(rc), port, info.RTSPPath)
+}
+
+// defaultSnapshotToken picks the profile served by parameterless
+// snapshot requests: the first snapshot-enabled profile, else the first
+// profile (whose own capture surfaces its not-supported error).
+func (s *Server) defaultSnapshotToken() string {
+	for i := range s.config.Profiles {
+		if s.config.Profiles[i].Snapshot.Enabled {
+			return s.config.Profiles[i].Token
+		}
+	}
+
+	if len(s.config.Profiles) > 0 {
+		return s.config.Profiles[0].Token
+	}
+
+	return ""
+}
+
 // registerDeviceService registers the device service handler.
 func (s *Server) registerDeviceService(mux *http.ServeMux) {
 	handler := s.newSOAPHandler()
@@ -221,6 +260,7 @@ func (s *Server) registerDeviceService(mux *http.ServeMux) {
 	handler.RegisterContextHandler("GetCapabilities", s.HandleGetCapabilities)
 	handler.RegisterContextHandler("GetSystemDateAndTime", s.HandleGetSystemDateAndTime)
 	handler.RegisterContextHandler("GetServices", s.HandleGetServices)
+	handler.RegisterContextHandler("GetScopes", s.HandleGetScopes)
 	handler.RegisterContextHandler("SystemReboot", s.HandleSystemReboot)
 
 	mux.Handle(s.config.BasePath+"/device_service", handler)
@@ -268,17 +308,23 @@ func (s *Server) registerImagingService(mux *http.ServeMux) {
 	mux.Handle(s.config.BasePath+"/imaging_service", handler)
 }
 
-// handleSnapshot handles HTTP snapshot requests through the SnapshotProvider.
+// handleSnapshot serves snapshot captures through the SnapshotProvider.
+// The ?profile= parameter selects the profile; when absent the default
+// (first snapshot-enabled) profile is served — real devices commonly
+// expose parameterless snapshot endpoints (#36). The content type comes
+// from the provider, defaulting to image/jpeg.
 func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
-	// Get profile token from query parameter
 	profileToken := r.URL.Query().Get("profile")
 	if profileToken == "" {
-		http.Error(w, "Missing profile parameter", http.StatusBadRequest)
+		profileToken = s.defaultSnapshotToken()
+		if profileToken == "" {
+			http.Error(w, "No camera profiles configured", http.StatusNotFound)
 
-		return
+			return
+		}
 	}
 
-	jpegData, err := s.snapshot.Snapshot(profileToken)
+	result, err := s.snapshot.Snapshot(profileToken)
 	if err != nil {
 		if errors.Is(err, ErrProfileNotFound) {
 			http.Error(w, "Profile not found", http.StatusNotFound)
@@ -297,11 +343,16 @@ func (s *Server) handleSnapshot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "image/jpeg")
-	w.Header().Set("Content-Length", strconv.Itoa(len(jpegData)))
+	contentType := result.ContentType
+	if contentType == "" {
+		contentType = "image/jpeg"
+	}
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Length", strconv.Itoa(len(result.Data)))
 	w.WriteHeader(http.StatusOK)
 
-	_, _ = w.Write(jpegData)
+	_, _ = w.Write(result.Data)
 }
 
 // GetConfig returns the server configuration.
@@ -394,12 +445,7 @@ func (s *Server) ServerInfo() string {
 			profile.VideoEncoder.Framerate,
 			profile.VideoEncoder.Encoding)
 		if info, err := s.stream.Stream(profile.Token); err == nil {
-			uri := info.OverrideURI
-			if uri == "" {
-				uri = fmt.Sprintf("rtsp://%s:8554%s", s.advertiseHost(nil), info.RTSPPath)
-			}
-
-			fmt.Fprintf(&sb, "      RTSP: %s\n", uri)
+			fmt.Fprintf(&sb, "      RTSP: %s\n", s.deriveStreamURI(nil, info))
 		}
 		if profile.PTZ != nil {
 			sb.WriteString("      PTZ: Enabled\n")

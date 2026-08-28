@@ -73,14 +73,17 @@ func TestSnapshotCachingAndGuards(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Snapshot: %v", err)
 	}
+	if first.ContentType != "" {
+		t.Errorf("simulator snapshot ContentType = %q, want empty (JPEG default)", first.ContentType)
+	}
 
-	cfg, err := jpeg.DecodeConfig(bytes.NewReader(first))
+	cfg, err := jpeg.DecodeConfig(bytes.NewReader(first.Data))
 	if err != nil || cfg.Width != 320 || cfg.Height != 240 {
 		t.Errorf("snapshot not valid JPEG at configured size: %v, %+v", err, cfg)
 	}
 
 	second, _ := sim.Snapshot("profile-1")
-	if !bytes.Equal(first, second) {
+	if !bytes.Equal(first.Data, second.Data) {
 		t.Error("snapshot must be cached per profile")
 	}
 

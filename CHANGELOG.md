@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (server, embedded-host provider surface)
+- **`StreamInfo.RTSPPort`** (#34): GetStreamUri derives
+  `rtsp://<host>:<RTSPPort|8554><path>` instead of hardcoding 8554;
+  OverrideURI stays verbatim. The startup banner and ServerInfo use the
+  same derivation.
+- **Device-service `GetScopes`** (#37): returns `Config.Scopes`
+  (empty → the conventional `DefaultScopes`), wire form
+  `tt:ScopeDefinition Scopeitem="…"`. Hosts should mirror their
+  discovery Responder Scopes so ProbeMatches and GetScopes agree.
+- **Snapshot-chain adaptations** (#36): `SnapshotProvider` now returns
+  `SnapshotResult{Data, ContentType}` (empty ContentType = image/jpeg)
+  so devices with fallback captures (e.g. cached H.264 IDR frames) can
+  express non-JPEG results; the HTTP snapshot endpoint accepts requests
+  without `?profile=` (serves the first snapshot-enabled profile); the
+  endpoint path and advertised URI follow `Config.SnapshotPath` (empty →
+  the historical `BasePath/snapshot`) and `Config.SnapshotURIParameterless`
+  drops the `?profile=` query for parameterless device semantics.
+
+### Changed
+- `New` normalizes a shallow copy of the caller's `*Config` (fills the
+  SnapshotPath default); `GetConfig` no longer returns the caller's
+  pointer.
+
 ### Fixed (server, embedded-host interop)
 - **WS-Security digest auth now accepts the misspelled utility namespace**:
   many community clients emit `wsu:Created` under
