@@ -2,6 +2,7 @@ package discovery
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 )
@@ -54,14 +55,24 @@ func TestResponderDefaults(t *testing.T) {
 	responder := NewResponder(Config{})
 
 	// Defaults: ONVIF types, port 80, conventional device path, generated UUID.
-	match := responder.matchFor("198.51.100.9")
+	match := responder.matchFor(t.Context(), "198.51.100.9")
 
 	if match.EndpointRef == "" {
 		t.Error("EndpointRef default missing")
 	}
 
-	if match.XAddrs != "http://198.51.100.9:80/onvif/device_service" {
-		t.Errorf("derived XAddrs = %q", match.XAddrs)
+	// Derived XAddrs: the device's own address toward the peer (#38 —
+	// never the requester's), default port and device path.
+	if !strings.HasSuffix(match.XAddrs, ":80/onvif/device_service") {
+		t.Errorf("derived XAddrs = %q, want default port/path suffix", match.XAddrs)
+	}
+
+	if strings.Contains(match.XAddrs, "198.51.100.9") {
+		t.Errorf("derived XAddrs = %q echoes the requester", match.XAddrs)
+	}
+
+	if !isLocalAddress(t, match.XAddrs) {
+		t.Errorf("derived XAddrs = %q is not a local device address", match.XAddrs)
 	}
 
 	if match.Types == "" || match.MetadataVersion == 0 {

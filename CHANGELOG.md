@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (server, embedding + discovery)
+- **`Server.RegisterServices(mux)` / `Server.Handler()`** (#35): hosts
+  mount the ONVIF services plus the snapshot endpoint on their own
+  mux/router — their routes coexist, `Start` is never required. `Start`
+  itself now serves through `Handler()`.
+- **`Config.Logger *slog.Logger`** (#35): startup/shutdown messages go
+  through structured logging; nil → completely silent (no stdout). The
+  emoji banner is gone — CLIs pass their own logger.
+
+### Changed (server/discovery)
+- **WS-Discovery XAddrs default no longer echoes the requester** (#38):
+  an unset `Config.XAddrs` now derives the device's own source address
+  toward the peer (the interface a reply leaves from; throwaway UDP
+  dial, no packets sent), falling back to the configured interface's
+  IPv4 address, then loopback. Rationale: NVR-style consumers register
+  the XAddrs host as the device endpoint — an echoed requester IP makes
+  them register *themselves* as the camera (observed with MiBee NVR).
+  Multi-homed hosts should still set `XAddrs` explicitly.
+
 ### Added (server, embedded-host provider surface)
 - **`StreamInfo.RTSPPort`** (#34): GetStreamUri derives
   `rtsp://<host>:<RTSPPort|8554><path>` instead of hardcoding 8554;

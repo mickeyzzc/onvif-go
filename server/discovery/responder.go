@@ -30,6 +30,17 @@ const readTick = 5 * time.Second
 // scan in volleys.
 const listenerBufferSize = 256 * 1024
 
+// multicastGroupHost is the host part of the WS-Discovery group
+// address, used as the derivation peer for Hello/Bye announcements.
+var multicastGroupHost = func() string {
+	host, _, err := net.SplitHostPort(wsdiscovery.MulticastAddr)
+	if err != nil {
+		return wsdiscovery.MulticastAddr
+	}
+
+	return host
+}()
+
 // DefaultMetadataVersion is the WS-Discovery metadata revision devices
 // advertise; bump it whenever the advertised Types/Scopes/XAddrs change
 // at runtime.
@@ -50,8 +61,12 @@ type Config struct {
 	Scopes []string
 
 	// XAddrs advertised verbatim. Empty → derived per request as
-	// http://<requester IP>:<Port><DevicePath>, so every peer receives
-	// an address reachable from its own network.
+	// http://<device's own address toward the peer>:<Port><DevicePath>
+	// (the interface a reply to that peer leaves from). NOTE: the
+	// device's own address, never the requester's — echoing the
+	// requester would make NVR-style consumers register themselves as
+	// the camera (#38). Multi-homed hosts with a stable service address
+	// should set XAddrs explicitly.
 	XAddrs []string
 
 	// Port and DevicePath build the derived XAddrs (when XAddrs is
@@ -186,8 +201,9 @@ func (r *Responder) run(ctx context.Context) error {
 	default:
 	}
 
-	// Announce ourselves.
-	if hello := wsdiscovery.BuildHello(r.matchFor("")); len(hello) > 0 {
+	// Announce ourselves. Deriving the XAddr host toward the multicast
+	// group picks the interface the announcement leaves from.
+	if hello := wsdiscovery.BuildHello(r.matchFor(ctx, multicastGroupHost)); len(hello) > 0 {
 		if _, err := conn.WriteToUDP(hello, group); err != nil {
 			_ = conn.Close()
 
@@ -197,7 +213,7 @@ func (r *Responder) run(ctx context.Context) error {
 
 	defer func() {
 		// Best-effort Bye on the way out.
-		_, _ = conn.WriteToUDP(wsdiscovery.BuildBye(r.matchFor("")), group)
+		_, _ = conn.WriteToUDP(wsdiscovery.BuildBye(r.matchFor(ctx, multicastGroupHost)), group)
 		_ = conn.Close()
 	}()
 
@@ -235,7 +251,7 @@ func (r *Responder) readLoop(ctx context.Context, conn *net.UDPConn) error {
 			}
 		}
 
-		r.handleDatagram(buffer[:n], src, func(data []byte, to *net.UDPAddr) {
+		r.handleDatagram(ctx, buffer[:n], src, func(data []byte, to *net.UDPAddr) {
 			_, _ = conn.WriteToUDP(data, to)
 		})
 	}
@@ -243,7 +259,7 @@ func (r *Responder) readLoop(ctx context.Context, conn *net.UDPConn) error {
 
 // handleDatagram answers one probe datagram from src; send delivers the
 // reply (unicast). Non-probe traffic is ignored.
-func (r *Responder) handleDatagram(data []byte, src *net.UDPAddr, send func([]byte, *net.UDPAddr)) {
+func (r *Responder) handleDatagram(ctx context.Context, data []byte, src *net.UDPAddr, send func([]byte, *net.UDPAddr)) {
 	probe := wsdiscovery.ParseProbe(data)
 	if probe == nil || probe.MessageID == "" {
 		return
@@ -253,7 +269,7 @@ func (r *Responder) handleDatagram(data []byte, src *net.UDPAddr, send func([]by
 		return
 	}
 
-	answer := wsdiscovery.BuildProbeMatches(probe.MessageID, r.matchFor(hostOnly(src)))
+	answer := wsdiscovery.BuildProbeMatches(probe.MessageID, r.matchFor(ctx, hostOnly(src)))
 	send(answer, src)
 }
 
@@ -291,7 +307,7 @@ func (r *Responder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		remote = host
 	}
 
-	answer := wsdiscovery.BuildProbeMatches(probe.MessageID, r.matchFor(remote))
+	answer := wsdiscovery.BuildProbeMatches(probe.MessageID, r.matchFor(req.Context(), remote))
 
 	w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -320,16 +336,15 @@ func (r *Responder) Done() <-chan struct{} {
 	return r.done
 }
 
-// matchFor builds the advertised Match; remoteIP is the requesting
-// peer when XAddrs are derived (empty remoteIP → loopback form).
-func (r *Responder) matchFor(remoteIP string) wsdiscovery.Match {
+// matchFor builds the advertised Match. When XAddrs is unset, the XAddr
+// host is the device's own source address toward the peer — the address
+// a reply to that peer is sent from — never the peer's address. Echoing
+// the requester would make NVR-style consumers register *themselves* as
+// the camera (#38).
+func (r *Responder) matchFor(ctx context.Context, peer string) wsdiscovery.Match {
 	xaddrs := r.config.XAddrs
 	if len(xaddrs) == 0 {
-		if remoteIP == "" {
-			remoteIP = "127.0.0.1"
-		}
-
-		hostPort := net.JoinHostPort(remoteIP, strconv.Itoa(r.config.Port))
+		hostPort := net.JoinHostPort(r.derivedHost(ctx, peer), strconv.Itoa(r.config.Port))
 		xaddrs = []string{"http://" + hostPort + r.config.DevicePath}
 	}
 
@@ -340,6 +355,56 @@ func (r *Responder) matchFor(remoteIP string) wsdiscovery.Match {
 		XAddrs:          strings.Join(xaddrs, " "),
 		MetadataVersion: r.config.MetadataVersion,
 	}
+}
+
+// derivedHost returns the device address to advertise toward peer: the
+// local source address a reply to peer would use (falling back to the
+// configured interface's address, then loopback). Consumers registering
+// the device from ProbeMatches XAddrs always end up pointed at this
+// device, not at themselves.
+func (r *Responder) derivedHost(ctx context.Context, peer string) string {
+	if peer != "" {
+		if host := localAddrToward(ctx, peer); host != "" {
+			return host
+		}
+	}
+
+	if r.config.Interface != "" {
+		if iface, err := resolveInterface(r.config.Interface); err == nil {
+			if addrs, addrErr := iface.Addrs(); addrErr == nil {
+				for _, addr := range addrs {
+					if ipnet, ok := addr.(*net.IPNet); ok && ipnet.IP.To4() != nil {
+						return ipnet.IP.String()
+					}
+				}
+			}
+		}
+	}
+
+	return "127.0.0.1"
+}
+
+// localAddrToward dials a throwaway UDP socket toward peer (no packets
+// are sent) and returns the local source address the kernel chose — the
+// interface address traffic to that peer leaves from.
+func localAddrToward(ctx context.Context, peer string) string {
+	dialCtx, cancel := context.WithTimeout(ctx, time.Second)
+	defer cancel()
+
+	var dialer net.Dialer
+
+	conn, err := dialer.DialContext(dialCtx, "udp", net.JoinHostPort(peer, "9"))
+	if err != nil {
+		return ""
+	}
+	defer func() { _ = conn.Close() }()
+
+	host, _, err := net.SplitHostPort(conn.LocalAddr().String())
+	if err != nil {
+		return ""
+	}
+
+	return host
 }
 
 // randomUUID builds a random v4 UUID string (crypto/rand).

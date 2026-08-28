@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/mickeyzzc/onvif-go/v2/onvif"
@@ -133,6 +134,11 @@ type Config struct {
 	// serves the default profile for parameterless requests (#36). The
 	// default (false) keeps the historical query form.
 	SnapshotURIParameterless bool
+
+	// Logger receives the server's startup and shutdown messages
+	// (structured, log/slog). nil → nothing is logged anywhere —
+	// embedded hosts keep a clean stdout/stderr (#35).
+	Logger *slog.Logger
 
 	// Capabilities
 	SupportPTZ     bool
