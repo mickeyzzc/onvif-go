@@ -15,8 +15,13 @@ type DeviceInfoProvider interface {
 // StreamInfo describes where a profile's RTSP stream lives.
 type StreamInfo struct {
 	// RTSPPath is the path suffix used to derive a URI from the
-	// advertised host when OverrideURI is empty (rtsp://<host>:8554<path>).
+	// advertised host when OverrideURI is empty (rtsp://<host>:<port><path>).
 	RTSPPath string
+
+	// RTSPPort is the RTSP listener port used when deriving the URI.
+	// 0 → the ONVIF-conventional 8554 default (#34: real devices expose
+	// configurable RTSP ports).
+	RTSPPort int
 
 	// OverrideURI, when non-empty, is returned verbatim by GetStreamUri
 	// (a pinned external address; the advertised host is not applied).
@@ -34,11 +39,19 @@ type StreamURISetter interface {
 	SetStreamURI(profileToken, uri string) error
 }
 
-// SnapshotProvider supplies JPEG snapshot bytes for the HTTP snapshot
-// endpoint (and future GetSnapshotUri consumers). Implementations
-// return ErrSnapshotNotSupported when the profile cannot snapshot.
+// SnapshotResult is a captured snapshot: raw bytes plus their content
+// type. Devices with fallback chains may serve non-JPEG results (e.g. a
+// cached H.264 IDR frame); an empty ContentType means image/jpeg.
+type SnapshotResult struct {
+	Data        []byte
+	ContentType string
+}
+
+// SnapshotProvider supplies snapshot bytes for the HTTP snapshot
+// endpoint and GetSnapshotUri consumers. Implementations return
+// ErrSnapshotNotSupported when the profile cannot snapshot.
 type SnapshotProvider interface {
-	Snapshot(profileToken string) ([]byte, error)
+	Snapshot(profileToken string) (SnapshotResult, error)
 }
 
 // ImagingProvider is the read/write backend behind the Imaging service

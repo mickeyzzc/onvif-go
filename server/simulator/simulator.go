@@ -106,14 +106,14 @@ func (s *Simulator) SetStreamURI(profileToken, uri string) error {
 
 // Snapshot implements provider.SnapshotProvider: a solid-color JPEG at
 // the configured snapshot resolution, cached per profile.
-func (s *Simulator) Snapshot(profileToken string) ([]byte, error) {
+func (s *Simulator) Snapshot(profileToken string) (provider.SnapshotResult, error) {
 	profile, ok := s.Profile(profileToken)
 	if !ok {
-		return nil, fmt.Errorf("%w: %s", provider.ErrProfileNotFound, profileToken)
+		return provider.SnapshotResult{}, fmt.Errorf("%w: %s", provider.ErrProfileNotFound, profileToken)
 	}
 
 	if !profile.Snapshot.Enabled {
-		return nil, fmt.Errorf("%w: %s", provider.ErrSnapshotNotSupported, profileToken)
+		return provider.SnapshotResult{}, fmt.Errorf("%w: %s", provider.ErrSnapshotNotSupported, profileToken)
 	}
 
 	s.mu.RLock()
@@ -121,7 +121,7 @@ func (s *Simulator) Snapshot(profileToken string) ([]byte, error) {
 	s.mu.RUnlock()
 
 	if ok {
-		return cached, nil
+		return provider.SnapshotResult{Data: cached}, nil
 	}
 
 	width := profile.Snapshot.Resolution.Width
@@ -148,7 +148,7 @@ func (s *Simulator) Snapshot(profileToken string) ([]byte, error) {
 
 	var buf bytes.Buffer
 	if err := jpeg.Encode(&buf, img, &jpeg.Options{Quality: 85}); err != nil {
-		return nil, fmt.Errorf("simulator snapshot encode: %w", err)
+		return provider.SnapshotResult{}, fmt.Errorf("simulator snapshot encode: %w", err)
 	}
 
 	data := buf.Bytes()
@@ -157,5 +157,5 @@ func (s *Simulator) Snapshot(profileToken string) ([]byte, error) {
 	s.jpegCache[profileToken] = data
 	s.mu.Unlock()
 
-	return data, nil
+	return provider.SnapshotResult{Data: data}, nil
 }

@@ -35,13 +35,13 @@ func (p *stubProviders) Stream(token string) (provider.StreamInfo, error) {
 	return info, nil
 }
 
-func (p *stubProviders) Snapshot(token string) ([]byte, error) {
+func (p *stubProviders) Snapshot(token string) (provider.SnapshotResult, error) {
 	data, ok := p.jpegs[token]
 	if !ok {
-		return nil, errors.New("no snapshot")
+		return provider.SnapshotResult{}, errors.New("no snapshot")
 	}
 
-	return data, nil
+	return provider.SnapshotResult{Data: data}, nil
 }
 
 func (p *stubProviders) ImagingSettings(token string) (*provider.ImagingSettings, error) {
