@@ -593,10 +593,19 @@ func TestEventStreamTransientPullErrorRecovers(t *testing.T) {
 	}
 	caller := newFakeCaller(script.handler)
 
+	// The handler must not block the loop goroutine: this script keeps
+	// returning messages after recovery, and a raw `delivered <- m` send
+	// wedges the loop once the buffer fills — cancellation cannot preempt
+	// a channel send, so Unsubscribe would never observe a stopped loop
+	// (the CI flake this case fixed). Non-blocking delivery models the
+	// real consumer contract.
 	delivered := make(chan NotificationMessage, 4)
 
 	stream, err := New(caller).SubscribeEvents(context.Background(), func(m NotificationMessage) {
-		delivered <- m
+		select {
+		case delivered <- m:
+		default:
+		}
 	}, fastStreamOptions())
 	if err != nil {
 		t.Fatalf("SubscribeEvents: %v", err)

@@ -529,3 +529,19 @@ func TestPTZStateTransitions(t *testing.T) {
 		t.Fatal("Updated PTZ state is nil")
 	}
 }
+
+func TestHandleStop(t *testing.T) {
+	srv, err := New(createTestConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := srv.HandleStop(nil, []byte(`<Stop xmlns="http://www.onvif.org/ver20/ptz/wsdl"><ProfileToken>profile_token_1</ProfileToken></Stop>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, ok := resp.(*StopResponse); !ok {
+		t.Fatalf("response type = %T", resp)
+	}
+}

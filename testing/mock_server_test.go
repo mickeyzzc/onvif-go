@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -34,7 +35,14 @@ func writeCaptureArchive(t *testing.T, entries map[string]string) string {
 	tw := tar.NewWriter(gzw)
 	defer func() { _ = tw.Close() }()
 
-	for name, body := range entries {
+	names := make([]string, 0, len(entries))
+	for name := range entries {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+
+	for _, name := range names {
+		body := entries[name]
 		if err := tw.WriteHeader(&tar.Header{Name: name, Mode: 0o600, Size: int64(len(body))}); err != nil {
 			t.Fatal(err)
 		}
