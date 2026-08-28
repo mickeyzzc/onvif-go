@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/mickeyzzc/onvif-go/v2/onvif"
@@ -111,6 +112,13 @@ type Config struct {
 	// network (real-camera behavior for multi-interface hosts).
 	AdvertiseHost string
 
+	// AdvertiseHostProvider is the dynamic source for the advertised
+	// host, consulted on every advertised-URL construction (#45: DHCP
+	// renewals change the device IP at runtime). A non-empty return
+	// value takes precedence over AdvertiseHost; nil installs nothing.
+	// The function may be called concurrently and must be safe for it.
+	AdvertiseHostProvider func() string
+
 	// ExplicitPrefixes emits response envelopes with explicit namespace
 	// prefixes (s:/tds:/trt:/...) instead of default xmlns declarations.
 	ExplicitPrefixes bool
@@ -156,6 +164,12 @@ type Server struct {
 	imaging    provider.ImagingProvider
 	ptz        provider.PTZProvider
 	systemTime time.Time
+
+	// advertiseFn is the effective dynamic host source (seeded from
+	// Config.AdvertiseHostProvider, replaceable at runtime); guarded by
+	// advertiseMu. nil → the static/requester resolution applies.
+	advertiseMu sync.RWMutex
+	advertiseFn func() string
 }
 
 // DefaultConfig returns a default server configuration with a multi-lens camera setup.

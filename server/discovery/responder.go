@@ -60,6 +60,14 @@ type Config struct {
 	// Scopes advertised (onvif://… URIs: name, location, hardware…).
 	Scopes []string
 
+	// XAddrsProvider is a dynamic XAddrs source consulted on every
+	// advertised Match (#45: DHCP renewals change the device address at
+	// runtime). Takes precedence over XAddrs; an empty/nil result falls
+	// back to the XAddrs field and then the derived device-local
+	// address. The function may be called concurrently and must be safe
+	// for it.
+	XAddrsProvider func() []string
+
 	// XAddrs advertised verbatim. Empty → derived per request as
 	// http://<device's own address toward the peer>:<Port><DevicePath>
 	// (the interface a reply to that peer leaves from). NOTE: the
@@ -343,6 +351,10 @@ func (r *Responder) Done() <-chan struct{} {
 // the camera (#38).
 func (r *Responder) matchFor(ctx context.Context, peer string) wsdiscovery.Match {
 	xaddrs := r.config.XAddrs
+	if r.config.XAddrsProvider != nil {
+		xaddrs = r.config.XAddrsProvider()
+	}
+
 	if len(xaddrs) == 0 {
 		hostPort := net.JoinHostPort(r.derivedHost(ctx, peer), strconv.Itoa(r.config.Port))
 		xaddrs = []string{"http://" + hostPort + r.config.DevicePath}
