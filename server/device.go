@@ -290,6 +290,17 @@ func (s *Server) HandleGetServices(rc *soap.RequestContext, body []byte) (interf
 		})
 	}
 
+	// GetCapabilities advertises the Events XAddr under the same flag;
+	// the two enumerations must agree (#46) — clients (including this
+	// library's Initialize) enumerate services via GetServices.
+	if s.config.SupportEvents {
+		services = append(services, Service{
+			Namespace: "http://www.onvif.org/ver10/events/wsdl",
+			XAddr:     baseURL + "/events_service",
+			Version:   Version{Major: 2, Minor: 5}, //nolint:mnd // ONVIF version
+		})
+	}
+
 	return &GetServicesResponse{
 		Service: services,
 	}, nil
