@@ -16,6 +16,36 @@ import (
 // element names, prefixes, or formatting. Prefix modes never rewrite it.
 type RawXML []byte
 
+// RawEnvelope is a complete, pre-built response document. Returning it
+// from a handler serves the bytes as the entire HTTP response body —
+// no Envelope/Body wrapping, no re-serialization, no XML declaration
+// prepended. This is the channel for responses that are themselves full
+// SOAP envelopes carrying their own headers, such as a WS-Discovery
+// ProbeMatches answer with WS-Addressing RelatesTo. Prefix modes never
+// rewrite it.
+type RawEnvelope []byte
+
+// sendResponse writes a handler result. RawEnvelope responses bypass
+// envelope construction entirely.
+func (h *Handler) sendResponse(w http.ResponseWriter, response interface{}) {
+	if raw, ok := response.(RawEnvelope); ok {
+		w.Header().Set("Content-Type", "application/soap+xml; charset=utf-8")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(raw)
+
+		return
+	}
+
+	content, err := h.marshalContent(response)
+	if err != nil {
+		h.sendFault(w, "Receiver", "Failed to marshal response", err.Error())
+
+		return
+	}
+
+	writeEnvelope(w, http.StatusOK, content, h.explicitPrefixes)
+}
+
 // namespacePrefixes maps ONVIF XML namespaces to the conventional wire
 // prefixes used in explicit-prefix responses.
 var namespacePrefixes = map[string]string{
@@ -29,18 +59,6 @@ var namespacePrefixes = map[string]string{
 	"http://www.onvif.org/ver20/ptz/wsdl":       "tptz",
 	"http://www.onvif.org/ver20/imaging/wsdl":   "timg",
 	"http://www.onvif.org/ver20/analytics/wsdl": "tan",
-}
-
-// sendResponse marshals the handler result and writes the SOAP envelope.
-func (h *Handler) sendResponse(w http.ResponseWriter, response interface{}) {
-	content, err := h.marshalContent(response)
-	if err != nil {
-		h.sendFault(w, "Receiver", "Failed to marshal response", err.Error())
-
-		return
-	}
-
-	writeEnvelope(w, http.StatusOK, content, h.explicitPrefixes)
 }
 
 // marshalContent serializes a handler result into body-content bytes.

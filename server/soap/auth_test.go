@@ -269,3 +269,58 @@ func TestLegacyActionSpellingAccepted(t *testing.T) {
 		t.Errorf("status = %d, want 200", w.Code)
 	}
 }
+
+// TestCreatedNamespaceVariantAccepted pins issue #40: many community
+// clients put wsu:Created in the misspelled utility namespace
+// (oasis-200401-wss-wssecurity-utility-…). The digest itself is computed
+// over the same timestamp, so auth must accept the variant instead of
+// failing with an unrelated "invalid password" fault.
+func TestCreatedNamespaceVariantAccepted(t *testing.T) {
+	const (
+		nonce   = "nonce-bytes"
+		created = "2026-01-02T03:04:05Z"
+	)
+	hash := sha1.New() //nolint:gosec // SHA1 required by the ONVIF digest formula
+	hash.Write([]byte(nonce))
+	hash.Write([]byte(created))
+	hash.Write([]byte("secret"))
+	digest := base64.StdEncoding.EncodeToString(hash.Sum(nil))
+
+	for _, ns := range []string{
+		"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-utility-1.0.xsd",
+		"http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd",
+	} {
+		t.Run(ns, func(t *testing.T) {
+			soapBody := `<?xml version="1.0" encoding="UTF-8"?>
+<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
+  <s:Header>
+    <wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
+      <wsse:UsernameToken>
+        <wsse:Username>admin</wsse:Username>
+        <wsse:Password Type="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-username-token-profile-1.0#PasswordDigest">` + digest + `</wsse:Password>
+        <wsse:Nonce EncodingType="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-soap-message-security-1.0#Base64Binary">` + base64.StdEncoding.EncodeToString([]byte(nonce)) + `</wsse:Nonce>
+        <u:Created xmlns:u="` + ns + `">` + created + `</u:Created>
+      </wsse:UsernameToken>
+    </wsse:Security>
+  </s:Header>
+  <s:Body>
+    <SetScopes xmlns="http://www.onvif.org/ver10/device/wsdl"/>
+  </s:Body>
+</s:Envelope>`
+
+			handler := NewHandler("admin", "secret")
+			handler.RegisterHandler("SetScopes", func(_ []byte) (interface{}, error) {
+				return nil, nil
+			})
+
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(soapBody))
+			req.RemoteAddr = "192.0.2.10:1234"
+			handler.ServeHTTP(rec, req)
+
+			if rec.Code != http.StatusOK {
+				t.Fatalf("auth with Created ns %q failed: status %d body %s", ns, rec.Code, rec.Body.String())
+			}
+		})
+	}
+}
