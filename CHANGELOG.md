@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0-rc3] - 2026-08-28
+
 ### Added (server, embedding + discovery)
 - **`Server.RegisterServices(mux)` / `Server.Handler()`** (#35): hosts
   mount the ONVIF services plus the snapshot endpoint on their own
