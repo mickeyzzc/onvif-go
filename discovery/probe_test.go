@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/mickeyzzc/onvif-go/v2/wsdiscovery"
 )
 
 const probeMatchesBody = `<?xml version="1.0" encoding="UTF-8"?>
@@ -274,4 +276,35 @@ func hostPort(t *testing.T, rawURL string) (string, int) {
 // httpProbeEnvelope reports whether the body carries a WS-Discovery Probe.
 func httpProbeEnvelope(body string) bool {
 	return strings.Contains(body, ":Probe") || strings.Contains(body, "<Probe ")
+}
+
+func TestParseProbeResponseDirect(t *testing.T) {
+	answer := wsdiscovery.BuildProbeMatches("probe-1", wsdiscovery.Match{
+		EndpointRef:     "urn:uuid:dev-1",
+		Types:           "tds:Device dp0:NetworkVideoTransmitter",
+		Scopes:          "onvif://www.onvif.org/name/TestCam onvif://www.onvif.org/location/Roof",
+		XAddrs:          "http://192.0.2.9/onvif/device_service",
+		MetadataVersion: 1,
+	})
+
+	device, err := parseProbeResponse(answer)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if device.EndpointRef != "urn:uuid:dev-1" {
+		t.Errorf("EndpointRef = %q", device.EndpointRef)
+	}
+
+	if len(device.XAddrs) != 1 || device.XAddrs[0] != "http://192.0.2.9/onvif/device_service" {
+		t.Errorf("XAddrs = %v", device.XAddrs)
+	}
+
+	if device.Name != "TestCam" || device.Location != "Roof" {
+		t.Errorf("scope fields = %q/%q", device.Name, device.Location)
+	}
+
+	if _, err := parseProbeResponse([]byte("not a probe matches")); err == nil {
+		t.Error("garbage accepted")
+	}
 }

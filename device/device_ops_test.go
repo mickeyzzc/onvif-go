@@ -381,3 +381,47 @@ func TestSetNetworkInterfacesValidation(t *testing.T) {
 		t.Error("validation must return types.ErrInvalidParameter")
 	}
 }
+
+func TestGetServicesMapping(t *testing.T) {
+	s, _ := newDeviceOpsService(t, "GetServices",
+		`<GetServicesResponse><Service><Namespace>http://www.onvif.org/ver10/device/wsdl</Namespace><XAddr>http://192.0.2.9/onvif/device_service</XAddr></Service></GetServicesResponse>`)
+
+	services, err := s.GetServices(context.Background(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(services) != 1 || services[0].Namespace != "http://www.onvif.org/ver10/device/wsdl" {
+		t.Fatalf("mapping wrong: %+v", services)
+	}
+}
+
+func TestNewWithFallback(t *testing.T) {
+	caller := testutil.NewFakeCaller("http://fake", func(_, _ string) (string, error) { return "", nil })
+
+	s := NewWithFallback(caller, true)
+	if s == nil || !s.minimalCapsFallback {
+		t.Fatal("NewWithFallback(caller, true) must set the fallback flag")
+	}
+
+	if NewWithFallback(caller, false).minimalCapsFallback {
+		t.Fatal("NewWithFallback(caller, false) must clear the flag")
+	}
+}
+
+func TestNetmaskFromPrefixLength(t *testing.T) {
+	cases := map[int]string{
+		0:  "0.0.0.0",
+		8:  "255.0.0.0",
+		24: "255.255.255.0",
+		32: "255.255.255.255",
+		-1: "",
+		33: "",
+	}
+
+	for prefix, want := range cases {
+		if got := NetmaskFromPrefixLength(prefix); got != want {
+			t.Errorf("NetmaskFromPrefixLength(%d) = %q, want %q", prefix, got, want)
+		}
+	}
+}

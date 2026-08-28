@@ -538,3 +538,19 @@ func TestGetImagingSettingsEdgeCases(t *testing.T) {
 		t.Error("Expected nil response for error case")
 	}
 }
+
+func TestHandleMove(t *testing.T) {
+	srv, err := New(createTestConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := srv.HandleMove(nil, []byte(`<Move xmlns="http://www.onvif.org/ver20/imaging/wsdl"><VideoSourceToken>video_source_1</VideoSourceToken></Move>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, ok := resp.(*MoveResponse); !ok {
+		t.Fatalf("response type = %T", resp)
+	}
+}

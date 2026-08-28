@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (tests — client-service TDD backfill, third pass: the tail)
+- `testing` (49.5%→87.6%): capture registry (load/save round-trip, entry
+  CRUD, coverage aggregation, ID sanitization, validation, entry creation
+  from archives) and the parameter-aware V2 mock server (V1/V2 mixed
+  archive loading with metadata, parameter-keyed replay, fallback and
+  404/400 paths, extractors, fault generation/detection). The v1 archive
+  test helper now writes deterministic (sorted) tar entries — map-order
+  iteration made the exchange-order assertion flaky.
+- `internal/testutil` (new, 96.9%): self-tests for the fake caller used
+  across every suite — decode path, error propagation, recording-copy
+  semantics, elementName edges.
+- `events` (72.5%→90.6%): Seek / SetEventSynchronizationPoint and the
+  event-broker CRUD wire contracts.
+- `media` (71.7%→78.4%): the main/sub profile selection heuristics
+  (resolution dominance, naming-hint tie-breaks, same-resolution-alias
+  exclusion, list-order fallbacks) and truncateForError.
+- `discovery` (→85.4%), `device` (→80.8%), `server` (→85.6%),
+  `onvif` (→92.7%): remaining single-function gaps (parseProbeResponse,
+  GetServices mapping, NewWithFallback, NetmaskFromPrefixLength,
+  HandleStop/HandleMove, facade accessors, AuthMode default,
+  downloadStatusError chain).
+- Scope note: `cmd/` tools and `examples/` stay outside the TDD mandate
+  (CLI mains / runnable docs; no test harness by convention).
+
 ### Added (tests — client-service TDD backfill, second pass)
 - Wire-contract suites for the client service packages that were still
   thin, all through the in-memory `internal/testutil.FakeCaller`:
