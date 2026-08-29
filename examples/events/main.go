@@ -31,12 +31,12 @@ func main() {
 		log.Fatalf("Failed to create client: %v", err)
 	}
 
-	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
-	defer stop()
-
-	if err := client.Initialize(ctx); err != nil {
+	if err := client.Initialize(context.Background()); err != nil {
 		log.Fatalf("Failed to initialize client: %v", err)
 	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
 
 	fmt.Println("Subscribing to events (PullPoint)...")
 
