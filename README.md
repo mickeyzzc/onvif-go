@@ -176,7 +176,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `docs/{en,zh}/` | Topic documentation (architecture, auth, discovery, media, events, concurrency, testing, CLI) |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` |
-| `examples/` | Runnable examples per feature area |
+| `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), simple-server, onvif-server, complete-demo |
 
 ## Documentation
 

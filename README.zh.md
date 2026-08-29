@@ -183,7 +183,7 @@ API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/gi
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
 | `docs/{en,zh}/` | 主题文档（架构、鉴权、发现、媒体、事件、并发、测试、CLI） |
 | `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server` |
-| `examples/` | 按功能划分的可运行示例 |
+| `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、simple-server、onvif-server、complete-demo |
 
 ## 开发
 
