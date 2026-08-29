@@ -518,7 +518,14 @@ func TestEventStreamPanicIsolation(t *testing.T) {
 			panic("handler bug must not kill the loop")
 		}
 
-		delivered <- n
+		// Non-blocking send: the fake device answers every pull with a
+		// message, but the test stops draining after message #2 — a
+		// blocking send would wedge the handler forever and Done() could
+		// never close (the loop cannot preempt a blocked handler).
+		select {
+		case delivered <- n:
+		default:
+		}
 	}, fastStreamOptions())
 	if err != nil {
 		t.Fatalf("SubscribeEvents: %v", err)
