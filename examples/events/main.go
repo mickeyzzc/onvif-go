@@ -16,27 +16,31 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	endpoint := "http://192.168.1.100/onvif/device_service"
-	username := "admin"
-	password := "password"
 
 	fmt.Println("Connecting to ONVIF camera...")
 
 	client, err := onvif.NewClient(
 		endpoint,
-		onvif.WithCredentials(username, password),
+		onvif.WithCredentials("admin", "password"),
 		onvif.WithTimeout(30*time.Second),
 	)
 	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-	}
-
-	if err := client.Initialize(context.Background()); err != nil {
-		log.Fatalf("Failed to initialize client: %v", err)
+		return fmt.Errorf("create client: %w", err)
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	if err := client.Initialize(ctx); err != nil {
+		return fmt.Errorf("initialize client: %w", err)
+	}
 
 	fmt.Println("Subscribing to events (PullPoint)...")
 
@@ -44,7 +48,8 @@ func main() {
 	// long-poll pulling, renewal before expiry, and best-effort unsubscribe
 	// on shutdown. Panics in the handler are isolated.
 	stream, err := client.Events().SubscribeEvents(ctx, func(msg onvif.NotificationMessage) {
-		fmt.Printf("[%s] topic=%s op=%s\n", msg.Message.UtcTime.Format(time.RFC3339), msg.Topic, msg.Message.PropertyOperation)
+		fmt.Printf("[%s] topic=%s op=%s\n",
+			msg.Message.UtcTime.Format(time.RFC3339), msg.Topic, msg.Message.PropertyOperation)
 
 		for _, item := range msg.Message.Data {
 			fmt.Printf("    %s = %s\n", item.Name, item.Value)
@@ -56,10 +61,10 @@ func main() {
 	})
 	if err != nil {
 		if errors.Is(err, onvif.ErrEventsNotSupported) {
-			log.Fatalf("Camera does not implement the ONVIF events service")
+			return errors.New("camera does not implement the ONVIF events service")
 		}
 
-		log.Fatalf("SubscribeEvents: %v", err)
+		return fmt.Errorf("SubscribeEvents: %w", err)
 	}
 
 	fmt.Println("Listening for events for 30s (Ctrl+C to stop early)...")
@@ -80,4 +85,6 @@ func main() {
 	// Deterministic cleanup: wait until the polling loop has fully exited.
 	<-stream.Done()
 	fmt.Println("Done.")
+
+	return nil
 }
