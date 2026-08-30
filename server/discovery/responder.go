@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"strconv"
@@ -393,6 +394,10 @@ func (r *Responder) derivedHost(ctx context.Context, peer string) string {
 		}
 	}
 
+	// Last-resort fallback: XAddrs built from loopback are unreachable for
+	// remote consumers — make the degradation visible instead of silent.
+	slog.Warn("onvif/discovery: could not derive a local address toward peer (no route, no interface config) — advertising 127.0.0.1",
+		"peer", peer)
 	return "127.0.0.1"
 }
 

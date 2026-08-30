@@ -26,7 +26,7 @@ race 测试与构建；三个任务都是必需状态检查。
 | 原始 fixture | `testdata/captures/*.xml` | 把真实形态的信封回放进 client（如 issue #3 背后的 GetStreamUri 命名空间变体） |
 | 解析器单测 | 如 `TestParseScopes`、`TestLooseExtractURI`、`TestSelectMainProfile` | 纯函数、无 I/O |
 | 并发矩阵 | `concurrency_test.go` | 单个共享 client 上的混合操作 + 配置变更，`-race` 下有实际意义 |
-| 抓包回放助手 | `testing/` 包 | mock server、抓包注册表、golden 文件——大型套件在用 |
+| 抓包回放助手 | `internal/onviftesting/` 包 | mock server、抓包注册表、golden 文件——大型套件在用 |
 
 ## 真机集成测试
 

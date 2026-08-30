@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (library hygiene)
+- `server.DefaultConfig()` no longer ships `admin`/`admin` credentials —
+  they are empty now. Without credentials the server runs in its
+  documented everything-open mode; embedders set their own pair explicitly.
+  Default credentials on a library were a footgun (audit 2026-08-30).
+- The public `testing/` package moved to `internal/onviftesting/` — it
+  linked `net/http/httptest` into consumer binaries and its directory/name
+  mismatch (`onviftesting`) forced awkward imports. No external consumers
+  existed (verified); internal callers updated.
+- The exported mutable default slices `server/soap.DefaultProtectedPrefixes`,
+  `server.DefaultScopes`, and `discovery.DefaultProbePorts` are now
+  functions returning fresh slices — appending to the package vars mutated
+  the defaults process-wide (classic Go slice-var pitfall).
+### Removed (privacy)
+- Real network data removed from `testdata/`: the 2026-01-13 discovery dump
+  (live LAN IPs, real device inventory) and vendor capture tarballs are
+  gone; fixtures are now synthetic (RFC 5737 documentation ranges only),
+  enforced by `hygiene_test.go` (also pins the empty-credential default).
+
 ### Added (tests — client-service TDD backfill, third pass: the tail)
 - `testing` (49.5%→87.6%): capture registry (load/save round-trip, entry
   CRUD, coverage aggregation, ID sanitization, validation, entry creation

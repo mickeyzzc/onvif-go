@@ -28,7 +28,7 @@ runners) they skip automatically — the suite stays green.
 | Raw fixtures | `testdata/captures/*.xml` | Hand-crafted real-shape envelopes replayed through the client (e.g. the GetStreamUri namespace variants behind issue #3) |
 | Parser unit tests | e.g. `TestParseScopes`, `TestLooseExtractURI`, `TestSelectMainProfile` | Pure functions, no I/O |
 | Concurrency matrix | `concurrency_test.go` | Mixed operations + config mutation on one shared client, meaningful under `-race` |
-| Capture-replay helpers | `testing/` package | Mock server, capture registry, golden files — used by the larger suites |
+| Capture-replay helpers | `internal/onviftesting/` package | Mock server, capture registry, golden files — used by the larger suites |
 
 ## Real-camera integration tests
 

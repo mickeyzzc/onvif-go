@@ -245,7 +245,7 @@ func TestProbeSerialContextCanceled(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	serial, ok := ProbeSerial(ctx, "192.0.2.1", DefaultProbePorts)
+	serial, ok := ProbeSerial(ctx, "192.0.2.1", DefaultProbePorts())
 	if ok || serial != "" {
 		t.Errorf("ProbeSerial(canceled ctx) = (%q, %v), want empty/not-found", serial, ok)
 	}

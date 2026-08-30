@@ -26,17 +26,17 @@ func TestGetStreamURIResponseVariants(t *testing.T) {
 		{
 			name:    "SOAP 1.2 with trt/tt prefixes",
 			fixture: "getstreamuri_normal_soap12.xml",
-			wantURI: "rtsp://192.168.1.100:554/stream1",
+			wantURI: "rtsp://192.0.2.100:554/stream1",
 		},
 		{
 			name:    "SOAP 1.1 envelope with default namespaces",
 			fixture: "getstreamuri_soap11_prefixes.xml",
-			wantURI: "rtsp://192.168.1.101:554/11/media/video",
+			wantURI: "rtsp://192.0.2.101:554/11/media/video",
 		},
 		{
 			name:    "Uri without MediaUri wrapper (loose extraction)",
 			fixture: "getstreamuri_no_mediauri_wrapper.xml",
-			wantURI: "rtsp://192.168.1.102:8554/h264_pcm",
+			wantURI: "rtsp://192.0.2.102:8554/h264_pcm",
 		},
 		{
 			name:     "empty Uri element",
@@ -85,7 +85,7 @@ func TestGetSnapshotURIResponseVariants(t *testing.T) {
 		t.Fatalf("GetSnapshotURI() error = %v", err)
 	}
 
-	if uri.URI != "http://192.168.1.100:80/onvif-http/snapshot.jpg" {
+	if uri.URI != "http://192.0.2.100:80/onvif-http/snapshot.jpg" {
 		t.Errorf("URI = %q, want snapshot URL", uri.URI)
 	}
 }

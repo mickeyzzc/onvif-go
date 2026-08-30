@@ -172,7 +172,16 @@ type Server struct {
 	advertiseFn func() string
 }
 
-// DefaultConfig returns a default server configuration with a multi-lens camera setup.
+// DefaultConfig returns a default server configuration with a multi-lens
+// camera setup.
+//
+// Credentials are intentionally EMPTY: without credentials every action is
+// open (see Config.Username). Embedders must set Username/Password
+// explicitly before exposing the server to any real network — a library
+// default must not ship a guessable admin/admin pair.
+//
+// The DeviceInfo values are placeholders ("SN-12345678", …) meant to be
+// overridden with the host's real identity.
 //
 //nolint:funlen // DefaultConfig has many statements due to comprehensive default configuration
 func DefaultConfig() *Config {
@@ -188,8 +197,6 @@ func DefaultConfig() *Config {
 			SerialNumber:    "SN-12345678",
 			HardwareID:      "HW-87654321",
 		},
-		Username:       "admin",
-		Password:       "admin",
 		SupportPTZ:     true,
 		SupportImaging: true,
 		SupportEvents:  false,

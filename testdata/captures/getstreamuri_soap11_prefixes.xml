@@ -3,7 +3,7 @@
   <soapenv:Body>
     <GetStreamUriResponse xmlns="http://www.onvif.org/ver10/media/wsdl">
       <MediaUri xmlns="http://www.onvif.org/ver10/schema">
-        <Uri>rtsp://192.168.1.101:554/11/media/video</Uri>
+        <Uri>rtsp://192.0.2.101:554/11/media/video</Uri>
         <InvalidAfterConnect>false</InvalidAfterConnect>
         <InvalidAfterReboot>false</InvalidAfterReboot>
       </MediaUri>
