@@ -704,9 +704,12 @@ func SelectMainProfile(profiles []*Profile) string {
 // substream — on some hardware (e.g. Amcrest IP4M) two tokens at the same
 // resolution are two handles onto the same stream.
 //
-// Returns "" when there is no independent substream (or when mainToken does
-// not resolve). If nothing carries resolution information, the first
-// non-main profile is returned as a list-order fallback.
+// Returns "" when there is no independent substream. If mainToken does not
+// resolve to any profile, the same-resolution guard is disabled and the
+// largest profile wins — the main stream itself is returned (pass a token
+// from SelectMainProfile to avoid this). If nothing carries resolution
+// information, the first non-main profile is returned as a list-order
+// fallback.
 func SelectSubProfile(profiles []*Profile, mainToken string) string {
 	if len(profiles) == 0 {
 		return ""
