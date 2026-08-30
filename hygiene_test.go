@@ -33,14 +33,16 @@ var libraryDirs = []string{
 // credential-looking defaults.
 func TestNoDefaultCredentialsInLibraryCode(t *testing.T) {
 	for _, dir := range libraryDirs {
-		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-			if err != nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+		err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			if info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 				return nil
 			}
 			data, err := os.ReadFile(path)
 			if err != nil {
-				t.Errorf("read %s: %v", path, err)
-				return nil
+				return err
 			}
 			src := string(data)
 			for _, banned := range []string{`Username: "admin"`, `Password: "admin"`, `"admin/admin"`} {
@@ -50,6 +52,9 @@ func TestNoDefaultCredentialsInLibraryCode(t *testing.T) {
 			}
 			return nil
 		})
+		if err != nil {
+			t.Fatalf("walk %s: %v", dir, err)
+		}
 	}
 }
 
@@ -58,14 +63,16 @@ func TestNoDefaultCredentialsInLibraryCode(t *testing.T) {
 // real LAN addresses (a 2026-01 network-discovery dump with live IPs was
 // committed once — never again).
 func TestTestdataContainsNoPrivateNetworkData(t *testing.T) {
-	filepath.Walk("testdata", func(path string, info os.FileInfo, err error) error {
-		if err != nil || info.IsDir() {
+	err := filepath.Walk("testdata", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
 			return nil
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
-			t.Errorf("read %s: %v", path, err)
-			return nil
+			return err
 		}
 		src := string(data)
 		for _, line := range strings.Split(src, "\n") {
@@ -78,4 +85,7 @@ func TestTestdataContainsNoPrivateNetworkData(t *testing.T) {
 		}
 		return nil
 	})
+	if err != nil {
+		t.Fatalf("walk testdata: %v", err)
+	}
 }
