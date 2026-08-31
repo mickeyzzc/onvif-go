@@ -152,20 +152,21 @@ diag, _ := client.DiagnoseAuth(ctx)
 
 ## 文档
 
-主题指南，中英双语：
+主题指南在 [`docs/zh/`](docs/zh/) —— 每篇在 `docs/en/` 下有英文对照版：
 
-| 主题 | 中文 | English |
-|---|---|---|
-| 架构 | [架构](docs/zh/architecture.md) | [architecture.md](docs/en/architecture.md) |
-| 鉴权与安全 | [鉴权与安全](docs/zh/authentication.md) | [authentication.md](docs/en/authentication.md) |
-| 设备发现 | [设备发现](docs/zh/discovery.md) | [discovery.md](docs/en/discovery.md) |
-| 媒体与码流 | [媒体与码流](docs/zh/media.md) | [media.md](docs/en/media.md) |
-| 事件 | [事件](docs/zh/events.md) | [events.md](docs/en/events.md) |
-| 服务端 | [服务端](docs/zh/server.md) | [server.md](docs/en/server.md) |
-| v1 → v2 迁移 | [迁移指南](MIGRATION.md) | [MIGRATION.md](MIGRATION.md) |
-| 并发模型 | [并发模型](docs/zh/concurrency.md) | [concurrency.md](docs/en/concurrency.md) |
-| 测试 | [测试](docs/zh/testing.md) | [testing.md](docs/en/testing.md) |
-| CLI 工具 | [CLI 工具](docs/zh/cli.md) | [cli.md](docs/en/cli.md) |
+| 主题 | 内容 |
+|---|---|
+| [架构](docs/zh/architecture.md) | 包结构与分层 |
+| [v2 架构](docs/zh/v2-architecture.md) | v2 传输层重设计 |
+| [鉴权与安全](docs/zh/authentication.md) | WS-UsernameToken、双 token 模式 |
+| [设备发现](docs/zh/discovery.md) | WS-Discovery 探测 |
+| [媒体与码流](docs/zh/media.md) | Profile、取流地址 |
+| [事件](docs/zh/events.md) | PullPoint 订阅 |
+| [服务端](docs/zh/server.md) | 嵌入服务器/模拟器 |
+| [并发模型](docs/zh/concurrency.md) | goroutine 与锁规则 |
+| [测试](docs/zh/testing.md) | 内部测试辅助、金串抓包 |
+| [CLI 工具](docs/zh/cli.md) | onvif-diagnostics、generate-tests |
+| [v1 → v2 迁移](MIGRATION.md) | 破坏性变更与迁移步骤 |
 
 API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
 

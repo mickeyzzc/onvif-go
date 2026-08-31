@@ -180,20 +180,21 @@ diag, _ := client.DiagnoseAuth(ctx)
 
 ## Documentation
 
-Topic guides, English and Chinese:
+Topic guides live under [`docs/en/`](docs/en/) — each has a Chinese counterpart under `docs/zh/`:
 
-| Topic | English | 中文 |
-|---|---|---|
-| Architecture | [architecture.md](docs/en/architecture.md) | [架构](docs/zh/architecture.md) |
-| Authentication & security | [authentication.md](docs/en/authentication.md) | [鉴权与安全](docs/zh/authentication.md) |
-| Device discovery | [discovery.md](docs/en/discovery.md) | [设备发现](docs/zh/discovery.md) |
-| Media & streaming | [media.md](docs/en/media.md) | [媒体与码流](docs/zh/media.md) |
-| Events | [events.md](docs/en/events.md) | [事件](docs/zh/events.md) |
-| ONVIF server | [server.md](docs/en/server.md) | [服务端](docs/zh/server.md) |
-| v1 → v2 migration | [MIGRATION.md](MIGRATION.md) | [迁移指南](MIGRATION.md) |
-| Concurrency model | [concurrency.md](docs/en/concurrency.md) | [并发模型](docs/zh/concurrency.md) |
-| Testing | [testing.md](docs/en/testing.md) | [测试](docs/zh/testing.md) |
-| CLI tools | [cli.md](docs/en/cli.md) | [CLI 工具](docs/zh/cli.md) |
+| Guide | Covers |
+|---|---|
+| [Architecture](docs/en/architecture.md) | package map and layering |
+| [v2 architecture](docs/en/v2-architecture.md) | the v2 transport redesign |
+| [Authentication & security](docs/en/authentication.md) | WS-UsernameToken, both token modes |
+| [Device discovery](docs/en/discovery.md) | WS-Discovery probing |
+| [Media & streaming](docs/en/media.md) | profiles, stream URIs |
+| [Events](docs/en/events.md) | PullPoint subscriptions |
+| [ONVIF server](docs/en/server.md) | embedding the server/simulator |
+| [Concurrency model](docs/en/concurrency.md) | goroutine and locking rules |
+| [Testing](docs/en/testing.md) | internal test helpers, golden captures |
+| [CLI tools](docs/en/cli.md) | onvif-diagnostics, generate-tests |
+| [v1 → v2 migration](MIGRATION.md) | breaking changes and migration steps |
 
 API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif).
 
