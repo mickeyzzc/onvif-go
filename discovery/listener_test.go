@@ -126,9 +126,28 @@ func (l *loopbackListener) sendRaw(t *testing.T, payload string) {
 		if _, err := l.conn.WriteToUDP([]byte(payload), l.addr); err != nil {
 			t.Fatalf("failed to send datagram: %v", err)
 		}
-
 		time.Sleep(50 * time.Millisecond)
 	}
+}
+
+// sendOnce delivers the payload exactly once and waits for the condition —
+// for tests that assert exact delivery counts. The resend-until-delivered
+// helper above can inject a duplicate datagram while the first copy still
+// sits in the read buffer (the loop polls on readTick), turning "delivered
+// exactly one" into a scheduling race.
+func (l *loopbackListener) sendOnce(t *testing.T, payload string, delivered func() bool) {
+	t.Helper()
+
+	if _, err := l.conn.WriteToUDP([]byte(payload), l.addr); err != nil {
+		t.Fatalf("failed to send datagram: %v", err)
+	}
+	for range 40 {
+		if delivered() {
+			return
+		}
+		time.Sleep(50 * time.Millisecond)
+	}
+	t.Fatal("datagram was not delivered to the listener loop")
 }
 
 func TestListenerReceivesHello(t *testing.T) {
@@ -204,7 +223,7 @@ func TestListenerIgnoresByeAndGarbage(t *testing.T) {
 	// Hello afterwards.
 	l.sendRaw(t, byeDatagram)
 	l.sendRaw(t, "<not+xml")
-	l.send(t, helloDatagram, func() bool {
+	l.sendOnce(t, helloDatagram, func() bool {
 		mu.Lock()
 		defer mu.Unlock()
 
