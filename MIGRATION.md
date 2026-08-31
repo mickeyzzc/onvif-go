@@ -92,12 +92,30 @@ New on the device side: `server/discovery.Responder` (multicast Probe
 answering + Hello/Bye + directed HTTP probe handler) built on the shared
 `wsdiscovery` codec.
 
-## 5. Quick checklist
+## 5. v2.0.0-rc4 hygiene changes (library-embedding breaks)
+
+Three small breaks landed with the rc4 hygiene pass; none affect the
+client or the wire format:
+
+| Before (≤ rc3) | rc4 |
+|---|---|
+| `server.DefaultConfig()` shipped `admin`/`admin` credentials | credentials are **empty**; without credentials the server runs in its documented everything-open mode — set `Username`/`Password` explicitly for real networks |
+| `github.com/mickeyzzc/onvif-go/v2/testing` (public helper package; linked `httptest` into consumer binaries) | `…/v2/internal/onviftesting` — unreachable from outside the module by design |
+| `soap.DefaultProtectedPrefixes`, `server.DefaultScopes`, `discovery.DefaultProbePorts` (exported mutable package vars) | functions returning fresh slices of the same names — appending to a package var no longer mutates process-wide defaults |
+| `README.zh.md` | renamed `README.zh-CN.md` |
+
+The repo-root `hygiene_test.go` pins all of these so they cannot
+silently regress.
+
+## 6. Quick checklist
 
 1. Bump the import path to `/v2`; run `go build`.
 2. Replace per-service endpoint setters with `SetServiceEndpoint`.
 3. If you embedded `server/`: adopt the context handler signature and
    review the auth-policy table above; consider swapping in providers
    for your real state sources.
-4. Re-run your integration tests; byte-level consumers of server
+4. If you imported `v2/testing` or mutated the default slice vars: see
+   §5 — switch to `internal/onviftesting` (vendor the helpers if you
+   need them externally) and call the new functions.
+5. Re-run your integration tests; byte-level consumers of server
    responses should pin the golden forms from `server/soap/response_test.go`.

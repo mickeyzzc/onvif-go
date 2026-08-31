@@ -11,7 +11,7 @@
 > PTZ / media / events / imaging. Zero third-party dependencies.
 > Maintained by [@mickeyzzc](https://github.com/mickeyzzc).
 
-> [**中文**](README.zh.md) — [English](README.md)
+> [**中文**](README.zh-CN.md) — [English](README.md)
 
 A production-hardened Go library for communicating with ONVIF-compliant IP
 cameras, NVRs and surveillance devices. Its device compatibility comes from
@@ -209,6 +209,22 @@ make fmt      # gofumpt + goimports via golangci-lint fmt
 CI ([ci.yml](.github/workflows/ci.yml)) runs lint + format check + race
 tests + build on every push to `main`; the branch requires all three jobs
 green.
+
+## Library hygiene (rc4 hardening)
+
+- `server.DefaultConfig()` no longer ships `admin`/`admin` credentials
+  (empty by default; the no-credentials mode is the documented everything-
+  open mode — set `Username`/`Password` explicitly before real networks).
+- The public `testing` package moved to `internal/onviftesting` (no more
+  `httptest` linked into consumer binaries).
+- The exported mutable default slices became functions returning fresh
+  slices: `server/soap.DefaultProtectedPrefixes()`, `server.DefaultScopes()`,
+  `discovery.DefaultProbePorts()`.
+- `testdata/` carries synthetic data only (RFC 5737 ranges); keep real
+  captures in the gitignored `tmp/`.
+- `hygiene_test.go` at the repo root pins all of the above. See
+  [CHANGELOG.md](CHANGELOG.md) and [MIGRATION.md](MIGRATION.md) for
+  migration details.
 
 ## Attribution & license
 

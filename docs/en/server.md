@@ -57,6 +57,17 @@ network*. The simulator does the same by default:
 
 ## Per-action authentication (#16)
 
+`server.DefaultConfig()` ships with **empty credentials** — a library default
+must not carry a guessable pair. Without credentials everything is open
+(fine for local simulators); set `Username`/`Password` explicitly before
+exposing the server to a real network:
+
+```go
+cfg := server.DefaultConfig()
+cfg.Username = "admin"      // your choice
+cfg.Password = "..."        // from host configuration, never committed
+```
+
 With credentials configured, the default policy authenticates **write-style
 actions only** — `Set*`, `Remove*`, `Create*`, `Go*`, plus `SystemReboot`
 and any names in `Config.AuthProtectedActions`. Read operations stay open

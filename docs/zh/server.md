@@ -54,6 +54,16 @@ handler.RegisterContextHandler("GetStreamUri", func(rc *soap.RequestContext, bod
 
 ## 按动作鉴权（#16）
 
+`server.DefaultConfig()` 的**凭据默认为空** —— 库的默认值绝不能内置可猜
+测的账号对。未配置凭据时全部动作开放（适合本地模拟器）；把服务端暴露到
+真实网络前，必须显式设置 `Username`/`Password`：
+
+```go
+cfg := server.DefaultConfig()
+cfg.Username = "admin"      // 自行决定
+cfg.Password = "..."        // 来自宿主配置，绝不硬编码提交
+```
+
 配置了凭据时，默认策略只对**写类动作**要求认证——`Set*`、`Remove*`、
 `Create*`、`Go*`，外加 `SystemReboot` 和 `Config.AuthProtectedActions`
 里列出的名字。读操作对无凭据的发现客户端保持开放。未配置凭据时全部

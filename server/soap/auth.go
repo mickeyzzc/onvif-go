@@ -4,7 +4,6 @@ import (
 	"crypto/sha1" //nolint:gosec // SHA1 required by the ONVIF digest formula
 	"crypto/subtle"
 	"encoding/base64"
-	"slices"
 	"strings"
 
 	originsoap "github.com/mickeyzzc/onvif-go/v2/internal/soap"
@@ -14,7 +13,13 @@ import (
 // authentication under the default policy: write-style operations
 // (Set*, Remove*, Create*, Go*) are protected while read operations
 // stay open.
-var DefaultProtectedPrefixes = []string{"Set", "Remove", "Create", "Go"}
+//
+// It is a function (not a package var) so callers always get a fresh
+// slice — appending to a shared package-level var would mutate the
+// default policy process-wide.
+func DefaultProtectedPrefixes() []string {
+	return []string{"Set", "Remove", "Create", "Go"}
+}
 
 // AuthPolicy decides which SOAP actions require WS-Security credentials
 // and which UsernameToken password types are accepted. It only applies
@@ -41,7 +46,7 @@ type AuthPolicy struct {
 // authenticated, reads open, PasswordText accepted.
 func DefaultAuthPolicy() *AuthPolicy {
 	return &AuthPolicy{
-		Prefixes:          slices.Clone(DefaultProtectedPrefixes),
+		Prefixes:          DefaultProtectedPrefixes(),
 		AllowPasswordText: true,
 	}
 }
@@ -49,7 +54,7 @@ func DefaultAuthPolicy() *AuthPolicy {
 // protectedPrefixes returns the effective prefix list.
 func (p *AuthPolicy) protectedPrefixes() []string {
 	if p.Prefixes == nil {
-		return DefaultProtectedPrefixes
+		return DefaultProtectedPrefixes()
 	}
 
 	return p.Prefixes

@@ -179,7 +179,7 @@ API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/gi
 | `discovery/` | WS-Discovery：主动探测、被动监听、定向 HTTP 探测、后处理 |
 | `internal/soap/` | SOAP 传输 + WS-Security（digest/明文模式、Fault 检测） |
 | `server/` | 虚拟 ONVIF 相机服务器（测试用模拟器） |
-| `testing/` | 测试助手：mock server、抓包回放、golden 文件 |
+| `internal/onviftesting/` | 测试助手：mock server、抓包回放、golden 文件（内部包，不进消费方二进制） |
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
 | `docs/{en,zh}/` | 主题文档（架构、鉴权、发现、媒体、事件、并发、测试、CLI） |
 | `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server` |
@@ -196,6 +196,19 @@ make fmt      # 通过 golangci-lint fmt 执行 gofumpt + goimports
 
 CI（[ci.yml](.github/workflows/ci.yml)）在每次推送到 `main` 时运行 lint +
 格式检查 + race 测试 + 构建；分支要求三个任务全绿，且只接受 PR 合并。
+
+## 库卫生（rc4 加固）
+
+- `server.DefaultConfig()` **不再内置 admin/admin 凭据**（默认为空；未配凭据
+  即文档化的全开放模式，暴露真实网络前请显式设置 `Username`/`Password`）；
+- 公开的 `testing` 包移入 `internal/onviftesting`（不再把 `httptest` 链进
+  消费方二进制）；
+- 三个可变默认切片改为返回新切片的函数：`server/soap.DefaultProtectedPrefixes()`、
+  `server.DefaultScopes()`、`discovery.DefaultProbePorts()`；
+- `testdata/` 只含合成数据（RFC 5737 文档网段），真实抓包请放 gitignored
+  的 `tmp/`；
+- 仓库根 `hygiene_test.go` 源码扫描守卫钉死以上各条。迁移细节见
+  [CHANGELOG.md](CHANGELOG.md) 与 [MIGRATION.md](MIGRATION.md)。
 
 ## 血统与许可
 

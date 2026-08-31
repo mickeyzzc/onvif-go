@@ -11,7 +11,7 @@ import (
 	"text/template"
 	"time"
 
-	onviftesting "github.com/mickeyzzc/onvif-go/v2/testing"
+	onviftesting "github.com/mickeyzzc/onvif-go/v2/internal/onviftesting"
 )
 
 const (
@@ -37,7 +37,7 @@ import (
 	"time"
 
 	"github.com/mickeyzzc/onvif-go/v2/onvif"
-	onviftesting "github.com/mickeyzzc/onvif-go/v2/testing"
+	onviftesting "github.com/mickeyzzc/onvif-go/v2/internal/onviftesting"
 )
 
 // Test{{.CameraName}} tests ONVIF client against {{.CameraDescription}} captured responses.

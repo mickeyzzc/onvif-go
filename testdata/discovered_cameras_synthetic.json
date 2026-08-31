@@ -1,0 +1,51 @@
+{
+  "discovery_date": "synthetic",
+  "total_cameras": 4,
+  "note": "All entries are fabricated (RFC 5737 documentation ranges, synthetic UUIDs). No real network data is committed.",
+  "cameras": [
+    {
+      "id": 1,
+      "endpoint": "urn:uuid:a0000000-0000-4000-8000-000000000001",
+      "xaddrs": ["http://192.0.2.11:8000/onvif/device_service"],
+      "manufacturer": "VendorA",
+      "model": "PTZ-Cam-A1",
+      "ip": "192.0.2.11",
+      "port": 8000,
+      "profiles": ["Streaming", "T"],
+      "supports_https": false
+    },
+    {
+      "id": 2,
+      "endpoint": "urn:uuid:a0000000-0000-4000-8000-000000000002",
+      "xaddrs": ["http://192.0.2.12/onvif/device_service", "https://192.0.2.12/onvif/device_service"],
+      "manufacturer": "VendorB",
+      "model": "Dome-B2",
+      "ip": "192.0.2.12",
+      "port": 80,
+      "profiles": ["Streaming", "G", "T"],
+      "supports_https": true
+    },
+    {
+      "id": 3,
+      "endpoint": "urn:uuid:a0000000-0000-4000-8000-000000000003",
+      "xaddrs": ["http://198.51.100.13/onvif/device_service"],
+      "manufacturer": "VendorC",
+      "model": "Corner-C3",
+      "ip": "198.51.100.13",
+      "port": 80,
+      "profiles": ["Streaming", "G", "M", "T"],
+      "supports_https": false
+    },
+    {
+      "id": 4,
+      "endpoint": "urn:uuid:a0000000-0000-4000-8000-000000000004",
+      "xaddrs": ["http://198.51.100.14:8000/onvif/device_service", "https://198.51.100.14:8000/onvif/device_service"],
+      "manufacturer": "VendorA",
+      "model": "Fisheye-A4",
+      "ip": "198.51.100.14",
+      "port": 8000,
+      "profiles": ["Streaming", "G", "T", "M"],
+      "supports_https": true
+    }
+  ]
+}

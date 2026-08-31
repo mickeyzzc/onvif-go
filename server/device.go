@@ -317,9 +317,15 @@ func (s *Server) HandleSystemReboot(rc *soap.RequestContext, body []byte) (inter
 // empty — the conventional ONVIF device scope URIs. Hosts advertising
 // WS-Discovery should mirror their Responder Scopes into Config.Scopes
 // so ProbeMatches and GetScopes agree (#37).
-var DefaultScopes = []string{
-	"onvif://www.onvif.org/type/NetworkVideoTransmitter",
-	"onvif://www.onvif.org/type/video_encoder",
+//
+// It is a function (not a package var) so callers always get a fresh
+// slice — appending to a shared package-level var would mutate the
+// served scope set process-wide.
+func DefaultScopes() []string {
+	return []string{
+		"onvif://www.onvif.org/type/NetworkVideoTransmitter",
+		"onvif://www.onvif.org/type/video_encoder",
+	}
 }
 
 // GetScopesResponse represents the GetScopes response.
@@ -340,7 +346,7 @@ type ScopeDefinition struct {
 func (s *Server) HandleGetScopes(_ *soap.RequestContext, _ []byte) (interface{}, error) {
 	scopes := s.config.Scopes
 	if len(scopes) == 0 {
-		scopes = DefaultScopes
+		scopes = DefaultScopes()
 	}
 
 	resp := &GetScopesResponse{Scopes: make([]ScopeDefinition, len(scopes))}

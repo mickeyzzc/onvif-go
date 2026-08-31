@@ -17,7 +17,13 @@ import (
 )
 
 // DefaultProbePorts are the ports commonly serving ONVIF device_service.
-var DefaultProbePorts = []int{80, 8080, 8000}
+//
+// It is a function (not a package var) so callers always get a fresh
+// slice — appending to a shared package-level var would mutate the scan
+// set process-wide.
+func DefaultProbePorts() []int {
+	return []int{80, 8080, 8000}
+}
 
 // DeviceInfo carries the identity fields an unauthenticated
 // GetDeviceInformation probe can extract.
@@ -238,7 +244,7 @@ const defaultProbeTimeout = 1200 * time.Millisecond
 // through both GB28181 and ONVIF. ok is false when no port yields a serial.
 func ProbeSerial(ctx context.Context, host string, ports []int) (serial string, ok bool) {
 	if len(ports) == 0 {
-		ports = DefaultProbePorts
+		ports = DefaultProbePorts()
 	}
 
 	if host == "" {

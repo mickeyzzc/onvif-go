@@ -1,5 +1,8 @@
-// Package testdata provides camera configuration data for testing
-// Auto-generated from network discovery on 2026-01-13
+// Package testdata provides synthetic camera configuration data for testing.
+//
+// All entries are FABRICATED: RFC 5737 documentation IPs (192.0.2.x /
+// 198.51.100.x), synthetic UUIDs, and generic vendor/model names. No real
+// network data is committed to this repository (see testdata/README.md).
 package testdata
 
 // DiscoveredCamera represents a camera found on the network
@@ -15,91 +18,48 @@ type DiscoveredCamera struct {
 	SupportsHTTPS bool
 }
 
-// TestCameras contains the discovered cameras for testing
+// TestCameras contains synthetic cameras for testing
 var TestCameras = []DiscoveredCamera{
 	{
 		ID:           1,
-		Endpoint:     "urn:uuid:15020314-0204-0408-1500-ec71db465af7",
-		XAddrs:       []string{"http://192.168.2.61:8000/onvif/device_service"},
-		Manufacturer: "Reolink",
-		Model:        "E1Zoom",
-		IP:           "192.168.2.61",
+		Endpoint:     "urn:uuid:a0000000-0000-4000-8000-000000000001",
+		XAddrs:       []string{"http://192.0.2.11:8000/onvif/device_service"},
+		Manufacturer: "VendorA",
+		Model:        "PTZ-Cam-A1",
+		IP:           "192.0.2.11",
 		Port:         8000,
 		Profiles:     []string{"Streaming", "T"},
 	},
 	{
 		ID:            2,
-		Endpoint:      "urn:uuid:00075fe0-a604-04a6-e05f-0700075fe05f",
-		XAddrs:        []string{"http://192.168.2.57/onvif/device_service", "https://192.168.2.57/onvif/device_service"},
-		Manufacturer:  "Bosch",
-		Model:         "AUTODOME_IP_starlight_5000i",
-		IP:            "192.168.2.57",
+		Endpoint:      "urn:uuid:a0000000-0000-4000-8000-000000000002",
+		XAddrs:        []string{"http://192.0.2.12/onvif/device_service", "https://192.0.2.12/onvif/device_service"},
+		Manufacturer:  "VendorB",
+		Model:         "Dome-B2",
+		IP:            "192.0.2.12",
 		Port:          80,
 		Profiles:      []string{"Streaming", "G", "T"},
 		SupportsHTTPS: true,
 	},
 	{
 		ID:           3,
-		Endpoint:     "urn:uuid:555a3d17-6698-43d9-9a52-2a199ff14dec",
-		XAddrs:       []string{"http://192.168.2.82/onvif/device_service"},
-		Manufacturer: "AXIS",
-		Model:        "P3818-PVE",
-		IP:           "192.168.2.82",
+		Endpoint:     "urn:uuid:a0000000-0000-4000-8000-000000000003",
+		XAddrs:       []string{"http://198.51.100.13/onvif/device_service"},
+		Manufacturer: "VendorC",
+		Model:        "Corner-C3",
+		IP:           "198.51.100.13",
 		Port:         80,
 		Profiles:     []string{"Streaming", "G", "M", "T"},
 	},
 	{
-		ID:           4,
-		Endpoint:     "urn:uuid:12060714-0005-0000-0302-ec71dbe838cc",
-		XAddrs:       []string{"http://192.168.2.236:8000/onvif/device_service"},
-		Manufacturer: "Reolink",
-		Model:        "ReolinkTrackMixWiFi",
-		IP:           "192.168.2.236",
-		Port:         8000,
-		Profiles:     []string{"Streaming", "T"},
-	},
-	{
-		ID:            5,
-		Endpoint:      "urn:uuid:00075fca-f8fa-faf8-ca5f-0700075fca5f",
-		XAddrs:        []string{"http://192.168.2.200/onvif/device_service", "https://192.168.2.200/onvif/device_service"},
-		Manufacturer:  "Bosch",
-		Model:         "FLEXIDOME_IP_starlight_8000i",
-		IP:            "192.168.2.200",
-		Port:          80,
-		Profiles:      []string{"Streaming", "G", "T"},
-		SupportsHTTPS: true,
-	},
-	{
-		ID:            6,
-		Endpoint:      "urn:uuid:00075fd5-9fbe-be9f-d55f-0700075fd55f",
-		XAddrs:        []string{"http://192.168.2.24/onvif/device_service", "https://192.168.2.24/onvif/device_service"},
-		Manufacturer:  "Bosch",
-		Model:         "FLEXIDOME_panoramic_5100i",
-		IP:            "192.168.2.24",
-		Port:          80,
+		ID:            4,
+		Endpoint:      "urn:uuid:a0000000-0000-4000-8000-000000000004",
+		XAddrs:        []string{"http://198.51.100.14:8000/onvif/device_service", "https://198.51.100.14:8000/onvif/device_service"},
+		Manufacturer:  "VendorA",
+		Model:         "Fisheye-A4",
+		IP:            "198.51.100.14",
+		Port:          8000,
 		Profiles:      []string{"Streaming", "G", "T", "M"},
-		SupportsHTTPS: true,
-	},
-	{
-		ID:            7,
-		Endpoint:      "urn:uuid:cbc93166-2a81-4635-9fe3-dcd5e99528d3",
-		XAddrs:        []string{"http://192.168.2.190/onvif/device_service", "https://192.168.2.190/onvif/device_service"},
-		Manufacturer:  "AXIS",
-		Model:         "Q3819-PVE",
-		IP:            "192.168.2.190",
-		Port:          80,
-		Profiles:      []string{"Streaming", "G", "M", "T"},
-		SupportsHTTPS: true,
-	},
-	{
-		ID:            8,
-		Endpoint:      "urn:uuid:9e8de0a1-c818-448d-90eb-85670b2b9872",
-		XAddrs:        []string{"http://192.168.2.30/onvif/device_service", "https://192.168.2.30/onvif/device_service"},
-		Manufacturer:  "AXIS",
-		Model:         "P5655-E",
-		IP:            "192.168.2.30",
-		Port:          80,
-		Profiles:      []string{"Streaming", "G", "M", "T"},
 		SupportsHTTPS: true,
 	},
 }
