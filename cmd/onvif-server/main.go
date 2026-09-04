@@ -30,7 +30,7 @@ func main() {
 	host := flag.String("host", "0.0.0.0", "Server host address")
 	port := flag.Int("port", defaultPort, "Server port")
 	username := flag.String("username", "admin", "Authentication username")
-	password := flag.String("password", "admin", "Authentication password")
+	password := flag.String("password", "", "Authentication password (required — no default; falls back to ONVIF_SERVER_PASSWORD)")
 	manufacturer := flag.String("manufacturer", "onvif-go", "Device manufacturer")
 	model := flag.String("model", "Virtual Multi-Lens Camera", "Device model")
 	firmware := flag.String("firmware", "1.0.0", "Firmware version")
@@ -68,13 +68,18 @@ func main() {
 		os.Exit(0)
 	}
 
+	authPassword, err := resolvePassword(*password)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	// Validate profiles count
 	if *profiles < 1 || *profiles > 10 {
 		log.Fatal("Number of profiles must be between 1 and 10")
 	}
 
 	// Create server configuration
-	config := buildConfig(*host, *port, *username, *password, *manufacturer, *model,
+	config := buildConfig(*host, *port, *username, authPassword, *manufacturer, *model,
 		*firmware, *serial, *profiles, *ptz, *imaging, *events)
 
 	// Create server
@@ -116,6 +121,19 @@ func main() {
 	// Give the server a moment to shut down gracefully
 	time.Sleep(1 * time.Second)
 	fmt.Println("✅ Server stopped")
+}
+
+// resolvePassword returns the simulator auth password. There is no default:
+// empty credentials would leave every action open (see server.Config), so
+// the demo refuses to run without an explicit -password or env value.
+func resolvePassword(flagValue string) (string, error) {
+	if flagValue != "" {
+		return flagValue, nil
+	}
+	if env := os.Getenv("ONVIF_SERVER_PASSWORD"); env != "" {
+		return env, nil
+	}
+	return "", fmt.Errorf("authentication password required: pass -password <secret> or set ONVIF_SERVER_PASSWORD")
 }
 
 // buildConfig creates a server configuration from command-line arguments.
