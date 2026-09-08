@@ -63,15 +63,16 @@ go install ./cmd/onvif-server
 
 ### Basic Usage
 
-Start the server with default settings (3 camera profiles):
+Start the server with 3 camera profiles (an auth password is **required** — there is no default):
 
 ```bash
-./onvif-server
+./onvif-server -password my-secret
+# or: ONVIF_SERVER_PASSWORD=my-secret ./onvif-server
 ```
 
 The server will start on `http://0.0.0.0:8080` with:
 - Username: `admin`
-- Password: `admin`
+- Password: whatever you passed (`my-secret` above)
 - 3 camera profiles with different resolutions
 - PTZ and Imaging services enabled
 
@@ -101,7 +102,7 @@ The server will start on `http://0.0.0.0:8080` with:
   -username string
         Authentication username (default "admin")
   -password string
-        Authentication password (default "admin")
+        Authentication password (required — no default; falls back to ONVIF_SERVER_PASSWORD)
   -manufacturer string
         Device manufacturer (default "onvif-go")
   -model string
@@ -266,7 +267,7 @@ func main() {
     // Connect to the server
     client, err := onvif.NewClient(
         "http://localhost:8080/onvif/device_service",
-        onvif.WithCredentials("admin", "admin"),
+        onvif.WithCredentials("admin", "my-secret"),
         onvif.WithTimeout(30*time.Second),
     )
     if err != nil {

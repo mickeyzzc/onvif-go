@@ -11,10 +11,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/xml"
+	"errors"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"sync"
+	"time"
 
 	originsoap "github.com/mickeyzzc/onvif-go/v2/internal/soap"
 )
@@ -42,6 +45,13 @@ type Handler struct {
 	// explicitPrefixes emits responses with s:/tds:/trt:/... namespace
 	// prefixes instead of default xmlns declarations.
 	explicitPrefixes bool
+	// anonymousAllowed records the explicit AllowAnonymous opt-in (see
+	// HandlerOptions).
+	anonymousAllowed bool
+	// maxBodyBytes bounds request bodies (0 = unlimited).
+	maxBodyBytes int64
+	// authFailures is the per-source brute-force backstop (issue #60).
+	authFailures *authFailureTracker
 
 	mu       sync.RWMutex
 	handlers map[string]ContextHandler
@@ -95,6 +105,25 @@ type HandlerOptions struct {
 	// prefixes (s:Envelope, trt:GetStreamUriResponse, ...) instead of
 	// default xmlns declarations. RawXML responses are never rewritten.
 	ExplicitPrefixes bool
+
+	// MaxBodyBytes bounds the accepted request body; larger bodies are
+	// rejected with 413. 0 = default 1 MiB, negative = unlimited (tests
+	// only). Issue #59.
+	MaxBodyBytes int
+
+	// AuthFailureLimit is how many authentication failures from one source
+	// trigger a lockout; 0 = default 5, negative disables. Issue #60.
+	AuthFailureLimit int
+
+	// AuthLockout is how long a locked-out source is refused.
+	// 0 = default 60s.
+	AuthLockout time.Duration
+
+	// AllowAnonymous documents the empty-credentials open mode explicitly.
+	// Today empty Username/Password serves every action without
+	// authentication regardless of this flag (legacy behavior, with a
+	// startup warning); a future major version will require this opt-in.
+	AllowAnonymous bool
 }
 
 // NewHandler creates a new SOAP handler with the default per-action
@@ -108,12 +137,34 @@ func NewHandler(username, password string) *Handler {
 
 // NewHandlerWithOptions creates a new SOAP handler.
 func NewHandlerWithOptions(opts HandlerOptions) *Handler {
+	limit := opts.MaxBodyBytes
+	if limit == 0 {
+		limit = 1 << 20
+	} else if limit < 0 {
+		limit = 0 // unlimited
+	}
+	failureLimit := opts.AuthFailureLimit
+	if failureLimit == 0 {
+		failureLimit = 5
+	} else if failureLimit < 0 {
+		failureLimit = 0
+	}
+	lockout := opts.AuthLockout
+	if lockout == 0 {
+		lockout = 60 * time.Second
+	}
+	if opts.Username == "" || opts.Password == "" {
+		slog.Warn("onvif: SOAP handler serving WITHOUT authentication (empty credentials) — set credentials or see AllowAnonymous")
+	}
 	return &Handler{
 		username:         opts.Username,
 		password:         opts.Password,
 		auth:             opts.Auth,
 		explicitPrefixes: opts.ExplicitPrefixes,
 		handlers:         make(map[string]ContextHandler),
+		maxBodyBytes:     int64(limit),
+		anonymousAllowed: opts.AllowAnonymous,
+		authFailures:     newAuthFailureTracker(failureLimit, lockout),
 	}
 }
 
@@ -143,14 +194,34 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Read request body
-	body, err := io.ReadAll(r.Body)
+	// Read request body, bounded (issue #59).
+	var body []byte
+	var err error
+	if h.maxBodyBytes > 0 {
+		body, err = io.ReadAll(http.MaxBytesReader(w, r.Body, h.maxBodyBytes))
+	} else {
+		body, err = io.ReadAll(r.Body)
+	}
 	if err != nil {
-		h.sendFault(w, "Receiver", "Failed to read request body", err.Error())
+		var tooLarge *http.MaxBytesError
+		if errors.As(err, &tooLarge) {
+			http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+		} else {
+			h.sendFault(w, "Receiver", "Failed to read request body", err.Error())
+		}
 
 		return
 	}
 	_ = r.Body.Close()
+
+	// Brute-force backstop: refuse locked-out sources before any auth
+	// work (issue #60).
+	source := remoteIP(r)
+	if h.authFailures.locked(source) {
+		h.sendFault(w, "Sender", "Too many authentication failures", "source temporarily locked out")
+
+		return
+	}
 
 	// Extract action from raw XML first (before parsing), canonicalized
 	// to the ONVIF WSDL spelling so legacy client spellings still
@@ -171,10 +242,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Authenticate actions the policy protects
-	if h.requiresAuth(action) && !h.authenticate(envelope.Header) {
-		h.sendFault(w, "Sender", "Sender not authorized", "Invalid username or password")
+	if h.requiresAuth(action) {
+		if !h.authenticate(envelope.Header) {
+			h.authFailures.recordFailure(source)
+			h.sendFault(w, "Sender", "Sender not authorized", "Invalid username or password")
 
-		return
+			return
+		}
+		h.authFailures.recordSuccess(source)
 	}
 
 	// Find and execute handler
