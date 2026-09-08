@@ -708,7 +708,7 @@ func TestEventStreamSoakLifecycleLoop(t *testing.T) {
 
 	base := runtime.NumGoroutine()
 
-	for round := 0; round < rounds; round++ {
+	for round := range rounds {
 		// Rounds 0/10/20 fail the first two pulls (1s+2s backoff), then
 		// deliver on pull 3; the other rounds deliver immediately.
 		deliverAt := 1
