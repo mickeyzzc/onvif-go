@@ -80,6 +80,11 @@ func New(config *Config, opts ...Option) (*Server, error) {
 		config = &cfg
 	}
 
+	// Fail fast on a misconfigured server (issue #63).
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("onvif server config: %w", err)
+	}
+
 	if config.SnapshotPath == "" {
 		config.SnapshotPath = path.Join(config.BasePath, "snapshot")
 	}

@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -313,6 +314,48 @@ func DefaultConfig() *Config {
 			},
 		},
 	}
+}
+
+// Validate checks the whole configuration and returns the first problem
+// found, or nil. New calls it and fails fast (issue #63): a
+// misconfigured server must refuse to start instead of surfacing
+// confusing runtime behavior.
+func (c *Config) Validate() error {
+	if c.Port < 0 || c.Port > 65535 {
+		return fmt.Errorf("Config.Port %d out of range 0-65535 (0 = kernel-assigned)", c.Port)
+	}
+	if c.Timeout <= 0 {
+		return fmt.Errorf("Config.Timeout must be positive, got %s", c.Timeout)
+	}
+	if c.BasePath != "" &&
+		(!strings.HasPrefix(c.BasePath, "/") || (len(c.BasePath) > 1 && strings.HasSuffix(c.BasePath, "/"))) {
+		return fmt.Errorf("Config.BasePath %q must be an absolute path without a trailing slash", c.BasePath)
+	}
+	if (c.Username == "") != (c.Password == "") {
+		return fmt.Errorf("Config credentials are half-configured: Username and Password must be set together (both empty = open mode)")
+	}
+	for _, action := range c.AuthProtectedActions {
+		if action == "" || strings.ContainsAny(action, " \t") {
+			return fmt.Errorf("Config.AuthProtectedActions contains invalid entry %q: action names are non-empty single tokens", action)
+		}
+	}
+	if c.SnapshotPath != "" && !strings.HasPrefix(c.SnapshotPath, "/") {
+		return fmt.Errorf("Config.SnapshotPath %q must be an absolute path", c.SnapshotPath)
+	}
+	if len(c.Profiles) == 0 {
+		return fmt.Errorf("Config.Profiles must contain at least one camera profile")
+	}
+	tokens := make(map[string]struct{}, len(c.Profiles))
+	for _, p := range c.Profiles {
+		if p.Token == "" {
+			return fmt.Errorf("Config.Profiles contains a profile with an empty token")
+		}
+		if _, dup := tokens[p.Token]; dup {
+			return fmt.Errorf("Config.Profiles contains duplicate token %q", p.Token)
+		}
+		tokens[p.Token] = struct{}{}
+	}
+	return nil
 }
 
 // ServiceEndpoints returns the service endpoint URLs.
