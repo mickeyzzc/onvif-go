@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (release tooling)
+- The tag-triggered release workflow now publishes a GitHub Release
+  (issue #67): a tag-gated test job, the 6-platform CLI matrix (Windows
+  binaries now carry the `.exe` suffix), SHA256SUMS, and
+  `gh release create --verify-tag --generate-notes` with all artifacts.
+  Merging to `main` still releases nothing — only a `v*.*.*` tag does.
+
 ### Added (observability)
 - `metrics` package (issue #66): the library-neutral `metrics.Hooks` seam
   — `SoapRequest(action)`, `SoapFault(action)`, `AuthFail()`,
