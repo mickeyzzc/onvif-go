@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"strings"
 	"time"
@@ -67,6 +68,11 @@ type DiscoverOptions struct {
 	// Examples: "eth0", "wlan0", "192.168.1.100"
 	NetworkInterface string
 
+	// Logger receives structured lifecycle entries: probe sent, matches
+	// as they arrive, skipped unparseable responses, and the final count
+	// (issue #62). nil = silent, the default.
+	Logger *slog.Logger
+
 	// Context and timeout are handled by the caller
 }
 
@@ -119,6 +125,14 @@ func DiscoverWithOptions(ctx context.Context, timeout time.Duration, opts *Disco
 	if _, err := conn.WriteToUDP(wsdiscovery.BuildProbe(messageID), addr); err != nil {
 		return nil, fmt.Errorf("failed to send probe message: %w", err)
 	}
+	logger := opts.Logger
+	if logger != nil {
+		ifaceName := "default"
+		if iface != nil {
+			ifaceName = iface.Name
+		}
+		logger.Debug("ws-discovery probe sent", "message_id", messageID, "interface", ifaceName, "multicast", multicastAddr)
+	}
 
 	// Collect responses
 	devices := make(map[string]*Device)
@@ -136,6 +150,9 @@ func DiscoverWithOptions(ctx context.Context, timeout time.Duration, opts *Disco
 				var netErr net.Error
 				if errors.As(err, &netErr) && netErr.Timeout() {
 					// Timeout reached, return collected devices
+					if logger != nil {
+						logger.Info("ws-discovery complete", "devices", len(devices))
+					}
 					return deviceMapToSlice(devices), nil
 				}
 
@@ -146,11 +163,17 @@ func DiscoverWithOptions(ctx context.Context, timeout time.Duration, opts *Disco
 			device, err := parseProbeResponse(buffer[:n])
 			if err != nil {
 				// Skip invalid responses
+				if logger != nil {
+					logger.Debug("ws-discovery response skipped (unparseable)", "error", err.Error(), "bytes", n)
+				}
 				continue
 			}
 
 			// Add to devices map (deduplicate by endpoint)
 			if device != nil && device.EndpointRef != "" {
+				if _, seen := devices[device.EndpointRef]; !seen && logger != nil {
+					logger.Debug("ws-discovery match", "endpoint_ref", device.EndpointRef, "xaddrs", device.XAddrs)
+				}
 				devices[device.EndpointRef] = device
 			}
 		}
