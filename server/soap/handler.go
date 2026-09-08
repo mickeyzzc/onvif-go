@@ -20,6 +20,7 @@ import (
 	"time"
 
 	originsoap "github.com/mickeyzzc/onvif-go/v2/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/metrics"
 )
 
 // soapEnvelopeNS is the SOAP 1.2 envelope namespace.
@@ -52,6 +53,8 @@ type Handler struct {
 	maxBodyBytes int64
 	// authFailures is the per-source brute-force backstop (issue #60).
 	authFailures *authFailureTracker
+	// metrics receives observability events (issue #66); never nil.
+	metrics metrics.Hooks
 
 	mu       sync.RWMutex
 	handlers map[string]ContextHandler
@@ -119,6 +122,10 @@ type HandlerOptions struct {
 	// 0 = default 60s.
 	AuthLockout time.Duration
 
+	// Metrics receives observability events: dispatched requests, handler
+	// faults, auth failures, lockout refusals (issue #66). nil = no-ops.
+	Metrics metrics.Hooks
+
 	// AllowAnonymous documents the empty-credentials open mode explicitly.
 	// Today empty Username/Password serves every action without
 	// authentication regardless of this flag (legacy behavior, with a
@@ -165,6 +172,7 @@ func NewHandlerWithOptions(opts HandlerOptions) *Handler {
 		maxBodyBytes:     int64(limit),
 		anonymousAllowed: opts.AllowAnonymous,
 		authFailures:     newAuthFailureTracker(failureLimit, lockout),
+		metrics:          metrics.OrNoop(opts.Metrics),
 	}
 }
 
@@ -218,6 +226,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// work (issue #60).
 	source := remoteIP(r)
 	if h.authFailures.locked(source) {
+		h.metrics.AuthLockout()
 		h.sendFault(w, "Sender", "Too many authentication failures", "source temporarily locked out")
 
 		return
@@ -245,6 +254,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h.requiresAuth(action) {
 		if !h.authenticate(envelope.Header) {
 			h.authFailures.recordFailure(source)
+			h.metrics.AuthFail()
 			h.sendFault(w, "Sender", "Sender not authorized", "Invalid username or password")
 
 			return
@@ -270,8 +280,10 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Execute handler
+	h.metrics.SoapRequest(action)
 	response, err := handler(reqCtx, envelope.Body.Raw)
 	if err != nil {
+		h.metrics.SoapFault(action)
 		h.sendFault(w, "Receiver", "Handler error", err.Error())
 
 		return

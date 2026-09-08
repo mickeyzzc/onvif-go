@@ -19,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/metrics"
 	"github.com/mickeyzzc/onvif-go/v2/wsdiscovery"
 )
 
@@ -89,6 +90,11 @@ type Config struct {
 	// Interface selects the multicast interface ("" = kernel default;
 	// accepts names or IPs, like discovery.DiscoverOptions).
 	Interface string
+
+	// Metrics receives observability events (issue #66): one
+	// DiscoveryProbeAnswered per Probe answered with ProbeMatches.
+	// nil = no-ops.
+	Metrics metrics.Hooks
 }
 
 // Responder is the device-side WS-Discovery responder. Start runs the
@@ -133,6 +139,8 @@ func NewResponder(config Config) *Responder {
 	if config.MetadataVersion == 0 {
 		config.MetadataVersion = DefaultMetadataVersion
 	}
+
+	config.Metrics = metrics.OrNoop(config.Metrics)
 
 	return &Responder{
 		config:  config,
@@ -280,6 +288,7 @@ func (r *Responder) handleDatagram(ctx context.Context, data []byte, src *net.UD
 
 	answer := wsdiscovery.BuildProbeMatches(probe.MessageID, r.matchFor(ctx, hostOnly(src)))
 	send(answer, src)
+	r.config.Metrics.DiscoveryProbeAnswered()
 }
 
 // ServeHTTP answers directed WS-Discovery Probes POSTed over HTTP —
@@ -322,6 +331,7 @@ func (r *Responder) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusOK)
 
 	_, _ = w.Write(answer)
+	r.config.Metrics.DiscoveryProbeAnswered()
 }
 
 // Stop shuts the responder down (sending Bye) and unblocks the loop
