@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (observability)
+- `metrics` package (issue #66): the library-neutral `metrics.Hooks` seam
+  — `SoapRequest(action)`, `SoapFault(action)`, `AuthFail()`,
+  `AuthLockout()`, `DiscoveryProbeAnswered()` — with `NoopHooks` defaults
+  so the module takes no metrics dependency. Wired via
+  `server.WithMetrics(h)`, `soap.HandlerOptions.Metrics`, and
+  `discovery.Config.Metrics` (responder). Semantics mirror the onvif-rs
+  `MetricsHooks` contract: dispatched requests count by action, handler
+  errors are the fault-rate numerator, undelivered requests
+  (auth failures, lockouts, malformed envelopes) never count as dispatch.
+  `examples/metrics-bridge` demonstrates a full bridge.
+
 ### Changed (library hygiene)
 - `server.DefaultConfig()` no longer ships `admin`/`admin` credentials —
   they are empty now. Without credentials the server runs in its

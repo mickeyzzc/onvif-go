@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/metrics"
 	"github.com/mickeyzzc/onvif-go/v2/onvif"
 	"github.com/mickeyzzc/onvif-go/v2/server/provider"
 )
@@ -171,6 +172,10 @@ type Server struct {
 	// advertiseMu. nil → the static/requester resolution applies.
 	advertiseMu sync.RWMutex
 	advertiseFn func() string
+
+	// metrics receives observability events from the SOAP handlers
+	// (issue #66); never nil once New has run.
+	metrics metrics.Hooks
 }
 
 // DefaultConfig returns a default server configuration with a multi-lens

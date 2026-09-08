@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/metrics"
 	"github.com/mickeyzzc/onvif-go/v2/server/provider"
 	"github.com/mickeyzzc/onvif-go/v2/server/simulator"
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
@@ -67,6 +68,17 @@ func WithPTZProvider(p provider.PTZProvider) Option {
 	}
 }
 
+// WithMetrics wires the observability seam (issue #66): dispatched
+// requests, handler faults, and auth failures fire on the given Hooks
+// (bridged to Prometheus or any backend by the host; nil-safe).
+func WithMetrics(h metrics.Hooks) Option {
+	return func(s *Server) {
+		if h != nil {
+			s.metrics = h
+		}
+	}
+}
+
 // New creates a new ONVIF server with the given configuration. The
 // default state backend is the in-memory simulator built from the
 // profile configuration; options swap individual providers for
@@ -100,6 +112,7 @@ func New(config *Config, opts ...Option) (*Server, error) {
 		ptz:         sim,
 		systemTime:  time.Now(),
 		advertiseFn: config.AdvertiseHostProvider,
+		metrics:     metrics.NoopHooks{},
 	}
 
 	for _, opt := range opts {
@@ -231,6 +244,7 @@ func (s *Server) newSOAPHandler() *soap.Handler {
 		Password:         s.config.Password,
 		Auth:             policy,
 		ExplicitPrefixes: s.config.ExplicitPrefixes,
+		Metrics:          s.metrics,
 	})
 }
 
