@@ -10,6 +10,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 )
@@ -140,6 +141,10 @@ type Client struct {
 	// unauthenticated GetSystemDateAndTime) makes the digest use the device's
 	// view of "now". Default 0 = use local clock (legacy behavior).
 	clockSkew time.Duration
+
+	// slogger receives structured request/response/fault summaries
+	// (issue #62). nil = silent, the default.
+	slogger *slog.Logger
 }
 
 // NewClient creates a new SOAP client.
@@ -166,12 +171,33 @@ func (c *Client) SetDebug(enabled bool, logger func(format string, args ...inter
 	c.logger = logger
 }
 
+// SetLogger installs a structured logger for request/response/fault
+// summaries and clock-skew correction notes (issue #62). nil restores the
+// silent default. It is independent of the legacy SetDebug printf hook.
+func (c *Client) SetLogger(l *slog.Logger) {
+	c.slogger = l
+}
+
 // SetClockSkew sets the clock offset (deviceTime - localTime) used when building
 // WS-Security UsernameToken digest timestamps. Call this after measuring the
 // device's clock via GetSystemDateAndTime to fix auth failures caused by clock
 // divergence (Hikvision time-skew issue). Pass 0 to use the local clock.
 func (c *Client) SetClockSkew(skew time.Duration) {
 	c.clockSkew = skew
+}
+
+// authModeName renders the auth mode for log summaries.
+func authModeName(m AuthMode) string {
+	switch m {
+	case AuthModeDigest:
+		return "digest"
+	case AuthModePasswordText:
+		return "password-text"
+	case AuthModeNone:
+		return "none"
+	default:
+		return "unknown"
+	}
 }
 
 // logDebugf logs debug information if debug mode is enabled.
@@ -215,6 +241,12 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 
 	// Log request if debug is enabled
 	c.logDebugf("=== SOAP Request ===\nEndpoint: %s\nAction: %s\n%s\n", endpoint, action, string(xmlBody))
+	if c.slogger != nil {
+		c.slogger.Debug("soap request", "action", action, "endpoint", endpoint, "body_bytes", len(xmlBody), "auth_mode", authModeName(c.authMode))
+		if c.clockSkew != 0 {
+			c.slogger.Debug("clock skew correction applied to UsernameToken timestamps", "skew_ms", c.clockSkew.Milliseconds())
+		}
+	}
 
 	// Create HTTP request
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, endpoint, bytes.NewReader(xmlBody))
@@ -255,6 +287,9 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 
 	// Log response if debug is enabled
 	c.logDebugf("=== SOAP Response ===\nStatus: %d\n%s\n", resp.StatusCode, string(respBody))
+	if c.slogger != nil {
+		c.slogger.Debug("soap response", "status", resp.StatusCode, "body_bytes", len(respBody), "action", action)
+	}
 
 	// Check HTTP status
 	if resp.StatusCode != http.StatusOK {
@@ -280,6 +315,9 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 	}
 
 	if fault := parseFault(envelopeResp.Body.Content, resp.StatusCode); fault != nil {
+		if c.slogger != nil {
+			c.slogger.Warn("soap fault", "action", action, "http_status", resp.StatusCode, "fault_code", fault.Code, "fault_reason", fault.Reason)
+		}
 		return fault
 	}
 
