@@ -440,9 +440,9 @@ func TestServeHTTPAuthFailureLockout(t *testing.T) {
 
 	// The library's fault convention maps Sender faults to 400 (401
 	// status mapping is tracked in #60).
-	for i := 0; i < 3; i++ {
+	for range 3 {
 		if got := post(); got != http.StatusBadRequest {
-			t.Fatalf("failure %d: status = %d, want 400", i, got)
+			t.Fatalf("failure loop: status = %d, want 400", got)
 		}
 	}
 	// Locked out: the distinct fault message is observable.
