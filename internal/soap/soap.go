@@ -241,10 +241,16 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 		_ = resp.Body.Close()
 	}()
 
-	// Read response body
-	respBody, err := io.ReadAll(resp.Body)
+	// Read response body, bounded: a hostile or broken device must not be
+	// able to exhaust the client's memory (issue #59). 1 MiB is ample for
+	// real ONVIF responses (profiles, capabilities); larger bodies error.
+	const maxResponseBytes = 1 << 20
+	respBody, err := io.ReadAll(io.LimitReader(resp.Body, maxResponseBytes+1))
 	if err != nil {
 		return fmt.Errorf("failed to read response body: %w", err)
+	}
+	if len(respBody) > maxResponseBytes {
+		return fmt.Errorf("response body exceeds %d bytes", maxResponseBytes)
 	}
 
 	// Log response if debug is enabled
