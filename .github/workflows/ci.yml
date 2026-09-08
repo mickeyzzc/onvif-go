@@ -40,9 +40,12 @@ jobs:
         with:
           go-version: '1.26'
       - name: Test
-        run: go test -race -timeout 10m -coverprofile=coverage.out ./...
-      - name: Coverage summary
-        run: go tool cover -func=coverage.out | tail -1
+        run: go test -race -timeout 10m -coverprofile=coverage.out $(go list ./... | grep -vE '/cmd/|/examples/')
+      - name: Coverage gate (library ≥ 70%)
+        run: |
+          total=$(go tool cover -func=coverage.out | tail -1 | awk '{print substr($3, 1, length($3)-1)}')
+          echo "library coverage: ${total}%"
+          awk -v t="$total" 'BEGIN { if (t < 70) { printf "coverage %s%% below the 70%% floor\n", t; exit 1 } }' 
 
   build:
     runs-on: ubuntu-latest
