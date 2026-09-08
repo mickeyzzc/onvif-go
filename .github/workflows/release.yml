@@ -9,6 +9,19 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    name: Test (tag)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v6
+        with:
+          go-version: '1.26'
+      - name: Vet
+        run: go vet ./...
+      - name: Test
+        run: go test -race ./...
+
   tools:
     name: Build CLIs (${{ matrix.goos }}/${{ matrix.goarch }})
     runs-on: ubuntu-latest
@@ -39,10 +52,34 @@ jobs:
           CGO_ENABLED: 0
         run: |
           mkdir -p dist
+          ext=""
+          if [ "${GOOS}" = "windows" ]; then ext=".exe"; fi
           for cmd in discover onvif-diagnostics onvif-quick onvif-server; do
-            go build -trimpath -o "dist/${cmd}_${GOOS}_${GOARCH}" "./cmd/${cmd}"
+            go build -trimpath -o "dist/${cmd}_${GOOS}_${GOARCH}${ext}" "./cmd/${cmd}"
           done
       - uses: actions/upload-artifact@v4
         with:
           name: tools-${{ matrix.goos }}-${{ matrix.goarch }}
           path: dist/
+
+  release:
+    name: GitHub Release
+    needs: [test, tools]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --verify-tag \
+            --title "${GITHUB_REF_NAME}" \
+            --generate-notes \
+            dist/*
