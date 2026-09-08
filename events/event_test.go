@@ -5,6 +5,7 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -411,6 +412,14 @@ func (s *subscriptionScript) pulls() int {
 	return s.pullCount
 }
 
+// unsubscribed reports the SOAP unsubscribe count (handler-held, under mu).
+func (s *subscriptionScript) unsubscribed() int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return s.unsubscribes
+}
+
 // fastStreamOptions keeps lifecycle tests inside tens of milliseconds:
 // the subscription is created with an 11:00 termination time far in the
 // past only via renewFailure tests; for happy paths we rely on the
@@ -683,5 +692,74 @@ func TestEventStreamIdleThrottle(t *testing.T) {
 	// only a full-speed spin which would be 10k+).
 	if pulls > 20 {
 		t.Errorf("idle loop spun: %d pulls in 350ms (throttle broken)", pulls)
+	}
+}
+
+// TestEventStreamSoakLifecycleLoop (issue #65 soak): cycles the managed
+// pull-point subscription through many create→pull→unsubscribe rounds with
+// transient pull failures injected to exercise the error backoff, and
+// verifies no state leaks across rounds — one SOAP unsubscribe per round
+// and a settled goroutine count at the end.
+func TestEventStreamSoakLifecycleLoop(t *testing.T) {
+	if testing.Short() {
+		t.Skip("soak loop skipped in -short mode")
+	}
+	const rounds = 25
+
+	base := runtime.NumGoroutine()
+
+	for round := range rounds {
+		// Rounds 0/10/20 fail the first two pulls (1s+2s backoff), then
+		// deliver on pull 3; the other rounds deliver immediately.
+		deliverAt := 1
+		if round%10 == 0 {
+			deliverAt = 3
+		}
+		script := &subscriptionScript{
+			pullResponse: func(pull int) (string, error) {
+				switch {
+				case pull < deliverAt:
+					return "", fmt.Errorf("transient device hiccup (round %d)", round)
+				case pull == deliverAt:
+					return pullMessagesOne, nil
+				default:
+					return pullMessagesEmpty, nil
+				}
+			},
+		}
+		caller := newFakeCaller(script.handler)
+		ctx, cancel := context.WithCancel(context.Background())
+
+		delivered := make(chan NotificationMessage, 4)
+		stream, err := New(caller).SubscribeEvents(ctx, func(msg NotificationMessage) {
+			delivered <- msg
+		}, fastStreamOptions())
+		if err != nil {
+			cancel()
+			t.Fatalf("round %d: SubscribeEvents: %v", round, err)
+		}
+
+		mustReceive(t, fmt.Sprintf("round %d message", round), delivered)
+
+		if err := stream.Unsubscribe(context.Background()); err != nil {
+			cancel()
+			t.Fatalf("round %d: Unsubscribe: %v", round, err)
+		}
+		waitFor(t, fmt.Sprintf("round %d Done", round), stream.Done())
+		cancel()
+
+		if got := script.unsubscribed(); got != 1 {
+			t.Fatalf("round %d: SOAP unsubscribe count = %d, want exactly 1", round, got)
+		}
+	}
+
+	// Goroutine hygiene: every loop goroutine must have returned; Done()
+	// closes just before the goroutine exits, so allow a short settle.
+	deadline := time.Now().Add(5 * time.Second)
+	for runtime.NumGoroutine() > base && time.Now().Before(deadline) {
+		time.Sleep(50 * time.Millisecond)
+	}
+	if now := runtime.NumGoroutine(); now > base {
+		t.Errorf("goroutines leaked after %d rounds: base %d, now %d", rounds, base, now)
 	}
 }
