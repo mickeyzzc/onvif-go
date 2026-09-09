@@ -194,6 +194,7 @@ Topic guides live under [`docs/en/`](docs/en/) — each has a Chinese counterpar
 | [Concurrency model](docs/en/concurrency.md) | goroutine and locking rules |
 | [Testing](docs/en/testing.md) | internal test helpers, golden captures |
 | [CLI tools](docs/en/cli.md) | onvif-diagnostics, generate-tests |
+| [Production deployment & hardening](docs/en/production.md) | TLS, auth policy, rate limits, metrics, NVR checklist |
 | [v1 → v2 migration](MIGRATION.md) | breaking changes and migration steps |
 
 API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif).

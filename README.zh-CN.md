@@ -166,6 +166,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 | [并发模型](docs/zh/concurrency.md) | goroutine 与锁规则 |
 | [测试](docs/zh/testing.md) | 内部测试辅助、金串抓包 |
 | [CLI 工具](docs/zh/cli.md) | onvif-diagnostics、generate-tests |
+| [生产部署与加固](docs/zh/production.md) | TLS、认证策略、限速、监控接入、NVR 对接清单 |
 | [v1 → v2 迁移](MIGRATION.md) | 破坏性变更与迁移步骤 |
 
 API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
