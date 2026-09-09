@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (docs)
+- Production deployment & hardening guide (issue #68, `docs/en/production.md`
+  + `docs/zh/production.md`): TLS termination with advertised-host and
+  client-IP caveats, auth-policy selection matrix, body bounds and
+  lockout tuning, metrics-hook wiring, and the NVR integration
+  checklist (byte-stable SOAP, scopes, digest interop, 401 semantics).
+
 ### Added (release tooling)
 - The tag-triggered release workflow now publishes a GitHub Release
   (issue #67): a tag-gated test job, the 6-platform CLI matrix (Windows
