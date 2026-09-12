@@ -173,32 +173,20 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `discovery/` | WS-Discovery: active probe, passive listener, directed HTTP probing, post-processing |
 | `internal/soap/` | SOAP transport + WS-Security (digest/text modes, fault detection) |
 | `server/` | Virtual ONVIF camera server (simulator for testing) |
-| `docs/{en,zh}/` | Topic documentation (architecture, auth, discovery, media, events, concurrency, testing, CLI) |
+| `docs/` | Redirect to the documentation hub |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` |
 | `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), simple-server, onvif-server, complete-demo |
 
 ## Documentation
 
-Topic guides live under [`docs/en/`](docs/en/) — each has a Chinese counterpart under `docs/zh/`:
+Topic guides now live in the MiBee documentation hub — the single
+source of truth for library manuals, bilingual:
 
-| Guide | Covers |
-|---|---|
-| [Architecture](docs/en/architecture.md) | package map and layering |
-| [v2 architecture](docs/en/v2-architecture.md) | the v2 transport redesign |
-| [Authentication & security](docs/en/authentication.md) | WS-UsernameToken, both token modes |
-| [Device discovery](docs/en/discovery.md) | WS-Discovery probing |
-| [Media & streaming](docs/en/media.md) | profiles, stream URIs |
-| [Events](docs/en/events.md) | PullPoint subscriptions |
-| [ONVIF server](docs/en/server.md) | embedding the server/simulator |
-| [Concurrency model](docs/en/concurrency.md) | goroutine and locking rules |
-| [Testing](docs/en/testing.md) | internal test helpers, golden captures |
-| [CLI tools](docs/en/cli.md) | onvif-diagnostics, generate-tests |
-| [Production deployment & hardening](docs/en/production.md) | TLS, auth policy, rate limits, metrics, NVR checklist |
-| [v1 → v2 migration](MIGRATION.md) | breaking changes and migration steps |
+> **https://www.mlsbs.top/docs/mibeelibs**
 
-API reference: [pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2/onvif).
-
+Manual changes go there by PR (review flow in the hub repo's GOVERNANCE).
+[`docs/README.md`](docs/README.md) keeps the redirect.
 ## Development
 
 ```bash

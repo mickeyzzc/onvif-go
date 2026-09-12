@@ -152,25 +152,11 @@ diag, _ := client.DiagnoseAuth(ctx)
 
 ## 文档
 
-主题指南在 [`docs/zh/`](docs/zh/) —— 每篇在 `docs/en/` 下有英文对照版：
+专题手册已迁移至 MiBee 文档中心——库手册唯一真源（双语）：
 
-| 主题 | 内容 |
-|---|---|
-| [架构](docs/zh/architecture.md) | 包结构与分层 |
-| [v2 架构](docs/zh/v2-architecture.md) | v2 传输层重设计 |
-| [鉴权与安全](docs/zh/authentication.md) | WS-UsernameToken、双 token 模式 |
-| [设备发现](docs/zh/discovery.md) | WS-Discovery 探测 |
-| [媒体与码流](docs/zh/media.md) | Profile、取流地址 |
-| [事件](docs/zh/events.md) | PullPoint 订阅 |
-| [服务端](docs/zh/server.md) | 嵌入服务器/模拟器 |
-| [并发模型](docs/zh/concurrency.md) | goroutine 与锁规则 |
-| [测试](docs/zh/testing.md) | 内部测试辅助、金串抓包 |
-| [CLI 工具](docs/zh/cli.md) | onvif-diagnostics、generate-tests |
-| [生产部署与加固](docs/zh/production.md) | TLS、认证策略、限速、监控接入、NVR 对接清单 |
-| [v1 → v2 迁移](MIGRATION.md) | 破坏性变更与迁移步骤 |
+> **https://www.mlsbs.top/docs/mibeelibs**
 
-API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)。
-
+手册修改向文档中心提 PR（流程见该仓 GOVERNANCE）。本仓 [`docs/README.md`](docs/README.md) 保留引导页。
 ## 项目结构
 
 | 路径 | 用途 |
@@ -183,7 +169,7 @@ API 参考：[pkg.go.dev/github.com/mickeyzzc/onvif-go/v2](https://pkg.go.dev/gi
 | `server/` | 虚拟 ONVIF 相机服务器（测试用模拟器） |
 | `internal/onviftesting/` | 测试助手：mock server、抓包回放、golden 文件（内部包，不进消费方二进制） |
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
-| `docs/{en,zh}/` | 主题文档（架构、鉴权、发现、媒体、事件、并发、测试、CLI） |
+| `docs/` | 引导至文档中心 |
 | `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server` |
 | `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、simple-server、onvif-server、complete-demo |
 
