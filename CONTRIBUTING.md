@@ -44,7 +44,7 @@ Closes #123
   test, a new service operation with the wire-contract test. Behavioral
   tests run against `httptest` mock devices or the in-memory
   `internal/testutil.FakeCaller` — see
-  [docs/en/testing.md](docs/en/testing.md) for the layers, conventions,
+  the testing guide in the [documentation hub](https://www.mlsbs.top/docs/mibeelibs) for the layers, conventions,
   bounded-wait/deadlock rules, and CI timing budgets. Real-camera tests
   are environment-gated and never run in CI.
 - **Zero third-party dependencies** in the library module (stdlib only).
@@ -60,7 +60,7 @@ matter most for this library:
 - **Camera model and firmware version** — ONVIF quirks are almost always
   firmware-specific.
 - **Raw SOAP exchange** when possible — run `cmd/onvif-diagnostics` with
-  `-capture-xml` (see [docs/en/cli.md](docs/en/cli.md)) and attach the
+  `-capture-xml` (see the CLI guide in the [documentation hub](https://www.mlsbs.top/docs/mibeelibs)) and attach the
   output **after redacting credentials**. Captured responses can become
   `testdata/captures/` fixtures so the regression outlives the camera.
 
@@ -68,8 +68,10 @@ Never include real credentials in issues, examples, or test fixtures.
 
 ## Documentation
 
-User-facing behavior changes should update the topic docs — both languages:
-`docs/en/*.md` and its `docs/zh/*.md` mirror. API additions go into the
+User-facing behavior changes should update the topic docs in the
+[documentation hub](https://www.mlsbs.top/docs/mibeelibs) — both languages
+(the hub's `mibeelibs/` collection, `zh-CN` + `en-US` pages in one PR).
+API additions go into the
 [README](README.md) quick-start only when they are primary-surface features,
 and significant changes get a [CHANGELOG](CHANGELOG.md) entry.
 
