@@ -18,6 +18,22 @@
 的固件。它是 [MiBeeNvr](https://github.com/Mi-Bee-Studio/MiBeeNvr) 的 ONVIF
 底层——后者是跑在 ARM64 上 7×24 小时的 NVR。
 
+## 该用哪个 onvif-go？
+
+本仓库是 [0x524a/onvif-go](https://github.com/0x524a/onvif-go) 的持续维护
+谱系（其 v1.0.0–v1.1.7 tag 保留在本仓历史中，见
+[血统与许可](#血统与许可)）。上游项目仍在维护、两者同为 MIT——按需选择：
+
+| 你要什么 | 选哪个 |
+|---|---|
+| 可嵌入自家二进制的虚拟相机**服务器**——状态可注入的 provider、按动作的鉴权策略、metrics 接缝、PullPoint 事件 | 本仓库（`/v2`） |
+| 服务门面客户端 API、鉴权梯队、主动 + 被动 + 定向三种发现 | 本仓库（`/v2`） |
+| 现有代码已在用 `github.com/0x524a/onvif-go` 且满足需求 | 上游 `v1.1.7`——留在那边没问题 |
+| 从 v1 代码要上面的 v2 能力 | 本仓库；[MIGRATION.md](MIGRATION.md) 给出迁移映射（多数情况只需换 import 路径） |
+
+两者模块路径不同（`…/onvif-go/v2` 与 `…/onvif-go`），迁移期间甚至可以在
+同一个构建里共存。
+
 ## 功能特性
 
 **客户端** —— 每个 ONVIF 操作挂在其所属的服务对象上，与 ONVIF 服务模型一一对应：
@@ -54,6 +70,9 @@ HTTP Basic / 不鉴权；`WithAuthFallback` 提供自动回退梯队，并记住
 **虚拟相机服务器** —— `server/` 模拟 ONVIF 相机，不用硬件就能测你的录像软件：
 设备/媒体/PTZ/成像 + 可选的事件 PullPoint 服务（`SupportEvents`），
 宿主可经 `PublishEvent` 接缝注入自家分析产生的事件通知。
+
+范围说明：本库只做 ONVIF 信令——产出和消费流 **URI**（RTSP/HTTP/UDP），
+但不搬运媒体本身；媒体面请搭配 RTSP 服务器或客户端。
 
 ## 安装
 

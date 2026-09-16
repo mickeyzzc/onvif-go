@@ -55,7 +55,7 @@ See the server guide in the [documentation hub](https://www.mlsbs.top/docs/mibee
 
 ```bash
 # Clone the repository (if not already done)
-git clone https://github.com/0x524a/onvif-go
+git clone https://github.com/mickeyzzc/onvif-go
 cd onvif-go
 
 # Build the server CLI
@@ -143,7 +143,7 @@ import (
     "log"
     "time"
 
-    "github.com/0x524a/onvif-go/server"
+    "github.com/mickeyzzc/onvif-go/v2/server"
 )
 
 func main() {
@@ -179,7 +179,7 @@ import (
     "log"
     "time"
 
-    "github.com/0x524a/onvif-go/server"
+    "github.com/mickeyzzc/onvif-go/v2/server"
 )
 
 func main() {
@@ -266,7 +266,7 @@ import (
     "log"
     "time"
 
-    "github.com/0x524a/onvif-go"
+    onvif "github.com/mickeyzzc/onvif-go/v2"
 )
 
 func main() {
@@ -446,7 +446,7 @@ This project is licensed under the MIT License - see the [LICENSE](../../LICENSE
 
 ## Acknowledgments
 
-- Built on top of the [onvif-go](https://github.com/0x524a/onvif-go) client library
+- Continues the lineage of [0x524a/onvif-go](https://github.com/0x524a/onvif-go); the v2 server is rebuilt for embedding
 - ONVIF specifications from [ONVIF.org](https://www.onvif.org)
 - Inspired by the need for flexible camera simulation in development workflows
 

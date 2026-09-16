@@ -21,6 +21,24 @@ answers everything with a SOAP Fault. It powers
 [MiBeeNvr](https://github.com/Mi-Bee-Studio/MiBeeNvr), an NVR running
 24/7 on ARM64.
 
+## Which onvif-go should I use?
+
+This repository is the continued-maintenance lineage of
+[0x524a/onvif-go](https://github.com/0x524a/onvif-go) (its v1.0.0–v1.1.7
+tags are preserved in this repo's history; see
+[Attribution](#attribution--license)). The upstream project remains
+available and maintained — both are MIT, so pick by what you need:
+
+| You want… | Take |
+|---|---|
+| A virtual camera **server** to embed in your own binary — pluggable state providers, per-action auth policy, a metrics seam, pull-point events | this repo (`/v2`) |
+| The service-facade client API, the authentication ladder, active + passive + directed discovery | this repo (`/v2`) |
+| An existing codebase already importing `github.com/0x524a/onvif-go` that does everything you need | upstream `v1.1.7` — staying is fine |
+| The v2 capabilities above, coming from v1 code | this repo; [MIGRATION.md](MIGRATION.md) maps the move (mostly an import-path swap) |
+
+The module paths differ (`…/onvif-go/v2` vs `…/onvif-go`), so both can even
+coexist in one build during a migration.
+
 ## Features
 
 **Client** — every ONVIF operation lives on the service object that owns it,
@@ -67,6 +85,10 @@ contract: one `Client`, many goroutines, no external locking.
 your recorder without hardware: device, media, PTZ, imaging, and the
 opt-in events pull-point service (`SupportEvents`), with a
 `PublishEvent` seam for injecting notifications from your own analytics.
+
+Scope note: the library handles ONVIF signaling only. It produces and
+consumes stream **URIs** (RTSP/HTTP/UDP) but does not transport media
+itself — pair it with an RTSP server or client for the media plane.
 
 ## Install
 
