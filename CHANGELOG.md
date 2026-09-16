@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.0.0] — 2026-09-17
+
+The first stable v2 release. It ships the complete v2.0.0-rc6 capability
+pack (production hardening guide, metrics seam, coverage gate, fuzz
+targets, auth ladder) plus everything landed since rc6:
+
 ### Fixed (docs)
 - `server/README.md` code examples imported `github.com/0x524a/onvif-go`
   (the upstream v1 module path) — copy-paste from this repo's docs failed
@@ -16,6 +22,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   decision table (use-case oriented, honest about upstream remaining
   maintained — no disparagement) and an explicit scope note: the library
   handles ONVIF signaling and stream URIs, not RTSP media transport.
+
+### Changed (release)
+- The bundled CLIs (`onvif-server`, `onvif-diagnostics`) report version
+  2.0.0, aligned with the module tag (they said 1.0.0 through the rc
+  series).
 
 ### Changed (CI)
 - The test job now runs the full `-race` suite on all three desktop Go
