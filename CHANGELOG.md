@@ -10,9 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed (CI)
 - The test job now runs the full `-race` suite on all three desktop Go
   platforms — ubuntu, windows, and macos runners — instead of ubuntu only.
-  The suite is hermetic (pure parsing, httptest loopback, fake senders),
-  so platform-specific regressions surface natively. The coverage gate
-  stays ubuntu-only (its awk pipeline is a Linux convenience).
+  The coverage gate stays ubuntu-only (its awk pipeline is a Linux
+  convenience).
+- First matrix run caught a real portability gap: `discovery`'s
+  multicast guard only probed group JOIN, while macOS runners join fine
+  and fail the SEND with "no route to host". `skipWithoutMulticast` now
+  probes both halves, and the listener smoke test plus the logger
+  lifecycle test use the shared guard — hosts without a usable multicast
+  route skip instead of failing.
 
 ### Fixed (client)
 - `events.Service.PullMessages` now parses the canonical WS-BaseNotification
