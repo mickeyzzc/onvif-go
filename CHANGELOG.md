@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed (CI)
+- The test job now runs the full `-race` suite on all three desktop Go
+  platforms — ubuntu, windows, and macos runners — instead of ubuntu only.
+  The suite is hermetic (pure parsing, httptest loopback, fake senders),
+  so platform-specific regressions surface natively. The coverage gate
+  stays ubuntu-only (its awk pipeline is a Linux convenience).
+
 ### Fixed (client)
 - `events.Service.PullMessages` now parses the canonical WS-BaseNotification
   + ONVIF notification shape (issue #82): the wire form wraps the ONVIF
