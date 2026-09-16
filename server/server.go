@@ -112,6 +112,7 @@ func New(config *Config, opts ...Option) (*Server, error) {
 		ptz:         sim,
 		systemTime:  time.Now(),
 		advertiseFn: config.AdvertiseHostProvider,
+		pullPoints:  make(map[string]*pullPoint),
 		metrics:     metrics.NoopHooks{},
 	}
 
@@ -174,6 +175,10 @@ func (s *Server) RegisterServices(mux *http.ServeMux) {
 
 	if s.config.SupportImaging {
 		s.registerImagingService(mux)
+	}
+
+	if s.config.SupportEvents {
+		s.registerEventsService(mux)
 	}
 
 	// Snapshot endpoint (SnapshotPath; defaults to BasePath/snapshot)

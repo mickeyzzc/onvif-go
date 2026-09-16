@@ -10,6 +10,7 @@ import (
 	"github.com/mickeyzzc/onvif-go/v2/metrics"
 	"github.com/mickeyzzc/onvif-go/v2/onvif"
 	"github.com/mickeyzzc/onvif-go/v2/server/provider"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // The data model (profile configuration, PTZ/imaging state, imaging
@@ -60,6 +61,7 @@ type (
 	Vector2D                      = provider.Vector2D
 	Vector1D                      = provider.Vector1D
 	FloatRange                    = provider.FloatRange
+	SimpleItem                    = types.SimpleItem
 )
 
 const (
@@ -172,6 +174,12 @@ type Server struct {
 	// advertiseMu. nil → the static/requester resolution applies.
 	advertiseMu sync.RWMutex
 	advertiseFn func() string
+
+	// eventsMu guards pullPoints, the pull-point registry of the events
+	// service (#83). Entries appear only while SupportEvents routes are
+	// served; PublishEvent with no subscribers is a no-op.
+	eventsMu   sync.Mutex
+	pullPoints map[string]*pullPoint
 
 	// metrics receives observability events from the SOAP handlers
 	// (issue #66); never nil once New has run.

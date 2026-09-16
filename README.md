@@ -64,7 +64,9 @@ advertised IPs after camera roaming), and a documented, tested concurrency
 contract: one `Client`, many goroutines, no external locking.
 
 **Virtual camera server** — `server/` simulates ONVIF cameras for testing
-your recorder without hardware.
+your recorder without hardware: device, media, PTZ, imaging, and the
+opt-in events pull-point service (`SupportEvents`), with a
+`PublishEvent` seam for injecting notifications from your own analytics.
 
 ## Install
 

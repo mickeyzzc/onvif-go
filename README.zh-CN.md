@@ -51,7 +51,9 @@ HTTP Basic / 不鉴权；`WithAuthFallback` 提供自动回退梯队，并记住
 错误、能力 XAddr 修复（相机漫游后的陈旧宣传地址）、以及有文档有测试的并发
 契约：一个 `Client`、多个 goroutine、无需外部加锁。
 
-**虚拟相机服务器** —— `server/` 模拟 ONVIF 相机，不用硬件就能测你的录像软件。
+**虚拟相机服务器** —— `server/` 模拟 ONVIF 相机，不用硬件就能测你的录像软件：
+设备/媒体/PTZ/成像 + 可选的事件 PullPoint 服务（`SupportEvents`），
+宿主可经 `PublishEvent` 接缝注入自家分析产生的事件通知。
 
 ## 安装
 
