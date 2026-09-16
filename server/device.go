@@ -225,10 +225,13 @@ func (s *Server) HandleGetCapabilities(rc *soap.RequestContext, body []byte) (in
 	}
 
 	if s.config.SupportEvents {
+		// WSPullPointSupport is true since #83: the events service really
+		// serves CreatePullPointSubscription/PullMessages/Renew/Unsubscribe
+		// on the advertised XAddr.
 		capabilities.Events = &EventCapabilities{
 			XAddr:                         baseURL + "/events_service",
 			WSSubscriptionPolicySupport:   false,
-			WSPullPointSupport:            false,
+			WSPullPointSupport:            true,
 			WSPausableSubscriptionSupport: false,
 		}
 	}

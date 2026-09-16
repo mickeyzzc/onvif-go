@@ -30,7 +30,13 @@ A complete ONVIF-compliant server implementation that simulates multi-lens IP ca
 - ✅ **Media Service**: Profiles, stream URIs (RTSP), snapshots
 - ✅ **PTZ Service**: Full PTZ control and preset management
 - ✅ **Imaging Service**: Complete imaging settings control
-- ⏳ **Events Service**: (Planned)
+- ✅ **Events Service** (issue #83, `-events`): pull-point subscriptions —
+  `CreatePullPointSubscription` / `PullMessages` (long-polling) / `Renew` /
+  `Unsubscribe`, plus `GetServiceCapabilities` / `GetEventProperties`.
+  Hosts inject notifications via `srv.PublishEvent(server.Event{...})`;
+  payloads use the canonical double-layer `wsnt:Message > tt:Message`
+  shape, and the library's own `events` client round-trips against it
+  (see `server/events_test.go`)
 
 ### 🔐 Security
 - **Per-Action Authentication** (v2): write-style actions (`Set*`, `Remove*`, `Create*`, `Go*`, `SystemReboot`) require credentials; read operations stay open for discovery clients
@@ -387,6 +393,7 @@ server/
 ├── media.go           # Media service handlers
 ├── ptz.go             # PTZ service handlers
 ├── imaging.go         # Imaging service handlers
+├── events.go          # Events service: pull-point subscriptions
 └── soap/
     └── handler.go     # SOAP message handling
 ```
@@ -418,7 +425,7 @@ rtsp://localhost:8554/stream2  # Profile 2
 
 ## Roadmap
 
-- [ ] **Events Service**: Event subscription and notification
+- [x] **Events Service**: pull-point core shipped (issue #83); pausable subscriptions and topic filtering remain open
 - [ ] **Recording Service**: Recording management
 - [ ] **Analytics Service**: Video analytics support
 - [ ] **Actual RTSP Streaming**: Integrated RTSP server with test patterns

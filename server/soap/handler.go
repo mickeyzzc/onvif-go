@@ -284,6 +284,14 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	response, err := handler(reqCtx, envelope.Body.Raw)
 	if err != nil {
 		h.metrics.SoapFault(action)
+
+		var sender *SenderFaultError
+		if errors.As(err, &sender) {
+			h.sendFault(w, "Sender", sender.Reason, sender.Detail)
+
+			return
+		}
+
 		h.sendFault(w, "Receiver", "Handler error", err.Error())
 
 		return

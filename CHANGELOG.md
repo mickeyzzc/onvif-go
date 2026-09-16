@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added (server)
+- Events pull-point service (issue #83): `SupportEvents=true` now really
+  serves the advertised `events_service` XAddr — previously the route was
+  never registered and subscribing clients got a bare HTTP 404. The
+  service endpoint answers `GetServiceCapabilities` (byte-golden) and
+  `GetEventProperties` (fixed empty topic set, no filter dialects —
+  subscription filters are accepted and ignored); the returned
+  `SubscriptionReference` addresses (`events_service/sub/<opaque id>`)
+  serve `PullMessages` (long-polling the requested Timeout, clamped to
+  60s), `Renew`, and `Unsubscribe`. Notification payloads use the
+  canonical WS-BaseNotification + ONVIF double-layer shape (outer
+  `wsnt:Message` wrapping the inner `tt:Message` with Source/Key/Data
+  SimpleItems — the spec sample from issue #82), verified end to end by
+  an interop test driving this library's own `events` client against the
+  server. Hosts inject notifications through the new
+  `server.Server.PublishEvent(server.Event{...})` seam (fan-out to every
+  live subscription, lossy at the head like a real device buffer).
+  `GetCapabilities.Events.WSPullPointSupport` flips to `true` — the
+  advertisement and the implementation now agree. Unknown/expired
+  subscriptions and invalid durations/limits fault as SOAP `Sender`
+  (HTTP 400) via the new `soap.SenderFaultError` channel; concurrent
+  pull points are capped (10) as advertised.
+
+
 ## [v2.0.0-rc6] — 2026-09-09
 
 ### Added (docs)
