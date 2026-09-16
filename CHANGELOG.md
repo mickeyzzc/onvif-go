@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (docs)
+- `server/README.md` code examples imported `github.com/0x524a/onvif-go`
+  (the upstream v1 module path) — copy-paste from this repo's docs failed
+  to compile. All example imports and the clone URL now point at this
+  repository's `/v2` module; the upstream attribution link stays.
+- Both READMEs gained a first-screen "Which onvif-go should I use?"
+  decision table (use-case oriented, honest about upstream remaining
+  maintained — no disparagement) and an explicit scope note: the library
+  handles ONVIF signaling and stream URIs, not RTSP media transport.
+
 ### Changed (CI)
 - The test job now runs the full `-race` suite on all three desktop Go
   platforms — ubuntu, windows, and macos runners — instead of ubuntu only.
