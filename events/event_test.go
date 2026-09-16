@@ -13,6 +13,7 @@ import (
 
 	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // fakeCaller is an in-memory api.Caller: it records requests and answers
@@ -138,6 +139,27 @@ var (
 </PullMessagesResponse>`
 
 	pullMessagesEmpty = `<PullMessagesResponse>
+</PullMessagesResponse>`
+
+	// pullMessagesCanonical is the WS-BaseNotification + ONVIF spec
+	// shape real cameras emit (issue #82): the outer wsnt:Message is an
+	// opaque wrapper; PropertyOperation/UtcTime and the Source/Key/Data
+	// SimpleItems live on the INNER tt:Message.
+	pullMessagesCanonical = `<PullMessagesResponse>
+	<wsnt:NotificationMessage xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2"
+		xmlns:tt="http://www.onvif.org/ver10/schema">
+		<wsnt:Topic Dialect="http://docs.oasis-open.org/wsn/t-1/TopicExpression/Concrete">tns1:VideoSource/MotionAlarm</wsnt:Topic>
+		<wsnt:ProducerReference><wsa:Address xmlns:wsa="http://www.w3.org/2005/08/addressing">urn:uuid:producer-1</wsa:Address></wsnt:ProducerReference>
+		<wsnt:Message>
+			<tt:Message UtcTime="2026-09-15T12:12:46Z" PropertyOperation="Changed">
+				<tt:Source><tt:SimpleItem Name="Source" Value="CSI"/></tt:Source>
+				<tt:Data>
+					<tt:SimpleItem Name="State" Value="true"/>
+					<tt:SimpleItem Name="Score" Value="87"/>
+				</tt:Data>
+			</tt:Message>
+		</wsnt:Message>
+	</wsnt:NotificationMessage>
 </PullMessagesResponse>`
 
 	unsubscribeResponse = `<UnsubscribeResponse/>`
@@ -269,6 +291,85 @@ func TestPullMessagesParsesAndValidates(t *testing.T) {
 
 	if _, err := svc.PullMessages(context.Background(), "ref", time.Second, 0); !errors.Is(err, ErrInvalidMessageLimit) {
 		t.Errorf("zero limit error = %v", err)
+	}
+}
+
+// TestPullMessagesParsesCanonicalDoubleLayerMessage pins issue #82: the
+// spec wire form wraps the ONVIF tt:Message inside an outer wsnt:Message.
+// The parser must reach through the wrapper for
+// PropertyOperation/UtcTime and Source/Key/Data SimpleItems — before the
+// fix those all parsed empty and only the Topic survived.
+func TestPullMessagesParsesCanonicalDoubleLayerMessage(t *testing.T) {
+	caller := newFakeCaller(func(string, string) (string, error) {
+		return pullMessagesCanonical, nil
+	})
+
+	messages, err := New(caller).PullMessages(context.Background(), "http://fake/sub/1", 10*time.Second, 5)
+	if err != nil {
+		t.Fatalf("PullMessages: %v", err)
+	}
+
+	if len(messages) != 1 {
+		t.Fatalf("messages = %d, want 1", len(messages))
+	}
+
+	msg := messages[0]
+	if msg.Topic != "tns1:VideoSource/MotionAlarm" {
+		t.Errorf("Topic = %q", msg.Topic)
+	}
+
+	if msg.ProducerAddress != "urn:uuid:producer-1" {
+		t.Errorf("ProducerAddress = %q", msg.ProducerAddress)
+	}
+
+	if msg.Message.PropertyOperation != "Changed" {
+		t.Errorf("PropertyOperation = %q (inner tt:Message not reached)", msg.Message.PropertyOperation)
+	}
+
+	wantTime, err := time.Parse(time.RFC3339, "2026-09-15T12:12:46Z")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !msg.Message.UtcTime.Equal(wantTime) {
+		t.Errorf("UtcTime = %v, want %v (inner tt:Message not reached)", msg.Message.UtcTime, wantTime)
+	}
+
+	if len(msg.Message.Source) != 1 || msg.Message.Source[0] != (types.SimpleItem{Name: "Source", Value: "CSI"}) {
+		t.Errorf("Source = %+v, want [{Source CSI}]", msg.Message.Source)
+	}
+
+	if len(msg.Message.Data) != 2 ||
+		msg.Message.Data[0] != (types.SimpleItem{Name: "State", Value: "true"}) ||
+		msg.Message.Data[1] != (types.SimpleItem{Name: "Score", Value: "87"}) {
+		t.Errorf("Data = %+v, want [State=true Score=87]", msg.Message.Data)
+	}
+}
+
+// TestPullMessagesParsesSingleLayerMessage keeps the lax single-layer
+// shape working: some firmwares put the attributes and SimpleItems
+// directly on the outer Message element (the historical fixture).
+func TestPullMessagesParsesSingleLayerMessage(t *testing.T) {
+	caller := newFakeCaller(func(string, string) (string, error) {
+		return pullMessagesOne, nil
+	})
+
+	messages, err := New(caller).PullMessages(context.Background(), "http://fake/sub/1", 10*time.Second, 5)
+	if err != nil {
+		t.Fatalf("PullMessages: %v", err)
+	}
+
+	msg := messages[0]
+	if msg.Message.PropertyOperation != "Changed" {
+		t.Errorf("PropertyOperation = %q", msg.Message.PropertyOperation)
+	}
+
+	if len(msg.Message.Source) != 1 || msg.Message.Source[0].Value != "VideoSource_1" {
+		t.Errorf("Source = %+v", msg.Message.Source)
+	}
+
+	if len(msg.Message.Data) != 1 || msg.Message.Data[0].Value != "true" {
+		t.Errorf("Data = %+v", msg.Message.Data)
 	}
 }
 
