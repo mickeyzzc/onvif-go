@@ -12,6 +12,7 @@ import (
 
 	onvif "github.com/mickeyzzc/onvif-go/v2/onvif"
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // postEventsSOAP posts a SOAP 1.2 envelope whose body is bodyXML to path
@@ -634,7 +635,13 @@ func TestEventsClientServerInterop(t *testing.T) {
 
 	srv.PublishEvent(Event{
 		Topic: "tns1:VideoSource/MotionAlarm",
-		Data:  []SimpleItem{{Name: "State", Value: "true"}},
+		Source: []SimpleItem{
+			{Name: "Source", Value: "CSI"},
+		},
+		Data: []SimpleItem{
+			{Name: "State", Value: "true"},
+			{Name: "Score", Value: "87"},
+		},
 	})
 
 	messages, err := client.Events().PullMessages(ctx, sub.SubscriptionReference, 2*time.Second, 10)
@@ -644,6 +651,27 @@ func TestEventsClientServerInterop(t *testing.T) {
 
 	if len(messages) != 1 || messages[0].Topic != "tns1:VideoSource/MotionAlarm" {
 		t.Fatalf("client pulled %+v, want the MotionAlarm notification", messages)
+	}
+
+	// The full double-layer payload must survive the client's parser
+	// (issue #82: before that fix only the Topic made it through).
+	pulled := messages[0].Message
+	if pulled.PropertyOperation != "Changed" {
+		t.Errorf("client PropertyOperation = %q, want Changed", pulled.PropertyOperation)
+	}
+
+	if len(pulled.Source) != 1 || pulled.Source[0] != (types.SimpleItem{Name: "Source", Value: "CSI"}) {
+		t.Errorf("client Source = %+v, want [{Source CSI}]", pulled.Source)
+	}
+
+	if len(pulled.Data) != 2 ||
+		pulled.Data[0] != (types.SimpleItem{Name: "State", Value: "true"}) ||
+		pulled.Data[1] != (types.SimpleItem{Name: "Score", Value: "87"}) {
+		t.Errorf("client Data = %+v, want [State=true Score=87]", pulled.Data)
+	}
+
+	if pulled.UtcTime.IsZero() {
+		t.Error("client UtcTime not parsed from the inner tt:Message")
 	}
 
 	_, term, err := client.Events().RenewSubscription(ctx, sub.SubscriptionReference, 10*time.Minute)

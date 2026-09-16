@@ -288,7 +288,26 @@ func (s *Service) PullMessages(
 			ProducerReference struct {
 				Address string `xml:"Address"`
 			} `xml:"ProducerReference"`
+			// Message carries BOTH wire shapes (issue #82): the spec's
+			// double-layer form wraps the ONVIF tt:Message inside the
+			// outer wsnt:Message — Inner reaches through the wrapper —
+			// while lax firmwares put the attributes and SimpleItems
+			// directly on the outer element (the legacy fields). The
+			// merge below prefers the inner layer when present.
 			Message struct {
+				Inner struct {
+					PropertyOperation string `xml:"PropertyOperation,attr"`
+					UtcTime           string `xml:"UtcTime,attr"`
+					Source            struct {
+						SimpleItems []SimpleItemXML `xml:"SimpleItem"`
+					} `xml:"Source"`
+					Key struct {
+						SimpleItems []SimpleItemXML `xml:"SimpleItem"`
+					} `xml:"Key"`
+					Data struct {
+						SimpleItems []SimpleItemXML `xml:"SimpleItem"`
+					} `xml:"Data"`
+				} `xml:"Message"`
 				PropertyOperation string `xml:"PropertyOperation,attr"`
 				UtcTime           string `xml:"UtcTime,attr"`
 				Source            struct {
@@ -324,29 +343,51 @@ func (s *Service) PullMessages(
 			ProducerAddress: nm.ProducerReference.Address,
 		}
 
-		msg.Message.PropertyOperation = nm.Message.PropertyOperation
+		// The spec's double-layer form keeps everything on the inner
+		// tt:Message; lax single-layer devices put it on the outer
+		// element. Prefer the inner layer, fall back to the outer
+		// (issue #82: MotionAlarm State/Score were dropped when only
+		// the outer layer was read).
+		operation := nm.Message.PropertyOperation
+		utcTime := nm.Message.UtcTime
+		source := nm.Message.Source.SimpleItems
+		key := nm.Message.Key.SimpleItems
+		data := nm.Message.Data.SimpleItems
 
-		if nm.Message.UtcTime != "" {
-			if t, err := time.Parse(time.RFC3339, nm.Message.UtcTime); err == nil {
+		if nm.Message.Inner.PropertyOperation != "" || nm.Message.Inner.UtcTime != "" ||
+			len(nm.Message.Inner.Source.SimpleItems) > 0 ||
+			len(nm.Message.Inner.Key.SimpleItems) > 0 ||
+			len(nm.Message.Inner.Data.SimpleItems) > 0 {
+			operation = nm.Message.Inner.PropertyOperation
+			utcTime = nm.Message.Inner.UtcTime
+			source = nm.Message.Inner.Source.SimpleItems
+			key = nm.Message.Inner.Key.SimpleItems
+			data = nm.Message.Inner.Data.SimpleItems
+		}
+
+		msg.Message.PropertyOperation = operation
+
+		if utcTime != "" {
+			if t, err := time.Parse(time.RFC3339, utcTime); err == nil {
 				msg.Message.UtcTime = t
 			}
 		}
 
 		// Convert source items.
-		msg.Message.Source = make([]types.SimpleItem, len(nm.Message.Source.SimpleItems))
-		for j, item := range nm.Message.Source.SimpleItems {
+		msg.Message.Source = make([]types.SimpleItem, len(source))
+		for j, item := range source {
 			msg.Message.Source[j] = types.SimpleItem(item)
 		}
 
 		// Convert key items.
-		msg.Message.Key = make([]types.SimpleItem, len(nm.Message.Key.SimpleItems))
-		for j, item := range nm.Message.Key.SimpleItems {
+		msg.Message.Key = make([]types.SimpleItem, len(key))
+		for j, item := range key {
 			msg.Message.Key[j] = types.SimpleItem(item)
 		}
 
 		// Convert data items.
-		msg.Message.Data = make([]types.SimpleItem, len(nm.Message.Data.SimpleItems))
-		for j, item := range nm.Message.Data.SimpleItems {
+		msg.Message.Data = make([]types.SimpleItem, len(data))
+		for j, item := range data {
 			msg.Message.Data[j] = types.SimpleItem(item)
 		}
 

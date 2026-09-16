@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (client)
+- `events.Service.PullMessages` now parses the canonical WS-BaseNotification
+  + ONVIF notification shape (issue #82): the wire form wraps the ONVIF
+  `tt:Message` inside an outer `wsnt:Message`, and the parser previously
+  read `PropertyOperation`/`UtcTime` and the Source/Key/Data SimpleItems
+  only from the outer element — spec-faithful cameras (the MotionAlarm
+  production reports) delivered messages where only the Topic survived.
+  The parser now reaches through the wrapper (inner layer wins) while
+  keeping the lax single-layer form working; verified end to end by the
+  server interop test, whose canonical payloads now round-trip Source,
+  Data, PropertyOperation, and UtcTime through the client.
+
 ### Added (server)
 - Events pull-point service (issue #83): `SupportEvents=true` now really
   serves the advertised `events_service` XAddr — previously the route was
