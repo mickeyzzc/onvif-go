@@ -324,14 +324,7 @@ func TestNewListenerRequiresHandler(t *testing.T) {
 func TestListenerMulticastStartStop(t *testing.T) {
 	// Probe multicast joinability first; hosts without a usable multicast
 	// route (some CI runners, VPN-up laptops) skip rather than fail.
-	probe, err := net.ListenMulticastUDP("udp", nil, &net.UDPAddr{
-		IP:   net.IPv4(239, 255, 255, 250),
-		Port: 3702,
-	})
-	if err != nil {
-		t.Skipf("host cannot join the WS-Discovery multicast group: %v", err)
-	}
-	_ = probe.Close()
+	skipWithoutMulticast(t)
 
 	listener, err := NewListener("", func(*Device) {})
 	if err != nil {

@@ -31,6 +31,11 @@ func (h *recordingHandler) joined() string {
 // DiscoverOptions.Logger emits the probe/discovery lifecycle entries;
 // a nil logger (the default) keeps discovery silent (issue #62).
 func TestDiscoverWithOptionsLoggerEmitsLifecycleEntries(t *testing.T) {
+	// The pinned lifecycle starts with "probe sent" — a host that cannot
+	// send to the multicast group (macOS CI runners: join works, send
+	// has no route) never gets that far.
+	skipWithoutMulticast(t)
+
 	rec := &recordingHandler{}
 
 	// Short timeout: on a quiet network no ProbeMatches arrive, which is

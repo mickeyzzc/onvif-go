@@ -362,7 +362,9 @@ func TestResolveNetworkInterface(t *testing.T) {
 
 // skipWithoutMulticast skips tests that need the WS-Discovery multicast
 // group when this host currently has no usable multicast route (VPN-up
-// laptops, some CI runners report WSAENETUNREACH on group join).
+// laptops, some CI runners report WSAENETUNREACH on group join; macOS
+// runners join fine but sends fail with "no route to host" — both halves
+// are probed).
 func skipWithoutMulticast(t *testing.T) {
 	t.Helper()
 
@@ -373,7 +375,14 @@ func skipWithoutMulticast(t *testing.T) {
 	if err != nil {
 		t.Skipf("host cannot join the WS-Discovery multicast group: %v", err)
 	}
-	_ = probe.Close()
+	defer func() { _ = probe.Close() }()
+
+	if _, err := probe.WriteTo([]byte{}, &net.UDPAddr{
+		IP:   net.IPv4(239, 255, 255, 250),
+		Port: 3702,
+	}); err != nil {
+		t.Skipf("host cannot send to the WS-Discovery multicast group: %v", err)
+	}
 }
 
 func TestDiscoverWithOptions_DefaultOptions(t *testing.T) {
