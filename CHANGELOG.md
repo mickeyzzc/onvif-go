@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed (wire format)
+- Client request serialization put `ver10/schema` elements into the SOAP
+  envelope namespace (#90): the PTZ vectors (`PanTilt`/`Zoom` inside
+  Velocity/Position/Translation/Speed), the imaging settings children
+  (`Brightness`, `Contrast`, `Exposure`, `Focus`, …) and focus-move
+  payloads, and the certificate load children (`CertificateID`/
+  `Certificate`/`PrivateKey`) were emitted unprefixed. Because the SOAP
+  `Body` declares `xmlns="…soap-envelope"`, those elements resolved into
+  the envelope namespace — strict devices (Dahua &co.) parsed empty
+  payloads, answered HTTP 200 and silently did nothing. They now carry
+  the `tt:` prefix with `xmlns:tt="http://www.onvif.org/ver10/schema"`
+  declared on the request root (the pattern `SetNetworkInterfaces` already
+  used). **Wire-format change** on the affected requests. Response parsing
+  is unchanged (unprefixed decode tags keep the lenient any-namespace
+  matching). The server-side response serialization has the same
+  namespace defect and is tracked in #90 for a follow-up change.
+
 ## [v2.0.0] — 2026-09-17
 
 The first stable v2 release. It ships the complete v2.0.0-rc6 capability

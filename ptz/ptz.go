@@ -12,6 +12,10 @@ import (
 // PTZ service namespace.
 const Namespace = "http://www.onvif.org/ver20/ptz/wsdl"
 
+// schemaNamespace is the ONVIF common schema namespace. Vector children
+// (PanTilt/Zoom) live here, not in the PTZ service namespace (#90).
+const schemaNamespace = "http://www.onvif.org/ver10/schema"
+
 // ptzPanTiltXML is a shared type for PTZ pan/tilt XML serialization.
 type ptzPanTiltXML struct {
 	X     float64 `xml:"x,attr"`
@@ -27,14 +31,14 @@ type ptzZoomXML struct {
 
 // ptzVectorXML is a shared type for PTZ position/velocity XML serialization.
 type ptzVectorXML struct {
-	PanTilt *ptzPanTiltXML `xml:"PanTilt,omitempty"`
-	Zoom    *ptzZoomXML    `xml:"Zoom,omitempty"`
+	PanTilt *ptzPanTiltXML `xml:"tt:PanTilt,omitempty"`
+	Zoom    *ptzZoomXML    `xml:"tt:Zoom,omitempty"`
 }
 
 // ptzSpeedXML is a shared type for PTZ speed XML serialization.
 type ptzSpeedXML struct {
-	PanTilt *ptzPanTiltXML `xml:"PanTilt,omitempty"`
-	Zoom    *ptzZoomXML    `xml:"Zoom,omitempty"`
+	PanTilt *ptzPanTiltXML `xml:"tt:PanTilt,omitempty"`
+	Zoom    *ptzZoomXML    `xml:"tt:Zoom,omitempty"`
 }
 
 // convertToPTZVectorXML converts PTZVector to XML struct.
@@ -78,6 +82,7 @@ func (s *Service) ContinuousMove(ctx context.Context, profileToken string, veloc
 	type ContinuousMove struct {
 		XMLName      xml.Name     `xml:"tptz:ContinuousMove"`
 		Xmlns        string       `xml:"xmlns:tptz,attr"`
+		XmlnsTT      string       `xml:"xmlns:tt,attr"`
 		ProfileToken string       `xml:"tptz:ProfileToken"`
 		Velocity     *ptzSpeedXML `xml:"tptz:Velocity"`
 		Timeout      *string      `xml:"tptz:Timeout,omitempty"`
@@ -85,6 +90,7 @@ func (s *Service) ContinuousMove(ctx context.Context, profileToken string, veloc
 
 	req := ContinuousMove{
 		Xmlns:        Namespace,
+		XmlnsTT:      schemaNamespace,
 		ProfileToken: profileToken,
 		Velocity:     convertToPTZSpeedXML(velocity),
 		Timeout:      timeout,
@@ -107,6 +113,7 @@ func (s *Service) AbsoluteMove(ctx context.Context, profileToken string, positio
 	type AbsoluteMove struct {
 		XMLName      xml.Name      `xml:"tptz:AbsoluteMove"`
 		Xmlns        string        `xml:"xmlns:tptz,attr"`
+		XmlnsTT      string        `xml:"xmlns:tt,attr"`
 		ProfileToken string        `xml:"tptz:ProfileToken"`
 		Position     *ptzVectorXML `xml:"tptz:Position"`
 		Speed        *ptzSpeedXML  `xml:"tptz:Speed,omitempty"`
@@ -114,6 +121,7 @@ func (s *Service) AbsoluteMove(ctx context.Context, profileToken string, positio
 
 	req := AbsoluteMove{
 		Xmlns:        Namespace,
+		XmlnsTT:      schemaNamespace,
 		ProfileToken: profileToken,
 		Position:     convertToPTZVectorXML(position),
 		Speed:        convertToPTZSpeedXML(speed),
@@ -136,6 +144,7 @@ func (s *Service) RelativeMove(ctx context.Context, profileToken string, transla
 	type RelativeMove struct {
 		XMLName      xml.Name      `xml:"tptz:RelativeMove"`
 		Xmlns        string        `xml:"xmlns:tptz,attr"`
+		XmlnsTT      string        `xml:"xmlns:tt,attr"`
 		ProfileToken string        `xml:"tptz:ProfileToken"`
 		Translation  *ptzVectorXML `xml:"tptz:Translation"`
 		Speed        *ptzSpeedXML  `xml:"tptz:Speed,omitempty"`
@@ -143,6 +152,7 @@ func (s *Service) RelativeMove(ctx context.Context, profileToken string, transla
 
 	req := RelativeMove{
 		Xmlns:        Namespace,
+		XmlnsTT:      schemaNamespace,
 		ProfileToken: profileToken,
 		Translation:  convertToPTZVectorXML(translation),
 		Speed:        convertToPTZSpeedXML(speed),
@@ -350,6 +360,7 @@ func (s *Service) GotoPreset(ctx context.Context, profileToken, presetToken stri
 	type GotoPreset struct {
 		XMLName      xml.Name     `xml:"tptz:GotoPreset"`
 		Xmlns        string       `xml:"xmlns:tptz,attr"`
+		XmlnsTT      string       `xml:"xmlns:tt,attr"`
 		ProfileToken string       `xml:"tptz:ProfileToken"`
 		PresetToken  string       `xml:"tptz:PresetToken"`
 		Speed        *ptzSpeedXML `xml:"tptz:Speed,omitempty"`
@@ -357,6 +368,7 @@ func (s *Service) GotoPreset(ctx context.Context, profileToken, presetToken stri
 
 	req := GotoPreset{
 		Xmlns:        Namespace,
+		XmlnsTT:      schemaNamespace,
 		ProfileToken: profileToken,
 		PresetToken:  presetToken,
 		Speed:        convertToPTZSpeedXML(speed),
@@ -447,12 +459,14 @@ func (s *Service) GotoHomePosition(ctx context.Context, profileToken string, spe
 	type GotoHomePosition struct {
 		XMLName      xml.Name     `xml:"tptz:GotoHomePosition"`
 		Xmlns        string       `xml:"xmlns:tptz,attr"`
+		XmlnsTT      string       `xml:"xmlns:tt,attr"`
 		ProfileToken string       `xml:"tptz:ProfileToken"`
 		Speed        *ptzSpeedXML `xml:"tptz:Speed,omitempty"`
 	}
 
 	req := GotoHomePosition{
 		Xmlns:        Namespace,
+		XmlnsTT:      schemaNamespace,
 		ProfileToken: profileToken,
 		Speed:        convertToPTZSpeedXML(speed),
 	}

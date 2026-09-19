@@ -12,6 +12,11 @@ import (
 // Imaging service namespace.
 const Namespace = "http://www.onvif.org/ver20/imaging/wsdl"
 
+// schemaNamespace is the ONVIF common schema namespace. Settings and
+// focus-move children live here, not in the imaging service namespace
+// (#90).
+const schemaNamespace = "http://www.onvif.org/ver10/schema"
+
 func (s *Service) GetImagingSettings(ctx context.Context, videoSourceToken string) (*ImagingSettings, error) {
 	endpoint := s.c.EndpointFor(api.ServiceImaging)
 	if endpoint == "" {
@@ -150,51 +155,53 @@ func (s *Service) SetImagingSettings(
 	type SetImagingSettings struct {
 		XMLName          xml.Name `xml:"timg:SetImagingSettings"`
 		Xmlns            string   `xml:"xmlns:timg,attr"`
+		XmlnsTT          string   `xml:"xmlns:tt,attr"`
 		VideoSourceToken string   `xml:"timg:VideoSourceToken"`
 		ImagingSettings  struct {
 			BacklightCompensation *struct {
-				Mode  string  `xml:"Mode"`
-				Level float64 `xml:"Level"`
-			} `xml:"BacklightCompensation,omitempty"`
-			Brightness      *float64 `xml:"Brightness,omitempty"`
-			ColorSaturation *float64 `xml:"ColorSaturation,omitempty"`
-			Contrast        *float64 `xml:"Contrast,omitempty"`
+				Mode  string  `xml:"tt:Mode"`
+				Level float64 `xml:"tt:Level"`
+			} `xml:"tt:BacklightCompensation,omitempty"`
+			Brightness      *float64 `xml:"tt:Brightness,omitempty"`
+			ColorSaturation *float64 `xml:"tt:ColorSaturation,omitempty"`
+			Contrast        *float64 `xml:"tt:Contrast,omitempty"`
 			Exposure        *struct {
-				Mode            string  `xml:"Mode"`
-				Priority        string  `xml:"Priority,omitempty"`
-				MinExposureTime float64 `xml:"MinExposureTime,omitempty"`
-				MaxExposureTime float64 `xml:"MaxExposureTime,omitempty"`
-				MinGain         float64 `xml:"MinGain,omitempty"`
-				MaxGain         float64 `xml:"MaxGain,omitempty"`
-				MinIris         float64 `xml:"MinIris,omitempty"`
-				MaxIris         float64 `xml:"MaxIris,omitempty"`
-				ExposureTime    float64 `xml:"ExposureTime,omitempty"`
-				Gain            float64 `xml:"Gain,omitempty"`
-				Iris            float64 `xml:"Iris,omitempty"`
-			} `xml:"Exposure,omitempty"`
+				Mode            string  `xml:"tt:Mode"`
+				Priority        string  `xml:"tt:Priority,omitempty"`
+				MinExposureTime float64 `xml:"tt:MinExposureTime,omitempty"`
+				MaxExposureTime float64 `xml:"tt:MaxExposureTime,omitempty"`
+				MinGain         float64 `xml:"tt:MinGain,omitempty"`
+				MaxGain         float64 `xml:"tt:MaxGain,omitempty"`
+				MinIris         float64 `xml:"tt:MinIris,omitempty"`
+				MaxIris         float64 `xml:"tt:MaxIris,omitempty"`
+				ExposureTime    float64 `xml:"tt:ExposureTime,omitempty"`
+				Gain            float64 `xml:"tt:Gain,omitempty"`
+				Iris            float64 `xml:"tt:Iris,omitempty"`
+			} `xml:"tt:Exposure,omitempty"`
 			Focus *struct {
-				AutoFocusMode string  `xml:"AutoFocusMode"`
-				DefaultSpeed  float64 `xml:"DefaultSpeed,omitempty"`
-				NearLimit     float64 `xml:"NearLimit,omitempty"`
-				FarLimit      float64 `xml:"FarLimit,omitempty"`
-			} `xml:"Focus,omitempty"`
-			IrCutFilter      *string  `xml:"IrCutFilter,omitempty"`
-			Sharpness        *float64 `xml:"Sharpness,omitempty"`
+				AutoFocusMode string  `xml:"tt:AutoFocusMode"`
+				DefaultSpeed  float64 `xml:"tt:DefaultSpeed,omitempty"`
+				NearLimit     float64 `xml:"tt:NearLimit,omitempty"`
+				FarLimit      float64 `xml:"tt:FarLimit,omitempty"`
+			} `xml:"tt:Focus,omitempty"`
+			IrCutFilter      *string  `xml:"tt:IrCutFilter,omitempty"`
+			Sharpness        *float64 `xml:"tt:Sharpness,omitempty"`
 			WideDynamicRange *struct {
-				Mode  string  `xml:"Mode"`
-				Level float64 `xml:"Level,omitempty"`
-			} `xml:"WideDynamicRange,omitempty"`
+				Mode  string  `xml:"tt:Mode"`
+				Level float64 `xml:"tt:Level,omitempty"`
+			} `xml:"tt:WideDynamicRange,omitempty"`
 			WhiteBalance *struct {
-				Mode   string  `xml:"Mode"`
-				CrGain float64 `xml:"CrGain,omitempty"`
-				CbGain float64 `xml:"CbGain,omitempty"`
-			} `xml:"WhiteBalance,omitempty"`
+				Mode   string  `xml:"tt:Mode"`
+				CrGain float64 `xml:"tt:CrGain,omitempty"`
+				CbGain float64 `xml:"tt:CbGain,omitempty"`
+			} `xml:"tt:WhiteBalance,omitempty"`
 		} `xml:"timg:ImagingSettings"`
 		ForcePersistence bool `xml:"timg:ForcePersistence"`
 	}
 
 	req := SetImagingSettings{
 		Xmlns:            Namespace,
+		XmlnsTT:          schemaNamespace,
 		VideoSourceToken: videoSourceToken,
 		ForcePersistence: forcePersistence,
 	}
@@ -202,8 +209,8 @@ func (s *Service) SetImagingSettings(
 	// Map settings
 	if settings.BacklightCompensation != nil {
 		req.ImagingSettings.BacklightCompensation = &struct {
-			Mode  string  `xml:"Mode"`
-			Level float64 `xml:"Level"`
+			Mode  string  `xml:"tt:Mode"`
+			Level float64 `xml:"tt:Level"`
 		}{
 			Mode:  settings.BacklightCompensation.Mode,
 			Level: settings.BacklightCompensation.Level,
@@ -218,17 +225,17 @@ func (s *Service) SetImagingSettings(
 
 	if settings.Exposure != nil {
 		req.ImagingSettings.Exposure = &struct {
-			Mode            string  `xml:"Mode"`
-			Priority        string  `xml:"Priority,omitempty"`
-			MinExposureTime float64 `xml:"MinExposureTime,omitempty"`
-			MaxExposureTime float64 `xml:"MaxExposureTime,omitempty"`
-			MinGain         float64 `xml:"MinGain,omitempty"`
-			MaxGain         float64 `xml:"MaxGain,omitempty"`
-			MinIris         float64 `xml:"MinIris,omitempty"`
-			MaxIris         float64 `xml:"MaxIris,omitempty"`
-			ExposureTime    float64 `xml:"ExposureTime,omitempty"`
-			Gain            float64 `xml:"Gain,omitempty"`
-			Iris            float64 `xml:"Iris,omitempty"`
+			Mode            string  `xml:"tt:Mode"`
+			Priority        string  `xml:"tt:Priority,omitempty"`
+			MinExposureTime float64 `xml:"tt:MinExposureTime,omitempty"`
+			MaxExposureTime float64 `xml:"tt:MaxExposureTime,omitempty"`
+			MinGain         float64 `xml:"tt:MinGain,omitempty"`
+			MaxGain         float64 `xml:"tt:MaxGain,omitempty"`
+			MinIris         float64 `xml:"tt:MinIris,omitempty"`
+			MaxIris         float64 `xml:"tt:MaxIris,omitempty"`
+			ExposureTime    float64 `xml:"tt:ExposureTime,omitempty"`
+			Gain            float64 `xml:"tt:Gain,omitempty"`
+			Iris            float64 `xml:"tt:Iris,omitempty"`
 		}{
 			Mode:            settings.Exposure.Mode,
 			Priority:        settings.Exposure.Priority,
@@ -246,10 +253,10 @@ func (s *Service) SetImagingSettings(
 
 	if settings.Focus != nil {
 		req.ImagingSettings.Focus = &struct {
-			AutoFocusMode string  `xml:"AutoFocusMode"`
-			DefaultSpeed  float64 `xml:"DefaultSpeed,omitempty"`
-			NearLimit     float64 `xml:"NearLimit,omitempty"`
-			FarLimit      float64 `xml:"FarLimit,omitempty"`
+			AutoFocusMode string  `xml:"tt:AutoFocusMode"`
+			DefaultSpeed  float64 `xml:"tt:DefaultSpeed,omitempty"`
+			NearLimit     float64 `xml:"tt:NearLimit,omitempty"`
+			FarLimit      float64 `xml:"tt:FarLimit,omitempty"`
 		}{
 			AutoFocusMode: settings.Focus.AutoFocusMode,
 			DefaultSpeed:  settings.Focus.DefaultSpeed,
@@ -260,8 +267,8 @@ func (s *Service) SetImagingSettings(
 
 	if settings.WideDynamicRange != nil {
 		req.ImagingSettings.WideDynamicRange = &struct {
-			Mode  string  `xml:"Mode"`
-			Level float64 `xml:"Level,omitempty"`
+			Mode  string  `xml:"tt:Mode"`
+			Level float64 `xml:"tt:Level,omitempty"`
 		}{
 			Mode:  settings.WideDynamicRange.Mode,
 			Level: settings.WideDynamicRange.Level,
@@ -270,9 +277,9 @@ func (s *Service) SetImagingSettings(
 
 	if settings.WhiteBalance != nil {
 		req.ImagingSettings.WhiteBalance = &struct {
-			Mode   string  `xml:"Mode"`
-			CrGain float64 `xml:"CrGain,omitempty"`
-			CbGain float64 `xml:"CbGain,omitempty"`
+			Mode   string  `xml:"tt:Mode"`
+			CrGain float64 `xml:"tt:CrGain,omitempty"`
+			CbGain float64 `xml:"tt:CbGain,omitempty"`
 		}{
 			Mode:   settings.WhiteBalance.Mode,
 			CrGain: settings.WhiteBalance.CrGain,
@@ -290,23 +297,23 @@ func (s *Service) SetImagingSettings(
 // Move performs a focus move operation.
 // focusXML is the wire shape of the Move Focus element.
 type focusXML struct {
-	Absolute   *absoluteFocusXML   `xml:"Absolute,omitempty"`
-	Relative   *relativeFocusXML   `xml:"Relative,omitempty"`
-	Continuous *continuousFocusXML `xml:"Continuous,omitempty"`
+	Absolute   *absoluteFocusXML   `xml:"tt:Absolute,omitempty"`
+	Relative   *relativeFocusXML   `xml:"tt:Relative,omitempty"`
+	Continuous *continuousFocusXML `xml:"tt:Continuous,omitempty"`
 }
 
 type absoluteFocusXML struct {
-	Position float64  `xml:"Position"`
-	Speed    *float64 `xml:"Speed,omitempty"`
+	Position float64  `xml:"tt:Position"`
+	Speed    *float64 `xml:"tt:Speed,omitempty"`
 }
 
 type relativeFocusXML struct {
-	Distance float64  `xml:"Distance"`
-	Speed    *float64 `xml:"Speed,omitempty"`
+	Distance float64  `xml:"tt:Distance"`
+	Speed    *float64 `xml:"tt:Speed,omitempty"`
 }
 
 type continuousFocusXML struct {
-	Speed float64 `xml:"Speed"`
+	Speed float64 `xml:"tt:Speed"`
 }
 
 func (s *Service) Move(ctx context.Context, videoSourceToken string, focus *FocusMove) error {
@@ -318,12 +325,14 @@ func (s *Service) Move(ctx context.Context, videoSourceToken string, focus *Focu
 	type Move struct {
 		XMLName          xml.Name  `xml:"timg:Move"`
 		Xmlns            string    `xml:"xmlns:timg,attr"`
+		XmlnsTT          string    `xml:"xmlns:tt,attr"`
 		VideoSourceToken string    `xml:"timg:VideoSourceToken"`
 		Focus            *focusXML `xml:"timg:Focus"`
 	}
 
 	req := Move{
 		Xmlns:            Namespace,
+		XmlnsTT:          schemaNamespace,
 		VideoSourceToken: videoSourceToken,
 	}
 
