@@ -33,67 +33,67 @@ type MediaProfile struct {
 // VideoSourceConfiguration represents video source configuration.
 type VideoSourceConfiguration struct {
 	Token       string       `xml:"token,attr"`
-	Name        string       `xml:"Name"`
-	UseCount    int          `xml:"UseCount"`
-	SourceToken string       `xml:"SourceToken"`
-	Bounds      IntRectangle `xml:"Bounds"`
+	Name        string       `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount    int          `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	SourceToken string       `xml:"http://www.onvif.org/ver10/schema SourceToken"`
+	Bounds      IntRectangle `xml:"http://www.onvif.org/ver10/schema Bounds"`
 }
 
 // AudioSourceConfiguration represents audio source configuration.
 type AudioSourceConfiguration struct {
 	Token       string `xml:"token,attr"`
-	Name        string `xml:"Name"`
-	UseCount    int    `xml:"UseCount"`
-	SourceToken string `xml:"SourceToken"`
+	Name        string `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount    int    `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	SourceToken string `xml:"http://www.onvif.org/ver10/schema SourceToken"`
 }
 
 // VideoEncoderConfiguration represents video encoder configuration.
 type VideoEncoderConfiguration struct {
 	Token          string                  `xml:"token,attr"`
-	Name           string                  `xml:"Name"`
-	UseCount       int                     `xml:"UseCount"`
-	Encoding       string                  `xml:"Encoding"`
-	Resolution     VideoResolution         `xml:"Resolution"`
-	Quality        float64                 `xml:"Quality"`
-	RateControl    *VideoRateControl       `xml:"RateControl,omitempty"`
-	H264           *H264Configuration      `xml:"H264,omitempty"`
-	Multicast      *MulticastConfiguration `xml:"Multicast,omitempty"`
-	SessionTimeout string                  `xml:"SessionTimeout"`
+	Name           string                  `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount       int                     `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	Encoding       string                  `xml:"http://www.onvif.org/ver10/schema Encoding"`
+	Resolution     VideoResolution         `xml:"http://www.onvif.org/ver10/schema Resolution"`
+	Quality        float64                 `xml:"http://www.onvif.org/ver10/schema Quality"`
+	RateControl    *VideoRateControl       `xml:"http://www.onvif.org/ver10/schema RateControl,omitempty"`
+	H264           *H264Configuration      `xml:"http://www.onvif.org/ver10/schema H264,omitempty"`
+	Multicast      *MulticastConfiguration `xml:"http://www.onvif.org/ver10/schema Multicast,omitempty"`
+	SessionTimeout string                  `xml:"http://www.onvif.org/ver10/schema SessionTimeout"`
 }
 
 // AudioEncoderConfiguration represents audio encoder configuration.
 type AudioEncoderConfiguration struct {
 	Token          string                  `xml:"token,attr"`
-	Name           string                  `xml:"Name"`
-	UseCount       int                     `xml:"UseCount"`
-	Encoding       string                  `xml:"Encoding"`
-	Bitrate        int                     `xml:"Bitrate"`
-	SampleRate     int                     `xml:"SampleRate"`
-	Multicast      *MulticastConfiguration `xml:"Multicast,omitempty"`
-	SessionTimeout string                  `xml:"SessionTimeout"`
+	Name           string                  `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount       int                     `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	Encoding       string                  `xml:"http://www.onvif.org/ver10/schema Encoding"`
+	Bitrate        int                     `xml:"http://www.onvif.org/ver10/schema Bitrate"`
+	SampleRate     int                     `xml:"http://www.onvif.org/ver10/schema SampleRate"`
+	Multicast      *MulticastConfiguration `xml:"http://www.onvif.org/ver10/schema Multicast,omitempty"`
+	SessionTimeout string                  `xml:"http://www.onvif.org/ver10/schema SessionTimeout"`
 }
 
 // VideoAnalyticsConfiguration represents video analytics configuration.
 type VideoAnalyticsConfiguration struct {
 	Token    string `xml:"token,attr"`
-	Name     string `xml:"Name"`
-	UseCount int    `xml:"UseCount"`
+	Name     string `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount int    `xml:"http://www.onvif.org/ver10/schema UseCount"`
 }
 
 // PTZConfiguration represents PTZ configuration.
 type PTZConfiguration struct {
 	Token     string `xml:"token,attr"`
-	Name      string `xml:"Name"`
-	UseCount  int    `xml:"UseCount"`
-	NodeToken string `xml:"NodeToken"`
+	Name      string `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount  int    `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	NodeToken string `xml:"http://www.onvif.org/ver10/schema NodeToken"`
 }
 
 // MetadataConfiguration represents metadata configuration.
 type MetadataConfiguration struct {
 	Token          string `xml:"token,attr"`
-	Name           string `xml:"Name"`
-	UseCount       int    `xml:"UseCount"`
-	SessionTimeout string `xml:"SessionTimeout"`
+	Name           string `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount       int    `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	SessionTimeout string `xml:"http://www.onvif.org/ver10/schema SessionTimeout"`
 }
 
 // IntRectangle represents a rectangle with integer coordinates.
@@ -106,36 +106,36 @@ type IntRectangle struct {
 
 // VideoResolution represents video resolution.
 type VideoResolution struct {
-	Width  int `xml:"Width"`
-	Height int `xml:"Height"`
+	Width  int `xml:"http://www.onvif.org/ver10/schema Width"`
+	Height int `xml:"http://www.onvif.org/ver10/schema Height"`
 }
 
 // VideoRateControl represents video rate control.
 type VideoRateControl struct {
-	FrameRateLimit   int `xml:"FrameRateLimit"`
-	EncodingInterval int `xml:"EncodingInterval"`
-	BitrateLimit     int `xml:"BitrateLimit"`
+	FrameRateLimit   int `xml:"http://www.onvif.org/ver10/schema FrameRateLimit"`
+	EncodingInterval int `xml:"http://www.onvif.org/ver10/schema EncodingInterval"`
+	BitrateLimit     int `xml:"http://www.onvif.org/ver10/schema BitrateLimit"`
 }
 
 // H264Configuration represents H264 configuration.
 type H264Configuration struct {
-	GovLength   int    `xml:"GovLength"`
-	H264Profile string `xml:"H264Profile"`
+	GovLength   int    `xml:"http://www.onvif.org/ver10/schema GovLength"`
+	H264Profile string `xml:"http://www.onvif.org/ver10/schema H264Profile"`
 }
 
 // MulticastConfiguration represents multicast configuration.
 type MulticastConfiguration struct {
-	Address   IPAddress `xml:"Address"`
-	Port      int       `xml:"Port"`
-	TTL       int       `xml:"TTL"`
-	AutoStart bool      `xml:"AutoStart"`
+	Address   IPAddress `xml:"http://www.onvif.org/ver10/schema Address"`
+	Port      int       `xml:"http://www.onvif.org/ver10/schema Port"`
+	TTL       int       `xml:"http://www.onvif.org/ver10/schema TTL"`
+	AutoStart bool      `xml:"http://www.onvif.org/ver10/schema AutoStart"`
 }
 
 // IPAddress represents an IP address.
 type IPAddress struct {
-	Type        string `xml:"Type"`
-	IPv4Address string `xml:"IPv4Address,omitempty"`
-	IPv6Address string `xml:"IPv6Address,omitempty"`
+	Type        string `xml:"http://www.onvif.org/ver10/schema Type"`
+	IPv4Address string `xml:"http://www.onvif.org/ver10/schema IPv4Address,omitempty"`
+	IPv6Address string `xml:"http://www.onvif.org/ver10/schema IPv6Address,omitempty"`
 }
 
 // GetStreamUriResponse represents GetStreamUri response.

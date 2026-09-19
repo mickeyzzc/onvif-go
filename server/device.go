@@ -16,29 +16,34 @@ const (
 // Device service SOAP message types
 
 // GetDeviceInformationResponse represents GetDeviceInformation response.
+// Its children are inline xs:string elements in the device WSDL, so they
+// carry the tds namespace (not ver10/schema).
 type GetDeviceInformationResponse struct {
 	XMLName         xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetDeviceInformationResponse"`
-	Manufacturer    string   `xml:"http://www.onvif.org/ver10/schema Manufacturer"`
-	Model           string   `xml:"http://www.onvif.org/ver10/schema Model"`
-	FirmwareVersion string   `xml:"http://www.onvif.org/ver10/schema FirmwareVersion"`
-	SerialNumber    string   `xml:"http://www.onvif.org/ver10/schema SerialNumber"`
-	HardwareID      string   `xml:"http://www.onvif.org/ver10/schema HardwareId"`
+	Manufacturer    string   `xml:"http://www.onvif.org/ver10/device/wsdl Manufacturer"`
+	Model           string   `xml:"http://www.onvif.org/ver10/device/wsdl Model"`
+	FirmwareVersion string   `xml:"http://www.onvif.org/ver10/device/wsdl FirmwareVersion"`
+	SerialNumber    string   `xml:"http://www.onvif.org/ver10/device/wsdl SerialNumber"`
+	HardwareID      string   `xml:"http://www.onvif.org/ver10/device/wsdl HardwareId"`
 }
 
-// GetCapabilitiesResponse represents GetCapabilities response.
+// GetCapabilitiesResponse represents GetCapabilities response. The
+// Capabilities wrapper element is locally declared in the device WSDL
+// (tds); its children — elements of the schema type tt:Capabilities — are
+// ver10/schema.
 type GetCapabilitiesResponse struct {
 	XMLName      xml.Name      `xml:"http://www.onvif.org/ver10/device/wsdl GetCapabilitiesResponse"`
-	Capabilities *Capabilities `xml:"http://www.onvif.org/ver10/schema Capabilities"`
+	Capabilities *Capabilities `xml:"http://www.onvif.org/ver10/device/wsdl Capabilities"`
 }
 
 // Capabilities represents device capabilities.
 type Capabilities struct {
-	Analytics *AnalyticsCapabilities `xml:"Analytics,omitempty"`
+	Analytics *AnalyticsCapabilities `xml:"http://www.onvif.org/ver10/schema Analytics,omitempty"`
 	Device    *DeviceCapabilities    `xml:"http://www.onvif.org/ver10/schema Device"`
-	Events    *EventCapabilities     `xml:"Events,omitempty"`
-	Imaging   *ImagingCapabilities   `xml:"Imaging,omitempty"`
+	Events    *EventCapabilities     `xml:"http://www.onvif.org/ver10/schema Events,omitempty"`
+	Imaging   *ImagingCapabilities   `xml:"http://www.onvif.org/ver10/schema Imaging,omitempty"`
 	Media     *MediaCapabilities     `xml:"http://www.onvif.org/ver10/schema Media"`
-	PTZ       *PTZCapabilities       `xml:"PTZ,omitempty"`
+	PTZ       *PTZCapabilities       `xml:"http://www.onvif.org/ver10/schema PTZ,omitempty"`
 }
 
 // AnalyticsCapabilities represents analytics service capabilities.
@@ -51,10 +56,10 @@ type AnalyticsCapabilities struct {
 // DeviceCapabilities represents device service capabilities.
 type DeviceCapabilities struct {
 	XAddr    string                `xml:"http://www.onvif.org/ver10/schema XAddr"`
-	Network  *NetworkCapabilities  `xml:"Network,omitempty"`
-	System   *SystemCapabilities   `xml:"System,omitempty"`
-	IO       *IOCapabilities       `xml:"IO,omitempty"`
-	Security *SecurityCapabilities `xml:"Security,omitempty"`
+	Network  *NetworkCapabilities  `xml:"http://www.onvif.org/ver10/schema Network,omitempty"`
+	System   *SystemCapabilities   `xml:"http://www.onvif.org/ver10/schema System,omitempty"`
+	IO       *IOCapabilities       `xml:"http://www.onvif.org/ver10/schema IO,omitempty"`
+	Security *SecurityCapabilities `xml:"http://www.onvif.org/ver10/schema Security,omitempty"`
 }
 
 // NetworkCapabilities represents network capabilities.
@@ -109,7 +114,7 @@ type ImagingCapabilities struct {
 // MediaCapabilities represents media service capabilities.
 type MediaCapabilities struct {
 	XAddr                 string                 `xml:"http://www.onvif.org/ver10/schema XAddr"`
-	StreamingCapabilities *StreamingCapabilities `xml:"StreamingCapabilities"`
+	StreamingCapabilities *StreamingCapabilities `xml:"http://www.onvif.org/ver10/schema StreamingCapabilities"`
 }
 
 // StreamingCapabilities represents streaming capabilities.
@@ -124,29 +129,32 @@ type PTZCapabilities struct {
 	XAddr string `xml:"http://www.onvif.org/ver10/schema XAddr"`
 }
 
-// GetServicesResponse represents GetServices response.
+// GetServicesResponse represents GetServices response. Service and its
+// Namespace/XAddr/Version children are locally declared in the device WSDL
+// (tds); the version numbers inside are children of the schema type
+// tt:OnvifVersion, so Major/Minor are ver10/schema.
 type GetServicesResponse struct {
 	XMLName xml.Name  `xml:"http://www.onvif.org/ver10/device/wsdl GetServicesResponse"`
-	Service []Service `xml:"Service"`
+	Service []Service `xml:"http://www.onvif.org/ver10/device/wsdl Service"`
 }
 
 // Service represents a service.
 type Service struct {
-	Namespace string  `xml:"Namespace"`
-	XAddr     string  `xml:"http://www.onvif.org/ver10/schema XAddr"`
-	Version   Version `xml:"Version"`
+	Namespace string  `xml:"http://www.onvif.org/ver10/device/wsdl Namespace"`
+	XAddr     string  `xml:"http://www.onvif.org/ver10/device/wsdl XAddr"`
+	Version   Version `xml:"http://www.onvif.org/ver10/device/wsdl Version"`
 }
 
 // Version represents service version.
 type Version struct {
-	Major int `xml:"Major"`
-	Minor int `xml:"Minor"`
+	Major int `xml:"http://www.onvif.org/ver10/schema Major"`
+	Minor int `xml:"http://www.onvif.org/ver10/schema Minor"`
 }
 
 // SystemRebootResponse represents SystemReboot response.
 type SystemRebootResponse struct {
 	XMLName xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl SystemRebootResponse"`
-	Message string   `xml:"Message"`
+	Message string   `xml:"http://www.onvif.org/ver10/device/wsdl Message"`
 }
 
 // Device service handlers
@@ -331,17 +339,20 @@ func DefaultScopes() []string {
 	}
 }
 
-// GetScopesResponse represents the GetScopes response.
+// GetScopesResponse represents the GetScopes response. Each Scopes entry
+// is the schema type tt:Scope: a ScopeDef enum ("Fixed"|"Configurable")
+// followed by the ScopeItem URI, both ver10/schema; the Scopes wrapper
+// element itself is locally declared in the device WSDL (tds).
 type GetScopesResponse struct {
 	XMLName xml.Name          `xml:"http://www.onvif.org/ver10/device/wsdl GetScopesResponse"`
-	Scopes  []ScopeDefinition `xml:"Scopes"`
+	Scopes  []ScopeDefinition `xml:"http://www.onvif.org/ver10/device/wsdl Scopes"`
 }
 
-// ScopeDefinition carries one advertised scope. The ONVIF schema spells
-// the attribute Scopeitem (lowercase i); the wire form preserves it.
+// ScopeDefinition carries one advertised scope in the tt:Scope wire shape
+// (ScopeDef + ScopeItem elements).
 type ScopeDefinition struct {
-	XMLName   xml.Name `xml:"http://www.onvif.org/ver10/schema ScopeDefinition"`
-	ScopeItem string   `xml:"Scopeitem,attr"`
+	ScopeDef  string `xml:"http://www.onvif.org/ver10/schema ScopeDef"`
+	ScopeItem string `xml:"http://www.onvif.org/ver10/schema ScopeItem"`
 }
 
 // HandleGetScopes handles the GetScopes request (#37): the configured
@@ -354,7 +365,7 @@ func (s *Server) HandleGetScopes(_ *soap.RequestContext, _ []byte) (interface{},
 
 	resp := &GetScopesResponse{Scopes: make([]ScopeDefinition, len(scopes))}
 	for i, scope := range scopes {
-		resp.Scopes[i] = ScopeDefinition{ScopeItem: scope}
+		resp.Scopes[i] = ScopeDefinition{ScopeDef: "Fixed", ScopeItem: scope}
 	}
 
 	return resp, nil
