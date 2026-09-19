@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Server: TLS transport (Profile T baseline) — `Config.TLSCertFile`/
+  `TLSKeyFile` serve the listener over HTTPS (`ServeTLS`); both must be
+  set together. `Start` now binds its listener explicitly, so
+  `Server.ListenAddr()` reports the bound address (with `Port: 0`, the
+  kernel-assigned port) as soon as Start runs.
+- Client media: MPEG-4 encoder options decode
+  (`VideoEncoderConfigurationOptions.MPEG4` — resolutions, gov-length/
+  frame-rate/encoding-interval ranges, Mpeg4ProfilesSupported); encoder
+  `Encoding` values pass through verbatim (pinned with `H265` — ver10 has
+  no H.265/AV1 options; those live in Media2, see the README roadmap).
+
 ### Changed
 - Server request bodies are now extracted with full namespace context
   instead of raw innerxml slicing: the first Body child is re-encoded as

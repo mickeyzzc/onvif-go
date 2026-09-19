@@ -202,6 +202,40 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` |
 | `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), simple-server, onvif-server, complete-demo |
 
+## Protocol alignment & roadmap
+
+Wire contracts are grounded in the official ONVIF WSDL/XSD set
+([onvif/specs](https://github.com/onvif/specs), all schemas
+`elementFormDefault="qualified"`): elements locally declared in a service
+WSDL resolve to that WSDL's namespace, children of `ver10/schema` types
+to `tt`. Every served response surface is pinned by a namespace-strict
+contract suite, a client↔simulator conformance loopback drives the full
+operation matrix, and hostile-response fuzzers cover the client decode
+paths.
+
+Deliberate scope boundaries (tracked for future capability packages):
+
+- **Media2 (ver20/media/wsdl)** — H.265/AV1 codec options and the Media2
+  configuration model live in the Media2 service, which this library does
+  not implement. Ver10 encoder configurations pass any `Encoding` value
+  through verbatim (tested with `H265`), and the ver10 options decode
+  covers JPEG/MPEG4/H264.
+- **Profile M** — the events PullPoint family and metadata configurations
+  in profiles are in; an analytics-service client (rule/module
+  configuration) is not implemented yet.
+- **Profile T** — TLS transport is supported on the server
+  (`Config.TLSCertFile`/`TLSKeyFile`); advanced onboarding (PKI,
+  802.1X, WS-Security beyond UsernameToken) is out of scope.
+- **GetEventProperties** currently serves the fixed-topic-set answer
+  without `TopicNamespaceLocation`/`TopicExpressionDialect`; subscription
+  filters are accepted and ignored (documented, no false advertising).
+- **Storage configurations** — the request payload still models `Data`
+  as a flat struct; the WSDL's `xsi:type`-polymorphic shape
+  (`tt:FileSystemStorage` &co.) needs a redesign before strict devices
+  accept it.
+- **WebRTC (Profile M-relevant later revisions)** — watched, not
+  implemented.
+
 ## Documentation
 
 Topic guides now live in the MiBee documentation hub — the single
