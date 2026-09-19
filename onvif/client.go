@@ -10,6 +10,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/analytics"
 	"github.com/mickeyzzc/onvif-go/v2/device"
 	"github.com/mickeyzzc/onvif-go/v2/deviceio"
 	"github.com/mickeyzzc/onvif-go/v2/events"
@@ -99,10 +100,11 @@ type Client struct {
 	mu         sync.RWMutex
 
 	// Service endpoints
-	mediaEndpoint   string
-	ptzEndpoint     string
-	imagingEndpoint string
-	eventEndpoint   string
+	mediaEndpoint     string
+	ptzEndpoint       string
+	imagingEndpoint   string
+	eventEndpoint     string
+	analyticsEndpoint string
 
 	// Auth configuration. authMode is the primary mode; authFallback lists
 	// modes to try (in order) when the primary fails with an auth-class error.
@@ -120,13 +122,14 @@ type Client struct {
 	// Long-lived service instances (v2): accessors return the same pointers,
 	// so services may hold their own state — the capabilities cache lives on
 	// the device service.
-	deviceSvc   *device.Service
-	mediaSvc    *media.Service
-	ptzSvc      *ptz.Service
-	imagingSvc  *imaging.Service
-	eventsSvc   *events.Service
-	deviceioSvc *deviceio.Service
-	securitySvc *security.Service
+	deviceSvc    *device.Service
+	mediaSvc     *media.Service
+	ptzSvc       *ptz.Service
+	imagingSvc   *imaging.Service
+	eventsSvc    *events.Service
+	analyticsSvc *analytics.Service
+	deviceioSvc  *deviceio.Service
+	securitySvc  *security.Service
 
 	// minimalCapsFallback configures the device service's cached-capabilities
 	// degradation (WithMinimalCapsFallback).
@@ -255,6 +258,7 @@ func NewClient(endpoint string, opts ...ClientOption) (*Client, error) {
 	client.ptzSvc = ptz.New(client)
 	client.imagingSvc = imaging.New(client)
 	client.eventsSvc = events.New(client)
+	client.analyticsSvc = analytics.New(client)
 	client.deviceioSvc = deviceio.New(client)
 	client.securitySvc = security.New(client)
 
@@ -429,6 +433,9 @@ func (c *Client) Initialize(ctx context.Context) error {
 	}
 	if capabilities.Events != nil && capabilities.Events.XAddr != "" {
 		c.eventEndpoint = c.fixServiceURL(capabilities.Events.XAddr)
+	}
+	if capabilities.Analytics != nil && capabilities.Analytics.XAddr != "" {
+		c.analyticsEndpoint = c.fixServiceURL(capabilities.Analytics.XAddr)
 	}
 
 	return nil

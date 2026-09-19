@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Analytics service client (`onvif.Client.Analytics()`, ver20 analytics
+  WSDL): GetServiceCapabilities, Get/GetSupported for rules and analytics
+  modules, Create/Modify/DeleteAnalyticsModules — the Profile M
+  configuration core. Requests follow the WSDL namespace contract
+  (tan-wrapped, tt:Config payloads with `xmlns:tt`); wire-namespace
+  envelope test included. Client endpoint discovery picks up a
+  capabilities-advertised analytics XAddr; `SetServiceEndpoint` works as
+  for the other services.
+
 ### Changed
 - Server request bodies are now extracted with full namespace context
   instead of raw innerxml slicing: the first Body child is re-encoded as

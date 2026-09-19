@@ -20,6 +20,8 @@ const (
 	ServiceImaging Service = "imaging"
 	// ServiceEvents is the events service (tev).
 	ServiceEvents Service = "events"
+	// ServiceAnalytics is the ver20 analytics service (tan).
+	ServiceAnalytics Service = "analytics"
 )
 
 // Caller performs an authenticated SOAP call through the client's auth

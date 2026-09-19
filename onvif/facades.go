@@ -1,6 +1,7 @@
 package onvif
 
 import (
+	"github.com/mickeyzzc/onvif-go/v2/analytics"
 	"github.com/mickeyzzc/onvif-go/v2/device"
 	"github.com/mickeyzzc/onvif-go/v2/deviceio"
 	"github.com/mickeyzzc/onvif-go/v2/events"
@@ -39,6 +40,9 @@ func (c *Client) Imaging() *imaging.Service { return c.imagingSvc }
 // Events returns the Events service facade.
 func (c *Client) Events() *events.Service { return c.eventsSvc }
 
+// Analytics returns the ver20 analytics service facade (tan).
+func (c *Client) Analytics() *analytics.Service { return c.analyticsSvc }
+
 // DeviceIO returns the Device IO service facade.
 func (c *Client) DeviceIO() *deviceio.Service { return c.deviceioSvc }
 
@@ -62,6 +66,8 @@ func (c *Client) EndpointFor(svc api.Service) string {
 		endpoint = c.imagingEndpoint
 	case api.ServiceEvents:
 		endpoint = c.eventEndpoint
+	case api.ServiceAnalytics:
+		endpoint = c.analyticsEndpoint
 	default:
 		return c.endpoint
 	}
@@ -90,6 +96,8 @@ func (c *Client) SetServiceEndpoint(svc api.Service, endpoint string) {
 		c.imagingEndpoint = endpoint
 	case api.ServiceEvents:
 		c.eventEndpoint = endpoint
+	case api.ServiceAnalytics:
+		c.analyticsEndpoint = endpoint
 	default:
 		c.endpoint = endpoint
 	}
