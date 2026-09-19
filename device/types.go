@@ -400,25 +400,27 @@ type Dot11AvailableNetworks struct {
 type Dot11AuthAndMangementSuite string
 
 // StorageConfiguration represents storage configuration.
+// StorageConfiguration is tds:StorageConfiguration: the token attribute
+// (from the tt:DeviceEntity base) plus the Data payload.
 type StorageConfiguration struct {
-	Token string
-	Data  StorageConfigurationData
+	Token string                   `xml:"token,attr"`
+	Data  StorageConfigurationData `xml:"Data"`
 }
 
-// StorageConfigurationData represents storage configuration data.
+// StorageConfigurationData is tds:StorageConfigurationData: LocalPath /
+// StorageUri / User / CertPathValidationPolicyID (all children of a type
+// declared in the device WSDL).
 type StorageConfigurationData struct {
-	Type                       string
-	LocalPath                  string
-	StorageURI                 string `xml:"StorageUri"`
-	User                       *UserCredential
-	CertPathValidationPolicyID string
+	LocalPath                  string          `xml:"LocalPath,omitempty"`
+	StorageURI                 string          `xml:"StorageUri,omitempty"`
+	User                       *UserCredential `xml:"User,omitempty"`
+	CertPathValidationPolicyID string          `xml:"CertPathValidationPolicyID,omitempty"`
 }
 
-// UserCredential represents user credentials.
+// UserCredential is tds:UserCredential.
 type UserCredential struct {
-	UserName string
-	Password string
-	Token    string
+	UserName string `xml:"UserName"`
+	Password string `xml:"Password,omitempty"`
 }
 
 // LocationEntity represents geo location.

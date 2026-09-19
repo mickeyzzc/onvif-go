@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Events service conformance: GetEventProperties now answers the
+  spec-complete form — `TopicNamespaceLocation` (ONVIF topic namespace),
+  the two mandatory topic-expression dialects, the spec-blessed single
+  empty `MessageContentFilterDialect` (content filtering is not applied
+  and not advertised), and the ONVIF schema location. The advertised
+  topic dialects are now **honored**: CreatePullPointSubscription filters
+  in the Concrete (exact local topic path) and ConcreteSet
+  (`|`-alternatives with `*` wildcards) dialects select what the
+  subscription delivers (previously filters were accepted and ignored);
+  unsupported dialects and empty expressions fault; an absent dialect
+  defaults to Concrete. PullMessages with `Timeout PT0S` is now a legal
+  immediate poll.
+
+### Fixed (wire format)
+- Storage configuration requests were non-conformant: the payload structs
+  carried no namespaces, the WSDL spells the element `StorageUri` (not
+  `StorageURI`), Create's `StorageConfiguration` element is typed as the
+  *data* type (children directly under it, no Data wrapper, no token),
+  Set's is the full type (token attribute + Data wrapper), and the token
+  is an attribute, not an element. Rewritten accordingly with
+  tds-qualified children; `StorageConfigurationData.Type` (no WSDL
+  counterpart) removed from the public model — **breaking** for anyone
+  setting it. Wire-namespace test pins both payloads.
+
+### Added
 - Server: TLS transport (Profile T baseline) — `Config.TLSCertFile`/
   `TLSKeyFile` serve the listener over HTTPS (`ServeTLS`); both must be
   set together. `Start` now binds its listener explicitly, so

@@ -59,12 +59,14 @@ func (s *Service) GetStorageConfiguration(ctx context.Context, token string) (*S
 }
 
 // CreateStorageConfiguration creates a storage configuration.
-// ONVIF Specification: CreateStorageConfiguration operation.
+// ONVIF Specification: CreateStorageConfiguration operation. The request's
+// StorageConfiguration element is typed tds:StorageConfigurationData — the
+// data children live directly under it (no Data wrapper, no token).
 func (s *Service) CreateStorageConfiguration(ctx context.Context, config *StorageConfiguration) (string, error) {
 	type CreateStorageConfigurationBody struct {
-		XMLName              xml.Name              `xml:"tds:CreateStorageConfiguration"`
-		Xmlns                string                `xml:"xmlns:tds,attr"`
-		StorageConfiguration *StorageConfiguration `xml:"tds:StorageConfiguration"`
+		XMLName              xml.Name            `xml:"tds:CreateStorageConfiguration"`
+		Xmlns                string              `xml:"xmlns:tds,attr"`
+		StorageConfiguration storageDataWireBody `xml:"tds:StorageConfiguration"`
 	}
 
 	type CreateStorageConfigurationResponse struct {
@@ -74,7 +76,7 @@ func (s *Service) CreateStorageConfiguration(ctx context.Context, config *Storag
 
 	request := CreateStorageConfigurationBody{
 		Xmlns:                Namespace,
-		StorageConfiguration: config,
+		StorageConfiguration: toStorageDataWire(&config.Data),
 	}
 	var response CreateStorageConfigurationResponse
 
@@ -85,12 +87,15 @@ func (s *Service) CreateStorageConfiguration(ctx context.Context, config *Storag
 	return response.Token, nil
 }
 
-// SetStorageConfiguration sets a storage configuration. ONVIF Specification: SetStorageConfiguration operation.
+// SetStorageConfiguration sets a storage configuration.
+// ONVIF Specification: SetStorageConfiguration operation. The request's
+// StorageConfiguration element is the full tds:StorageConfiguration —
+// token attribute plus the Data wrapper.
 func (s *Service) SetStorageConfiguration(ctx context.Context, config *StorageConfiguration) error {
 	type SetStorageConfigurationBody struct {
-		XMLName              xml.Name              `xml:"tds:SetStorageConfiguration"`
-		Xmlns                string                `xml:"xmlns:tds,attr"`
-		StorageConfiguration *StorageConfiguration `xml:"tds:StorageConfiguration"`
+		XMLName              xml.Name               `xml:"tds:SetStorageConfiguration"`
+		Xmlns                string                 `xml:"xmlns:tds,attr"`
+		StorageConfiguration *storageConfigWireBody `xml:"tds:StorageConfiguration"`
 	}
 
 	type SetStorageConfigurationResponse struct {
@@ -99,7 +104,7 @@ func (s *Service) SetStorageConfiguration(ctx context.Context, config *StorageCo
 
 	request := SetStorageConfigurationBody{
 		Xmlns:                Namespace,
-		StorageConfiguration: config,
+		StorageConfiguration: toStorageConfigWire(config),
 	}
 	var response SetStorageConfigurationResponse
 
@@ -159,4 +164,45 @@ func (s *Service) SetHashingAlgorithm(ctx context.Context, algorithm string) err
 	}
 
 	return nil
+}
+
+// storageDataWireBody is the tds:StorageConfigurationData serialization
+// shape (children declared in the device WSDL → tds:).
+type storageDataWireBody struct {
+	LocalPath                  string              `xml:"tds:LocalPath,omitempty"`
+	StorageURI                 string              `xml:"tds:StorageUri,omitempty"`
+	User                       *userCredentialWire `xml:"tds:User,omitempty"`
+	CertPathValidationPolicyID string              `xml:"tds:CertPathValidationPolicyID,omitempty"`
+}
+
+type userCredentialWire struct {
+	UserName string `xml:"tds:UserName"`
+	Password string `xml:"tds:Password,omitempty"`
+}
+
+// storageConfigWireBody is the full tds:StorageConfiguration
+// serialization shape (token attribute + Data wrapper).
+type storageConfigWireBody struct {
+	Token string              `xml:"token,attr"`
+	Data  storageDataWireBody `xml:"tds:Data"`
+}
+
+func toStorageDataWire(data *StorageConfigurationData) storageDataWireBody {
+	wire := storageDataWireBody{
+		LocalPath:                  data.LocalPath,
+		StorageURI:                 data.StorageURI,
+		CertPathValidationPolicyID: data.CertPathValidationPolicyID,
+	}
+	if data.User != nil {
+		wire.User = &userCredentialWire{UserName: data.User.UserName, Password: data.User.Password}
+	}
+
+	return wire
+}
+
+func toStorageConfigWire(config *StorageConfiguration) *storageConfigWireBody {
+	return &storageConfigWireBody{
+		Token: config.Token,
+		Data:  toStorageDataWire(&config.Data),
+	}
 }
