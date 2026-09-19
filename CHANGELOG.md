@@ -8,6 +8,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed (wire format)
+- Server responses misassigned several namespaces relative to the official
+  WSDL/XSD set (github.com/onvif/specs, all schemas
+  elementFormDefault="qualified"; follow-up audit to #90). Elements
+  locally declared inside a service WSDL belong to that WSDL's namespace —
+  including the direct children of response wrappers. Corrected: the
+  device-information fields (Manufacturer/Model/… → `tds:`), the
+  Capabilities wrapper (`tds:`; its Analytics/Device/Events/Imaging/Media/
+  PTZ children and nested Network/System/IO/Security/
+  StreamingCapabilities → `tt:`), SystemDateAndTime (element `tds:`,
+  typed children `tt:`), GetServices Service/Namespace/XAddr/Version
+  (`tds:`, with Major/Minor → `tt:`), SystemReboot Message (`tds:`), the
+  PTZ status and preset wrappers (`tptz:` with typed children `tt:`), all
+  media profile configuration children (Name/UseCount/Encoding/
+  Resolution/RateControl/H264/Multicast/NodeToken/… → `tt:`), and the
+  events family (Capabilities → `tev:`, FixedTopicSet/CurrentTime/
+  TerminationTime/NotificationMessage/Topic/ProducerReference/Message →
+  `wsnt:`, SubscriptionReference → `tev:` with `wsa:Address`,
+  tt:Message Source/Key/Data groups → `tt:`). Unprefixed tags previously
+  relied on default-xmlns inheritance in default mode and collapsed to
+  *no* namespace in explicit-prefix mode; both modes now emit the
+  WSDL-correct namespace (explicit mode adds the conventional `wsnt:`/
+  `wsa:`/`wstop:` prefixes). **Wire-format change** on the affected
+  responses. gSOAP-style strict clients previously read empty values for
+  the #92-placed elements (e.g. `tt:Manufacturer` where the WSDL requires
+  `tds:`).
+- GetScopes responses used a non-conformant wire shape — `<ScopeDefinition
+  Scopeitem="…">` — where the WSDL's `tt:Scope` type is a `ScopeDef` enum
+  element ("Fixed"/"Configurable") followed by the `ScopeItem` URI
+  element. The response now emits `<tds:Scopes><tt:ScopeDef>Fixed</tt:
+  ScopeDef><tt:ScopeItem>…</tt:ScopeItem></tds:Scopes>`, the shape
+  spec-faithful clients (and this library's own client) parse.
+  **Wire-format change**; consumers reading the `Scopeitem` attribute
+  must switch to the `ScopeItem` element.
+- Added a WSDL-grounded namespace contract suite: every served response
+  surface is marshaled and decoded namespace-strictly (values populate
+  only when elements resolve to the exact WSDL-assigned namespace), plus
+  an explicit-prefix end-to-end check pinning the conventional prefixes.
+
+### Fixed (wire format, #90 request side)
 - Client request payloads misnamespaced two more schema-typed families
   (WSDL audit follow-up to #90/#91): CreateUsers/SetUser carried
   Username/Password/UserLevel in `tds:` where the WSDL types the User

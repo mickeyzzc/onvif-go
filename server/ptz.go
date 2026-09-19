@@ -68,10 +68,12 @@ type GetStatusRequest struct {
 	ProfileToken string   `xml:"ProfileToken"`
 }
 
-// GetStatusResponse represents GetStatus response.
+// GetStatusResponse represents GetStatus response. The PTZStatus wrapper
+// is locally declared in the PTZ WSDL (tptz); its typed children are
+// ver10/schema.
 type GetStatusResponse struct {
 	XMLName   xml.Name   `xml:"http://www.onvif.org/ver20/ptz/wsdl GetStatusResponse"`
-	PTZStatus *PTZStatus `xml:"http://www.onvif.org/ver10/schema PTZStatus"`
+	PTZStatus *PTZStatus `xml:"http://www.onvif.org/ver20/ptz/wsdl PTZStatus"`
 }
 
 // PTZStatus represents PTZ status. Schema-typed children carry the
@@ -115,10 +117,12 @@ type GetPresetsRequest struct {
 	ProfileToken string   `xml:"ProfileToken"`
 }
 
-// GetPresetsResponse represents GetPresets response.
+// GetPresetsResponse represents GetPresets response. The Preset wrapper
+// element is locally declared in the PTZ WSDL (tptz); PTZPreset's own
+// children are ver10/schema.
 type GetPresetsResponse struct {
 	XMLName xml.Name    `xml:"http://www.onvif.org/ver20/ptz/wsdl GetPresetsResponse"`
-	Preset  []PTZPreset `xml:"Preset"`
+	Preset  []PTZPreset `xml:"http://www.onvif.org/ver20/ptz/wsdl Preset"`
 }
 
 // PTZPreset represents a PTZ preset.

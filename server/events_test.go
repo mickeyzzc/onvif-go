@@ -197,7 +197,7 @@ func TestGetEventServiceCapabilitiesGolden(t *testing.T) {
 <Envelope xmlns="http://www.w3.org/2003/05/soap-envelope">
   <Body>
     <GetServiceCapabilitiesResponse xmlns="http://www.onvif.org/ver10/events/wsdl">
-      <Capabilities WSPullPointSupport="true" MaxPullPoints="10"></Capabilities>
+      <Capabilities xmlns="http://www.onvif.org/ver10/events/wsdl" WSPullPointSupport="true" MaxPullPoints="10"></Capabilities>
     </GetServiceCapabilitiesResponse>
   </Body>
 </Envelope>`
@@ -223,7 +223,7 @@ func TestGetEventPropertiesResponse(t *testing.T) {
 		t.Fatalf("response missing GetEventPropertiesResponse:\n%s", body)
 	}
 
-	if !strings.Contains(body, "<FixedTopicSet>true</FixedTopicSet>") {
+	if !strings.Contains(body, "<FixedTopicSet xmlns=\"http://docs.oasis-open.org/wsn/b-2\">true</FixedTopicSet>") {
 		t.Errorf("FixedTopicSet not true:\n%s", body)
 	}
 
