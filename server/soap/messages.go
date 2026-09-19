@@ -58,9 +58,11 @@ type GetSystemDateAndTimeRequest struct {
 }
 
 // GetSystemDateAndTimeResponse represents GetSystemDateAndTime response.
+// The SystemDateAndTime wrapper is locally declared in the device WSDL
+// (tds); its typed children below are ver10/schema (tt).
 type GetSystemDateAndTimeResponse struct {
 	XMLName           xml.Name          `xml:"http://www.onvif.org/ver10/device/wsdl GetSystemDateAndTimeResponse"`
-	SystemDateAndTime SystemDateAndTime `xml:"http://www.onvif.org/ver10/schema SystemDateAndTime"`
+	SystemDateAndTime SystemDateAndTime `xml:"http://www.onvif.org/ver10/device/wsdl SystemDateAndTime"`
 }
 
 // SystemDateAndTime represents system date and time.

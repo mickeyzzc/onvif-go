@@ -59,6 +59,9 @@ var namespacePrefixes = map[string]string{
 	"http://www.onvif.org/ver20/ptz/wsdl":       "tptz",
 	"http://www.onvif.org/ver20/imaging/wsdl":   "timg",
 	"http://www.onvif.org/ver20/analytics/wsdl": "tan",
+	"http://docs.oasis-open.org/wsn/b-2":        "wsnt",
+	"http://docs.oasis-open.org/wsn/t-1":        "wstop",
+	"http://www.w3.org/2005/08/addressing":      "wsa",
 }
 
 // marshalContent serializes a handler result into body-content bytes.

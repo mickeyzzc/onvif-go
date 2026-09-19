@@ -48,7 +48,11 @@ const (
 	maxEventQueue               = 100
 )
 
-// Events service SOAP message types
+// Events service SOAP message types. Namespaces follow the WSDL facts:
+// tev wrappers are ver10/events/wsdl; WS-BaseNotification children
+// (CurrentTime, TerminationTime, NotificationMessage, Topic, Message) are
+// wsn b-2; endpoint references are wsa; the inner ONVIF message payload
+// is ver10/schema.
 
 // GetEventServiceCapabilitiesResponse represents the
 // GetServiceCapabilities response of the events service.
@@ -57,7 +61,7 @@ type GetEventServiceCapabilitiesResponse struct {
 	Capabilities struct {
 		WSPullPointSupport bool `xml:"WSPullPointSupport,attr"`
 		MaxPullPoints      int  `xml:"MaxPullPoints,attr,omitempty"`
-	} `xml:"Capabilities"`
+	} `xml:"http://www.onvif.org/ver10/events/wsdl Capabilities"`
 }
 
 // GetEventPropertiesResponse represents the GetEventProperties response:
@@ -65,10 +69,10 @@ type GetEventServiceCapabilitiesResponse struct {
 // does not apply subscription filters (they are accepted and ignored).
 type GetEventPropertiesResponse struct {
 	XMLName       xml.Name `xml:"http://www.onvif.org/ver10/events/wsdl GetEventPropertiesResponse"`
-	FixedTopicSet bool     `xml:"FixedTopicSet"`
+	FixedTopicSet bool     `xml:"http://docs.oasis-open.org/wsn/b-2 FixedTopicSet"`
 	TopicSet      struct {
 		XMLName xml.Name `xml:"http://docs.oasis-open.org/wsn/t-1 TopicSet"`
-	} `xml:"TopicSet"`
+	} `xml:"http://docs.oasis-open.org/wsn/t-1 TopicSet"`
 }
 
 // endpointReference is a WS-Addressing endpoint reference (the
@@ -81,9 +85,9 @@ type endpointReference struct {
 // CreatePullPointSubscription response.
 type CreatePullPointSubscriptionResponse struct {
 	XMLName               xml.Name          `xml:"http://www.onvif.org/ver10/events/wsdl CreatePullPointSubscriptionResponse"`
-	SubscriptionReference endpointReference `xml:"SubscriptionReference"`
-	CurrentTime           string            `xml:"CurrentTime"`
-	TerminationTime       string            `xml:"TerminationTime"`
+	SubscriptionReference endpointReference `xml:"http://www.onvif.org/ver10/events/wsdl SubscriptionReference"`
+	CurrentTime           string            `xml:"http://docs.oasis-open.org/wsn/b-2 CurrentTime"`
+	TerminationTime       string            `xml:"http://docs.oasis-open.org/wsn/b-2 TerminationTime"`
 }
 
 // eventTopic is the wsnt:Topic element (chardata expression, optional
@@ -99,14 +103,21 @@ type eventSimpleItem struct {
 	Value string `xml:"Value,attr"`
 }
 
+// eventItemGroup is one tt:Message SimpleItem group (Source, Key, or
+// Data). The wrapper struct exists because encoding/xml path tags
+// ("a>b") cannot carry a namespace on the nested segment.
+type eventItemGroup struct {
+	SimpleItems []eventSimpleItem `xml:"http://www.onvif.org/ver10/schema SimpleItem"`
+}
+
 // eventMessage is the inner ONVIF tt:Message: the property operation,
 // timestamp, and Source/Key/Data SimpleItem groups.
 type eventMessage struct {
-	PropertyOperation string            `xml:"PropertyOperation,attr"`
-	UtcTime           string            `xml:"UtcTime,attr"`
-	Source            []eventSimpleItem `xml:"Source>SimpleItem"`
-	Key               []eventSimpleItem `xml:"Key>SimpleItem"`
-	Data              []eventSimpleItem `xml:"Data>SimpleItem"`
+	PropertyOperation string         `xml:"PropertyOperation,attr"`
+	UtcTime           string         `xml:"UtcTime,attr"`
+	Source            eventItemGroup `xml:"http://www.onvif.org/ver10/schema Source"`
+	Key               eventItemGroup `xml:"http://www.onvif.org/ver10/schema Key"`
+	Data              eventItemGroup `xml:"http://www.onvif.org/ver10/schema Data"`
 }
 
 // notificationPayload is the outer wsnt:Message wrapper (an opaque xs:any
@@ -117,24 +128,24 @@ type notificationPayload struct {
 
 // notificationMessage is one wsnt:NotificationMessage.
 type notificationMessage struct {
-	Topic             eventTopic          `xml:"Topic"`
-	ProducerReference *endpointReference  `xml:"ProducerReference,omitempty"`
-	Message           notificationPayload `xml:"Message"`
+	Topic             eventTopic          `xml:"http://docs.oasis-open.org/wsn/b-2 Topic"`
+	ProducerReference *endpointReference  `xml:"http://docs.oasis-open.org/wsn/b-2 ProducerReference,omitempty"`
+	Message           notificationPayload `xml:"http://docs.oasis-open.org/wsn/b-2 Message"`
 }
 
 // PullMessagesResponse represents the PullMessages response.
 type PullMessagesResponse struct {
 	XMLName              xml.Name              `xml:"http://www.onvif.org/ver10/events/wsdl PullMessagesResponse"`
-	CurrentTime          string                `xml:"CurrentTime"`
-	TerminationTime      string                `xml:"TerminationTime"`
-	NotificationMessages []notificationMessage `xml:"NotificationMessage,omitempty"`
+	CurrentTime          string                `xml:"http://www.onvif.org/ver10/events/wsdl CurrentTime"`
+	TerminationTime      string                `xml:"http://www.onvif.org/ver10/events/wsdl TerminationTime"`
+	NotificationMessages []notificationMessage `xml:"http://docs.oasis-open.org/wsn/b-2 NotificationMessage,omitempty"`
 }
 
 // RenewResponse represents the wsnt:Renew response.
 type RenewResponse struct {
 	XMLName         xml.Name `xml:"http://docs.oasis-open.org/wsn/b-2 RenewResponse"`
-	CurrentTime     string   `xml:"CurrentTime"`
-	TerminationTime string   `xml:"TerminationTime"`
+	CurrentTime     string   `xml:"http://docs.oasis-open.org/wsn/b-2 CurrentTime"`
+	TerminationTime string   `xml:"http://docs.oasis-open.org/wsn/b-2 TerminationTime"`
 }
 
 // UnsubscribeResponse represents the wsnt:Unsubscribe response.
@@ -537,9 +548,9 @@ func randomSubscriptionID() (string, error) {
 
 // simpleItemsToWire converts the host-facing SimpleItem pairs to the wire
 // form.
-func simpleItemsToWire(items []SimpleItem) []eventSimpleItem {
+func simpleItemsToWire(items []SimpleItem) eventItemGroup {
 	if len(items) == 0 {
-		return nil
+		return eventItemGroup{}
 	}
 
 	wire := make([]eventSimpleItem, len(items))
@@ -547,7 +558,7 @@ func simpleItemsToWire(items []SimpleItem) []eventSimpleItem {
 		wire[i] = eventSimpleItem{Name: item.Name, Value: item.Value}
 	}
 
-	return wire
+	return eventItemGroup{SimpleItems: wire}
 }
 
 // parseISO8601Duration parses the ISO 8601 duration subset ONVIF uses on

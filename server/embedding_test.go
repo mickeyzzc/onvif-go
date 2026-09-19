@@ -121,15 +121,16 @@ func TestGetScopes(t *testing.T) {
 		}
 	}
 
-	// The wire form carries the scope as the tt:ScopeDefinition Scopeitem
-	// attribute, the shape ONVIF clients parse.
+	// The wire form is the tt:Scope shape: a ScopeDef enum element followed
+	// by the ScopeItem URI element, both in ver10/schema (the WSDL's
+	// elementFormDefault=qualified assignment).
 	data, err := xml.Marshal(scopesResp)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(string(data), `Scopeitem="onvif://www.onvif.org/name/MiBeeEye"`) {
-		t.Fatalf("marshaled scopes missing Scopeitem attribute: %s", data)
+	if !strings.Contains(string(data), `<ScopeItem xmlns="http://www.onvif.org/ver10/schema">onvif://www.onvif.org/name/MiBeeEye</ScopeItem>`) {
+		t.Fatalf("marshaled scopes missing tt:ScopeItem element: %s", data)
 	}
 }
 
