@@ -8,8 +8,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 	"github.com/mickeyzzc/onvif-go/v2/imaging"
+	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 	"github.com/mickeyzzc/onvif-go/v2/onvif"
 )
 
