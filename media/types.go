@@ -144,6 +144,7 @@ type MediaServiceCapabilities struct {
 type VideoEncoderConfigurationOptions struct {
 	QualityRange *types.FloatRange
 	JPEG         *JPEGOptions
+	MPEG4        *Mpeg4Options
 	H264         *H264Options
 }
 
@@ -161,6 +162,15 @@ type H264Options struct {
 	FrameRateRange        *types.FloatRange
 	EncodingIntervalRange *types.IntRange
 	H264ProfilesSupported []string
+}
+
+// Mpeg4Options represents MPEG-4 encoder options.
+type Mpeg4Options struct {
+	ResolutionsAvailable   []*VideoResolution
+	GovLengthRange         *types.IntRange
+	FrameRateRange         *types.FloatRange
+	EncodingIntervalRange  *types.IntRange
+	Mpeg4ProfilesSupported []string
 }
 
 // VideoSourceMode represents a video source mode.

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"path"
 	"strconv"
@@ -123,7 +124,11 @@ func New(config *Config, opts ...Option) (*Server, error) {
 	return server, nil
 }
 
-// Start starts the ONVIF server.
+// Start starts the ONVIF server. The listener binds before the first
+// goroutine starts, so ListenAddr is meaningful as soon as Start returns
+// control to its caller's select loop; with Port 0 the kernel assigns a
+// free port, discoverable through ListenAddr. TLSCertFile/TLSKeyFile in
+// the config serve HTTPS (Profile T's transport baseline).
 func (s *Server) Start(ctx context.Context) error {
 	httpServer := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", s.config.Host, s.config.Port),
@@ -132,13 +137,36 @@ func (s *Server) Start(ctx context.Context) error {
 		WriteTimeout: s.config.Timeout,
 	}
 
+	listener, err := net.Listen("tcp", httpServer.Addr)
+	if err != nil {
+		return fmt.Errorf("onvif server listen: %w", err)
+	}
+
+	s.listenMu.Lock()
+	s.listenAddr = listener.Addr().String()
+	s.listenMu.Unlock()
+
+	useTLS := s.config.TLSCertFile != "" && s.config.TLSKeyFile != ""
+	if (s.config.TLSCertFile == "") != (s.config.TLSKeyFile == "") {
+		_ = listener.Close()
+
+		return fmt.Errorf("onvif server config: TLSCertFile and TLSKeyFile must be set together")
+	}
+
 	// Start server in goroutine
 	errChan := make(chan error, 1)
 	go func() {
 		s.logStartup(httpServer.Addr)
 
-		if err := httpServer.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			errChan <- err
+		var serveErr error
+		if useTLS {
+			serveErr = httpServer.ServeTLS(listener, s.config.TLSCertFile, s.config.TLSKeyFile)
+		} else {
+			serveErr = httpServer.Serve(listener)
+		}
+
+		if serveErr != nil && !errors.Is(serveErr, http.ErrServerClosed) {
+			errChan <- serveErr
 		}
 	}()
 

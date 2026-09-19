@@ -127,6 +127,12 @@ type Config struct {
 	// prefixes (s:/tds:/trt:/...) instead of default xmlns declarations.
 	ExplicitPrefixes bool
 
+	// TLSCertFile/TLSKeyFile enable HTTPS on the listener (Profile T's
+	// transport baseline): both must be set together; empty serves plain
+	// HTTP. File paths are read at Start.
+	TLSCertFile string
+	TLSKeyFile  string
+
 	// Camera profiles (supports multi-lens cameras)
 	Profiles []ProfileConfig
 
@@ -184,6 +190,21 @@ type Server struct {
 	// metrics receives observability events from the SOAP handlers
 	// (issue #66); never nil once New has run.
 	metrics metrics.Hooks
+
+	// listenMu guards listenAddr, published by Start once the listener
+	// is bound (Port 0 → kernel-assigned port).
+	listenMu   sync.RWMutex
+	listenAddr string
+}
+
+// ListenAddr returns the bound listener address ("host:port") once Start
+// has bound it, or "" before. With Config.Port == 0 this is how callers
+// learn the kernel-assigned port.
+func (s *Server) ListenAddr() string {
+	s.listenMu.RLock()
+	defer s.listenMu.RUnlock()
+
+	return s.listenAddr
 }
 
 // DefaultConfig returns a default server configuration with a multi-lens
