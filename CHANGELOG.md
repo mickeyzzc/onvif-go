@@ -47,6 +47,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an explicit-prefix end-to-end check pinning the conventional prefixes.
 
 ### Fixed (wire format, #90 request side)
+- Client request payloads misnamespaced two more schema-typed families
+  (WSDL audit follow-up to #90/#91): CreateUsers/SetUser carried
+  Username/Password/UserLevel in `tds:` where the WSDL types the User
+  element as `tt:User` (children → ver10/schema); SetDNS/SetNTP carried
+  the DNSManual/NTPManual internals (Type/IPv4Address/IPv6Address/
+  DNSname) in `tds:` where the wrappers are typed `tt:IPAddress` /
+  `tt:NetworkHost`. Strict devices dropped the user records and manual
+  DNS/NTP entries. Both now send `tt:` children with `xmlns:tt` declared
+  on the request root; wire-namespace tests pin the envelopes. Known gap
+  (documented in the roadmap): the storage configuration payload still
+  needs its `xsi:type`-polymorphic `Data` shape redesigned.
+
+### Fixed (wire format)
 - Client request serialization put `ver10/schema` elements into the SOAP
   envelope namespace (#90): the PTZ vectors (`PanTilt`/`Zoom` inside
   Velocity/Position/Translation/Speed), the imaging settings children

@@ -18,26 +18,28 @@ func (s *Service) SetDNS(ctx context.Context, fromDHCP bool, searchDomain []stri
 	type SetDNS struct {
 		XMLName      xml.Name `xml:"tds:SetDNS"`
 		Xmlns        string   `xml:"xmlns:tds,attr"`
+		XmlnsTT      string   `xml:"xmlns:tt,attr"`
 		FromDHCP     bool     `xml:"tds:FromDHCP"`
 		SearchDomain []string `xml:"tds:SearchDomain,omitempty"`
 		DNSManual    []struct {
-			Type        string `xml:"tds:Type"`
-			IPv4Address string `xml:"tds:IPv4Address,omitempty"`
-			IPv6Address string `xml:"tds:IPv6Address,omitempty"`
+			Type        string `xml:"tt:Type"`
+			IPv4Address string `xml:"tt:IPv4Address,omitempty"`
+			IPv6Address string `xml:"tt:IPv6Address,omitempty"`
 		} `xml:"tds:DNSManual,omitempty"`
 	}
 
 	req := SetDNS{
 		Xmlns:        Namespace,
+		XmlnsTT:      "http://www.onvif.org/ver10/schema",
 		FromDHCP:     fromDHCP,
 		SearchDomain: searchDomain,
 	}
 
 	for _, dns := range dnsManual {
 		req.DNSManual = append(req.DNSManual, struct {
-			Type        string `xml:"tds:Type"`
-			IPv4Address string `xml:"tds:IPv4Address,omitempty"`
-			IPv6Address string `xml:"tds:IPv6Address,omitempty"`
+			Type        string `xml:"tt:Type"`
+			IPv4Address string `xml:"tt:IPv4Address,omitempty"`
+			IPv6Address string `xml:"tt:IPv6Address,omitempty"`
 		}{
 			Type:        dns.Type,
 			IPv4Address: dns.IPv4Address,
@@ -57,26 +59,28 @@ func (s *Service) SetNTP(ctx context.Context, fromDHCP bool, ntpManual []Network
 	type SetNTP struct {
 		XMLName   xml.Name `xml:"tds:SetNTP"`
 		Xmlns     string   `xml:"xmlns:tds,attr"`
+		XmlnsTT   string   `xml:"xmlns:tt,attr"`
 		FromDHCP  bool     `xml:"tds:FromDHCP"`
 		NTPManual []struct {
-			Type        string `xml:"tds:Type"`
-			IPv4Address string `xml:"tds:IPv4Address,omitempty"`
-			IPv6Address string `xml:"tds:IPv6Address,omitempty"`
-			DNSname     string `xml:"tds:DNSname,omitempty"`
+			Type        string `xml:"tt:Type"`
+			IPv4Address string `xml:"tt:IPv4Address,omitempty"`
+			IPv6Address string `xml:"tt:IPv6Address,omitempty"`
+			DNSname     string `xml:"tt:DNSname,omitempty"`
 		} `xml:"tds:NTPManual,omitempty"`
 	}
 
 	req := SetNTP{
 		Xmlns:    Namespace,
+		XmlnsTT:  "http://www.onvif.org/ver10/schema",
 		FromDHCP: fromDHCP,
 	}
 
 	for _, ntp := range ntpManual {
 		req.NTPManual = append(req.NTPManual, struct {
-			Type        string `xml:"tds:Type"`
-			IPv4Address string `xml:"tds:IPv4Address,omitempty"`
-			IPv6Address string `xml:"tds:IPv6Address,omitempty"`
-			DNSname     string `xml:"tds:DNSname,omitempty"`
+			Type        string `xml:"tt:Type"`
+			IPv4Address string `xml:"tt:IPv4Address,omitempty"`
+			IPv6Address string `xml:"tt:IPv6Address,omitempty"`
+			DNSname     string `xml:"tt:DNSname,omitempty"`
 		}{
 			Type:        ntp.Type,
 			IPv4Address: ntp.IPv4Address,
