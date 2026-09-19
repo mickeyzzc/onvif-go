@@ -60,41 +60,41 @@ type GetSystemDateAndTimeRequest struct {
 // GetSystemDateAndTimeResponse represents GetSystemDateAndTime response.
 type GetSystemDateAndTimeResponse struct {
 	XMLName           xml.Name          `xml:"http://www.onvif.org/ver10/device/wsdl GetSystemDateAndTimeResponse"`
-	SystemDateAndTime SystemDateAndTime `xml:"SystemDateAndTime"`
+	SystemDateAndTime SystemDateAndTime `xml:"http://www.onvif.org/ver10/schema SystemDateAndTime"`
 }
 
 // SystemDateAndTime represents system date and time.
 type SystemDateAndTime struct {
-	DateTimeType    string   `xml:"DateTimeType"`
-	DaylightSavings bool     `xml:"DaylightSavings"`
-	TimeZone        TimeZone `xml:"TimeZone,omitempty"`
-	UTCDateTime     DateTime `xml:"UTCDateTime,omitempty"`
-	LocalDateTime   DateTime `xml:"LocalDateTime,omitempty"`
+	DateTimeType    string   `xml:"http://www.onvif.org/ver10/schema DateTimeType"`
+	DaylightSavings bool     `xml:"http://www.onvif.org/ver10/schema DaylightSavings"`
+	TimeZone        TimeZone `xml:"http://www.onvif.org/ver10/schema TimeZone,omitempty"`
+	UTCDateTime     DateTime `xml:"http://www.onvif.org/ver10/schema UTCDateTime,omitempty"`
+	LocalDateTime   DateTime `xml:"http://www.onvif.org/ver10/schema LocalDateTime,omitempty"`
 }
 
 // TimeZone represents timezone information.
 type TimeZone struct {
-	TZ string `xml:"TZ"`
+	TZ string `xml:"http://www.onvif.org/ver10/schema TZ"`
 }
 
 // DateTime represents date and time.
 type DateTime struct {
-	Time Time `xml:"Time"`
-	Date Date `xml:"Date"`
+	Time Time `xml:"http://www.onvif.org/ver10/schema Time"`
+	Date Date `xml:"http://www.onvif.org/ver10/schema Date"`
 }
 
 // Time represents time components.
 type Time struct {
-	Hour   int `xml:"Hour"`
-	Minute int `xml:"Minute"`
-	Second int `xml:"Second"`
+	Hour   int `xml:"http://www.onvif.org/ver10/schema Hour"`
+	Minute int `xml:"http://www.onvif.org/ver10/schema Minute"`
+	Second int `xml:"http://www.onvif.org/ver10/schema Second"`
 }
 
 // Date represents date components.
 type Date struct {
-	Year  int `xml:"Year"`
-	Month int `xml:"Month"`
-	Day   int `xml:"Day"`
+	Year  int `xml:"http://www.onvif.org/ver10/schema Year"`
+	Month int `xml:"http://www.onvif.org/ver10/schema Month"`
+	Day   int `xml:"http://www.onvif.org/ver10/schema Day"`
 }
 
 // ToDateTime converts time.Time to DateTime structure.

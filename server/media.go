@@ -13,21 +13,21 @@ import (
 // GetProfilesResponse represents GetProfiles response.
 type GetProfilesResponse struct {
 	XMLName  xml.Name       `xml:"http://www.onvif.org/ver10/media/wsdl GetProfilesResponse"`
-	Profiles []MediaProfile `xml:"Profiles"`
+	Profiles []MediaProfile `xml:"http://www.onvif.org/ver10/media/wsdl Profiles"`
 }
 
 // MediaProfile represents a media profile.
 type MediaProfile struct {
 	Token                       string                       `xml:"token,attr"`
 	Fixed                       bool                         `xml:"fixed,attr"`
-	Name                        string                       `xml:"Name"`
-	VideoSourceConfiguration    *VideoSourceConfiguration    `xml:"VideoSourceConfiguration"`
-	AudioSourceConfiguration    *AudioSourceConfiguration    `xml:"AudioSourceConfiguration,omitempty"`
-	VideoEncoderConfiguration   *VideoEncoderConfiguration   `xml:"VideoEncoderConfiguration"`
-	AudioEncoderConfiguration   *AudioEncoderConfiguration   `xml:"AudioEncoderConfiguration,omitempty"`
-	VideoAnalyticsConfiguration *VideoAnalyticsConfiguration `xml:"VideoAnalyticsConfiguration,omitempty"`
-	PTZConfiguration            *PTZConfiguration            `xml:"PTZConfiguration,omitempty"`
-	MetadataConfiguration       *MetadataConfiguration       `xml:"MetadataConfiguration,omitempty"`
+	Name                        string                       `xml:"http://www.onvif.org/ver10/schema Name"`
+	VideoSourceConfiguration    *VideoSourceConfiguration    `xml:"http://www.onvif.org/ver10/schema VideoSourceConfiguration"`
+	AudioSourceConfiguration    *AudioSourceConfiguration    `xml:"http://www.onvif.org/ver10/schema AudioSourceConfiguration,omitempty"`
+	VideoEncoderConfiguration   *VideoEncoderConfiguration   `xml:"http://www.onvif.org/ver10/schema VideoEncoderConfiguration"`
+	AudioEncoderConfiguration   *AudioEncoderConfiguration   `xml:"http://www.onvif.org/ver10/schema AudioEncoderConfiguration,omitempty"`
+	VideoAnalyticsConfiguration *VideoAnalyticsConfiguration `xml:"http://www.onvif.org/ver10/schema VideoAnalyticsConfiguration,omitempty"`
+	PTZConfiguration            *PTZConfiguration            `xml:"http://www.onvif.org/ver10/schema PTZConfiguration,omitempty"`
+	MetadataConfiguration       *MetadataConfiguration       `xml:"http://www.onvif.org/ver10/schema MetadataConfiguration,omitempty"`
 }
 
 // VideoSourceConfiguration represents video source configuration.
@@ -141,34 +141,36 @@ type IPAddress struct {
 // GetStreamUriResponse represents GetStreamUri response.
 type GetStreamUriResponse struct {
 	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetStreamUriResponse"`
-	MediaUri MediaUri `xml:"MediaUri"`
+	MediaUri MediaUri `xml:"http://www.onvif.org/ver10/media/wsdl MediaUri"`
 }
 
 // MediaUri represents a media URI.
+// MediaUri children are ver10/schema elements (#90; real-device capture
+// in testdata/captures/getsnapshoturi_normal.xml shows tt:Uri &co.).
 type MediaUri struct {
-	URI                 string `xml:"Uri"`
-	InvalidAfterConnect bool   `xml:"InvalidAfterConnect"`
-	InvalidAfterReboot  bool   `xml:"InvalidAfterReboot"`
-	Timeout             string `xml:"Timeout"`
+	URI                 string `xml:"http://www.onvif.org/ver10/schema Uri"`
+	InvalidAfterConnect bool   `xml:"http://www.onvif.org/ver10/schema InvalidAfterConnect"`
+	InvalidAfterReboot  bool   `xml:"http://www.onvif.org/ver10/schema InvalidAfterReboot"`
+	Timeout             string `xml:"http://www.onvif.org/ver10/schema Timeout"`
 }
 
 // GetSnapshotUriResponse represents GetSnapshotUri response.
 type GetSnapshotUriResponse struct {
 	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetSnapshotUriResponse"`
-	MediaUri MediaUri `xml:"MediaUri"`
+	MediaUri MediaUri `xml:"http://www.onvif.org/ver10/media/wsdl MediaUri"`
 }
 
 // GetVideoSourcesResponse represents GetVideoSources response.
 type GetVideoSourcesResponse struct {
 	XMLName      xml.Name      `xml:"http://www.onvif.org/ver10/media/wsdl GetVideoSourcesResponse"`
-	VideoSources []VideoSource `xml:"VideoSources"`
+	VideoSources []VideoSource `xml:"http://www.onvif.org/ver10/media/wsdl VideoSources"`
 }
 
 // VideoSource represents a video source.
 type VideoSource struct {
 	Token      string          `xml:"token,attr"`
-	Framerate  float64         `xml:"Framerate"`
-	Resolution VideoResolution `xml:"Resolution"`
+	Framerate  float64         `xml:"http://www.onvif.org/ver10/schema Framerate"`
+	Resolution VideoResolution `xml:"http://www.onvif.org/ver10/schema Resolution"`
 }
 
 // Media service handlers

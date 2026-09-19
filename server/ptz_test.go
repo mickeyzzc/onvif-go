@@ -327,9 +327,9 @@ func TestPTZStatus(t *testing.T) {
 	y := 0.0
 	z := 0.0
 	status := &PTZStatus{
-		Position: PTZVector{
-			PanTilt: &Vector2D{X: x, Y: y},
-			Zoom:    &Vector1D{X: z},
+		Position: respPTZVector{
+			PanTilt: &respVector2D{X: x, Y: y},
+			Zoom:    &respVector1D{X: z},
 		},
 		MoveStatus: PTZMoveStatus{PanTilt: "IDLE"},
 		UTCTime:    "",
@@ -400,9 +400,9 @@ func TestPTZSpeed(t *testing.T) {
 func TestGetStatusResponseXML(t *testing.T) {
 	resp := &GetStatusResponse{
 		PTZStatus: &PTZStatus{
-			Position: PTZVector{
-				PanTilt: &Vector2D{X: 0, Y: 0},
-				Zoom:    &Vector1D{X: 0},
+			Position: respPTZVector{
+				PanTilt: &respVector2D{X: 0, Y: 0},
+				Zoom:    &respVector1D{X: 0},
 			},
 			MoveStatus: PTZMoveStatus{PanTilt: "IDLE"},
 		},

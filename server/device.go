@@ -18,39 +18,39 @@ const (
 // GetDeviceInformationResponse represents GetDeviceInformation response.
 type GetDeviceInformationResponse struct {
 	XMLName         xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetDeviceInformationResponse"`
-	Manufacturer    string   `xml:"Manufacturer"`
-	Model           string   `xml:"Model"`
-	FirmwareVersion string   `xml:"FirmwareVersion"`
-	SerialNumber    string   `xml:"SerialNumber"`
-	HardwareID      string   `xml:"HardwareId"`
+	Manufacturer    string   `xml:"http://www.onvif.org/ver10/schema Manufacturer"`
+	Model           string   `xml:"http://www.onvif.org/ver10/schema Model"`
+	FirmwareVersion string   `xml:"http://www.onvif.org/ver10/schema FirmwareVersion"`
+	SerialNumber    string   `xml:"http://www.onvif.org/ver10/schema SerialNumber"`
+	HardwareID      string   `xml:"http://www.onvif.org/ver10/schema HardwareId"`
 }
 
 // GetCapabilitiesResponse represents GetCapabilities response.
 type GetCapabilitiesResponse struct {
 	XMLName      xml.Name      `xml:"http://www.onvif.org/ver10/device/wsdl GetCapabilitiesResponse"`
-	Capabilities *Capabilities `xml:"Capabilities"`
+	Capabilities *Capabilities `xml:"http://www.onvif.org/ver10/schema Capabilities"`
 }
 
 // Capabilities represents device capabilities.
 type Capabilities struct {
 	Analytics *AnalyticsCapabilities `xml:"Analytics,omitempty"`
-	Device    *DeviceCapabilities    `xml:"Device"`
+	Device    *DeviceCapabilities    `xml:"http://www.onvif.org/ver10/schema Device"`
 	Events    *EventCapabilities     `xml:"Events,omitempty"`
 	Imaging   *ImagingCapabilities   `xml:"Imaging,omitempty"`
-	Media     *MediaCapabilities     `xml:"Media"`
+	Media     *MediaCapabilities     `xml:"http://www.onvif.org/ver10/schema Media"`
 	PTZ       *PTZCapabilities       `xml:"PTZ,omitempty"`
 }
 
 // AnalyticsCapabilities represents analytics service capabilities.
 type AnalyticsCapabilities struct {
-	XAddr                  string `xml:"XAddr"`
+	XAddr                  string `xml:"http://www.onvif.org/ver10/schema XAddr"`
 	RuleSupport            bool   `xml:"RuleSupport,attr"`
 	AnalyticsModuleSupport bool   `xml:"AnalyticsModuleSupport,attr"`
 }
 
 // DeviceCapabilities represents device service capabilities.
 type DeviceCapabilities struct {
-	XAddr    string                `xml:"XAddr"`
+	XAddr    string                `xml:"http://www.onvif.org/ver10/schema XAddr"`
 	Network  *NetworkCapabilities  `xml:"Network,omitempty"`
 	System   *SystemCapabilities   `xml:"System,omitempty"`
 	IO       *IOCapabilities       `xml:"IO,omitempty"`
@@ -95,7 +95,7 @@ type SecurityCapabilities struct {
 
 // EventCapabilities represents event service capabilities.
 type EventCapabilities struct {
-	XAddr                         string `xml:"XAddr"`
+	XAddr                         string `xml:"http://www.onvif.org/ver10/schema XAddr"`
 	WSSubscriptionPolicySupport   bool   `xml:"WSSubscriptionPolicySupport,attr"`
 	WSPullPointSupport            bool   `xml:"WSPullPointSupport,attr"`
 	WSPausableSubscriptionSupport bool   `xml:"WSPausableSubscriptionManagerInterfaceSupport,attr"`
@@ -103,12 +103,12 @@ type EventCapabilities struct {
 
 // ImagingCapabilities represents imaging service capabilities.
 type ImagingCapabilities struct {
-	XAddr string `xml:"XAddr"`
+	XAddr string `xml:"http://www.onvif.org/ver10/schema XAddr"`
 }
 
 // MediaCapabilities represents media service capabilities.
 type MediaCapabilities struct {
-	XAddr                 string                 `xml:"XAddr"`
+	XAddr                 string                 `xml:"http://www.onvif.org/ver10/schema XAddr"`
 	StreamingCapabilities *StreamingCapabilities `xml:"StreamingCapabilities"`
 }
 
@@ -121,7 +121,7 @@ type StreamingCapabilities struct {
 
 // PTZCapabilities represents PTZ service capabilities.
 type PTZCapabilities struct {
-	XAddr string `xml:"XAddr"`
+	XAddr string `xml:"http://www.onvif.org/ver10/schema XAddr"`
 }
 
 // GetServicesResponse represents GetServices response.
@@ -133,7 +133,7 @@ type GetServicesResponse struct {
 // Service represents a service.
 type Service struct {
 	Namespace string  `xml:"Namespace"`
-	XAddr     string  `xml:"XAddr"`
+	XAddr     string  `xml:"http://www.onvif.org/ver10/schema XAddr"`
 	Version   Version `xml:"Version"`
 }
 

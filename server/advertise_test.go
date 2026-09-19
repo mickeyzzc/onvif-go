@@ -145,7 +145,9 @@ func TestExplicitPrefixesThroughServer(t *testing.T) {
 		"<s:Body>",
 		"<trt:GetStreamUriResponse xmlns:trt=\"http://www.onvif.org/ver10/media/wsdl\">",
 		"<trt:MediaUri>",
-		"<trt:Uri>rtsp://198.51.100.50:8554",
+		// #90: Uri is a ver10/schema element — explicit-prefix mode maps it to
+		// tt: (matching the real-device capture in testdata/captures).
+		"<tt:Uri xmlns:tt=\"http://www.onvif.org/ver10/schema\">rtsp://198.51.100.50:8554",
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("prefixed response missing %q; body: %s", want, body)

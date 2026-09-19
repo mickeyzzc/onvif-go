@@ -71,20 +71,42 @@ type GetStatusRequest struct {
 // GetStatusResponse represents GetStatus response.
 type GetStatusResponse struct {
 	XMLName   xml.Name   `xml:"http://www.onvif.org/ver20/ptz/wsdl GetStatusResponse"`
-	PTZStatus *PTZStatus `xml:"PTZStatus"`
+	PTZStatus *PTZStatus `xml:"http://www.onvif.org/ver10/schema PTZStatus"`
 }
 
-// PTZStatus represents PTZ status.
+// PTZStatus represents PTZ status. Schema-typed children carry the
+// ver10/schema namespace (#90).
 type PTZStatus struct {
-	Position   PTZVector     `xml:"Position"`
-	MoveStatus PTZMoveStatus `xml:"MoveStatus"`
-	UTCTime    string        `xml:"UtcTime"`
+	Position   respPTZVector `xml:"http://www.onvif.org/ver10/schema Position"`
+	MoveStatus PTZMoveStatus `xml:"http://www.onvif.org/ver10/schema MoveStatus"`
+	UTCTime    string        `xml:"http://www.onvif.org/ver10/schema UtcTime"`
+}
+
+// respVector2D is the serialization shape of tt:Vector2D.
+type respVector2D struct {
+	X     float64 `xml:"x,attr"`
+	Y     float64 `xml:"y,attr"`
+	Space string  `xml:"space,attr,omitempty"`
+}
+
+// respVector1D is the serialization shape of tt:Vector1D.
+type respVector1D struct {
+	X     float64 `xml:"x,attr"`
+	Space string  `xml:"space,attr,omitempty"`
+}
+
+// respPTZVector is the serialization shape of tt:PTZVector. The shared
+// provider.PTZVector keeps unprefixed tags because it doubles as a
+// lenient request decode target (#90).
+type respPTZVector struct {
+	PanTilt *respVector2D `xml:"http://www.onvif.org/ver10/schema PanTilt,omitempty"`
+	Zoom    *respVector1D `xml:"http://www.onvif.org/ver10/schema Zoom,omitempty"`
 }
 
 // PTZMoveStatus represents PTZ movement status.
 type PTZMoveStatus struct {
-	PanTilt string `xml:"PanTilt,omitempty"`
-	Zoom    string `xml:"Zoom,omitempty"`
+	PanTilt string `xml:"http://www.onvif.org/ver10/schema PanTilt,omitempty"`
+	Zoom    string `xml:"http://www.onvif.org/ver10/schema Zoom,omitempty"`
 }
 
 // GetPresetsRequest represents GetPresets request.
@@ -101,9 +123,9 @@ type GetPresetsResponse struct {
 
 // PTZPreset represents a PTZ preset.
 type PTZPreset struct {
-	Token       string     `xml:"token,attr"`
-	Name        string     `xml:"Name"`
-	PTZPosition *PTZVector `xml:"PTZPosition,omitempty"`
+	Token       string         `xml:"token,attr"`
+	Name        string         `xml:"http://www.onvif.org/ver10/schema Name"`
+	PTZPosition *respPTZVector `xml:"http://www.onvif.org/ver10/schema PTZPosition,omitempty"`
 }
 
 // GotoPresetRequest represents GotoPreset request.
@@ -245,13 +267,13 @@ func (s *Server) HandleGetStatus(rc *soap.RequestContext, body []byte) (interfac
 
 	// Build status response
 	status := &PTZStatus{
-		Position: PTZVector{
-			PanTilt: &Vector2D{
+		Position: respPTZVector{
+			PanTilt: &respVector2D{
 				X:     state.Position.Pan,
 				Y:     state.Position.Tilt,
 				Space: "http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace",
 			},
-			Zoom: &Vector1D{
+			Zoom: &respVector1D{
 				X:     state.Position.Zoom,
 				Space: "http://www.onvif.org/ver10/tptz/ZoomSpaces/PositionGenericSpace",
 			},
@@ -295,12 +317,12 @@ func (s *Server) HandleGetPresets(rc *soap.RequestContext, body []byte) (interfa
 		presets[i] = PTZPreset{
 			Token: preset.Token,
 			Name:  preset.Name,
-			PTZPosition: &PTZVector{
-				PanTilt: &Vector2D{
+			PTZPosition: &respPTZVector{
+				PanTilt: &respVector2D{
 					X: preset.Position.Pan,
 					Y: preset.Position.Tilt,
 				},
-				Zoom: &Vector1D{
+				Zoom: &respVector1D{
 					X: preset.Position.Zoom,
 				},
 			},
