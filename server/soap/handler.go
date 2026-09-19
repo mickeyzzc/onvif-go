@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"log/slog"
 	"net"
@@ -250,6 +251,17 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Extract the request element with its namespace context intact:
+	// bindings declared on Envelope/Header ancestors are materialized on
+	// the extracted root, so prefix-style requests decode even when the
+	// client declared every prefix at the envelope level.
+	bodyContent, err := extractBodyElement(body)
+	if err != nil {
+		h.sendFault(w, "Sender", "Invalid SOAP body", err.Error())
+
+		return
+	}
+
 	// Authenticate actions the policy protects
 	if h.requiresAuth(action) {
 		if !h.authenticate(envelope.Header) {
@@ -281,7 +293,7 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Execute handler
 	h.metrics.SoapRequest(action)
-	response, err := handler(reqCtx, envelope.Body.Raw)
+	response, err := handler(reqCtx, bodyContent)
 	if err != nil {
 		h.metrics.SoapFault(action)
 
@@ -331,6 +343,150 @@ func (h *Handler) extractAction(bodyXML []byte) string {
 			}
 		}
 	}
+}
+
+// extractBodyElement re-encodes the first child of the SOAP Body as a
+// self-contained fragment: element names carry no prefix and every
+// namespace is declared as a default xmlns on the element that needs it.
+// The decoder resolves prefixes to URIs but EncodeToken cannot bind them
+// back (it treats Attr.Name.Space as a literal prefix), so canonical
+// default-xmlns form is the only token-level encoding that survives the
+// round trip. Handlers can decode the fragment with namespace-strict tags
+// regardless of where the client declared its prefixes — raw innerxml
+// extraction instead drops ancestor declarations and leaves unbound
+// prefixes for envelope-level declarers.
+func extractBodyElement(bodyXML []byte) ([]byte, error) {
+	decoder := xml.NewDecoder(bytes.NewReader(bodyXML))
+
+	var (
+		stack   []xml.Name // open elements; the top is the Body parent
+		capture []xml.Token
+		depth   int      // capture subtree depth (0 = not capturing)
+		nsStack []string // effective default namespace per captured level
+		ns      string   // effective default namespace while capturing
+	)
+
+	for {
+		token, err := decoder.Token()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("parse body: %w", err)
+		}
+
+		switch t := token.(type) {
+		case xml.StartElement:
+			isBodyChild := depth == 0 && isBodyChildElement(stack)
+
+			stack = append(stack, t.Name)
+
+			if isBodyChild {
+				capture = append(capture, canonicalizeElement(t, ns))
+				ns = t.Name.Space
+				nsStack = append(nsStack, ns)
+				depth = 1
+
+				continue
+			}
+
+			if depth > 0 {
+				capture = append(capture, canonicalizeElement(t, ns))
+				ns = t.Name.Space
+				nsStack = append(nsStack, ns)
+				depth++
+			}
+		case xml.EndElement:
+			if depth > 0 {
+				t.Name = xml.Name{Local: t.Name.Local}
+				capture = append(capture, t)
+				depth--
+
+				nsStack = nsStack[:len(nsStack)-1]
+				if len(nsStack) > 0 {
+					ns = nsStack[len(nsStack)-1]
+				}
+
+				if depth == 0 {
+					return flushCaptured(capture)
+				}
+			}
+
+			stack = stack[:len(stack)-1]
+		default:
+			if depth > 0 {
+				capture = append(capture, xml.CopyToken(token))
+			}
+		}
+	}
+
+	if len(capture) > 0 {
+		return nil, errors.New("unbalanced SOAP body element")
+	}
+
+	return nil, nil
+}
+
+// isBodyChildElement reports whether the element about to be pushed is
+// the first child of the SOAP Body: the current top of the stack is Body
+// in the SOAP envelope namespace (the decoder resolves prefixes to URIs,
+// so this is prefix-independent).
+func isBodyChildElement(stack []xml.Name) bool {
+	if len(stack) == 0 {
+		return false
+	}
+
+	top := stack[len(stack)-1]
+
+	return top.Local == "Body" && top.Space == soapEnvelopeNS
+}
+
+// canonicalizeElement rewrites one captured element into default-xmlns
+// form: prefix-free name, non-xmlns attributes spelled as local names,
+// and an xmlns declaration whenever the element's namespace differs from
+// the in-scope default. Binding declarations from the source document are
+// dropped and re-derived — they are what this canonicalization replaces.
+func canonicalizeElement(t xml.StartElement, defaultNS string) xml.StartElement {
+	attrs := make([]xml.Attr, 0, len(t.Attr)+1)
+
+	for _, attr := range t.Attr {
+		if attr.Name.Space == "xmlns" || (attr.Name.Space == "" && attr.Name.Local == "xmlns") {
+			continue
+		}
+
+		attrs = append(attrs, xml.Attr{Name: xml.Name{Local: attr.Name.Local}, Value: attr.Value})
+	}
+
+	if t.Name.Space != defaultNS {
+		attrs = append(attrs, xmlnsAttr("", t.Name.Space))
+	}
+
+	return xml.StartElement{Name: xml.Name{Local: t.Name.Local}, Attr: attrs}
+}
+
+// xmlnsAttr builds a default xmlns declaration attribute (empty URI means
+// no namespace).
+func xmlnsAttr(_, uri string) xml.Attr {
+	return xml.Attr{Name: xml.Name{Local: "xmlns"}, Value: uri}
+}
+
+// flushCaptured encodes the captured token slice back to bytes.
+func flushCaptured(capture []xml.Token) ([]byte, error) {
+	var buf bytes.Buffer
+	enc := xml.NewEncoder(&buf)
+
+	for _, tok := range capture {
+		if err := enc.EncodeToken(tok); err != nil {
+			return nil, fmt.Errorf("re-encode body element: %w", err)
+		}
+	}
+
+	if err := enc.Close(); err != nil {
+		return nil, fmt.Errorf("flush body element: %w", err)
+	}
+
+	return buf.Bytes(), nil
 }
 
 // canonicalActions maps legacy action spellings to the ONVIF WSDL names.
