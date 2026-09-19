@@ -624,7 +624,8 @@ func parseTopicFilter(req *struct {
 },
 ) (*topicFilter, error) {
 	if req == nil || req.TopicExpression == nil {
-		return nil, nil
+		// No filter: every topic is delivered (nilnil-safe sentinel form).
+		return (*topicFilter)(nil), nil
 	}
 
 	expr := strings.TrimSpace(req.TopicExpression.Value)

@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+
 - Metadata stream parser (`metadata.Parse`, new package): decodes
   tt:MetadataStream documents (metadatastream.xsd — the Profile M
   analytics output channel) into frames, tracked objects (bounding box /
