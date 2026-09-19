@@ -468,12 +468,45 @@ func (s *Service) GetCACertificates(ctx context.Context) ([]*Certificate, error)
 	return response.Certificates, nil
 }
 
+// schemaNamespace is the ONVIF common schema namespace. Certificate load
+// children live here, not in the device service namespace (#90).
+const schemaNamespace = "http://www.onvif.org/ver10/schema"
+
+// binaryDataXML is the serialization shape of BinaryData (tt: children).
+type binaryDataXML struct {
+	ContentType string `xml:"tt:ContentType,omitempty"`
+	Data        []byte `xml:"tt:Data"`
+}
+
+// certificateLoadXML is the serialization shape of a certificate entry in
+// LoadCertificates / LoadCertificateWithPrivateKey requests.
+type certificateLoadXML struct {
+	CertificateID string         `xml:"tt:CertificateID"`
+	Certificate   *binaryDataXML `xml:"tt:Certificate"`
+}
+
+// certificateWithKeyXML is the serialization shape of the
+// CertificateWithPrivateKey entry (#90).
+type certificateWithKeyXML struct {
+	CertificateID string              `xml:"tt:CertificateID"`
+	Certificate   *certificateLoadXML `xml:"tt:Certificate"`
+	PrivateKey    *binaryDataXML      `xml:"tt:PrivateKey"`
+}
+
+func toBinaryDataXML(b *BinaryData) *binaryDataXML {
+	if b == nil {
+		return nil
+	}
+	return &binaryDataXML{ContentType: b.ContentType, Data: b.Data}
+}
+
 // LoadCertificates loads certificates. ONVIF Specification: LoadCertificates operation.
 func (s *Service) LoadCertificates(ctx context.Context, certificates []*Certificate) error {
 	type LoadCertificatesBody struct {
-		XMLName     xml.Name       `xml:"tds:LoadCertificates"`
-		Xmlns       string         `xml:"xmlns:tds,attr"`
-		Certificate []*Certificate `xml:"tds:Certificate"`
+		XMLName     xml.Name              `xml:"tds:LoadCertificates"`
+		Xmlns       string                `xml:"xmlns:tds,attr"`
+		XmlnsTT     string                `xml:"xmlns:tt,attr"`
+		Certificate []*certificateLoadXML `xml:"tds:Certificate"`
 	}
 
 	type LoadCertificatesResponse struct {
@@ -481,8 +514,14 @@ func (s *Service) LoadCertificates(ctx context.Context, certificates []*Certific
 	}
 
 	request := LoadCertificatesBody{
-		Xmlns:       device.Namespace,
-		Certificate: certificates,
+		Xmlns:   device.Namespace,
+		XmlnsTT: schemaNamespace,
+	}
+	for _, cert := range certificates {
+		request.Certificate = append(request.Certificate, &certificateLoadXML{
+			CertificateID: cert.CertificateID,
+			Certificate:   toBinaryDataXML(&cert.Certificate),
+		})
 	}
 	var response LoadCertificatesResponse
 
@@ -697,13 +736,10 @@ func (s *Service) LoadCertificateWithPrivateKey(
 	certificateIDs []string,
 ) error {
 	type LoadCertificateWithPrivateKeyBody struct {
-		XMLName                   xml.Name `xml:"tds:LoadCertificateWithPrivateKey"`
-		Xmlns                     string   `xml:"xmlns:tds,attr"`
-		CertificateWithPrivateKey []struct {
-			CertificateID string       `xml:"CertificateID"`
-			Certificate   *Certificate `xml:"Certificate"`
-			PrivateKey    *BinaryData  `xml:"PrivateKey"`
-		} `xml:"tds:CertificateWithPrivateKey"`
+		XMLName                   xml.Name                 `xml:"tds:LoadCertificateWithPrivateKey"`
+		Xmlns                     string                   `xml:"xmlns:tds,attr"`
+		XmlnsTT                   string                   `xml:"xmlns:tt,attr"`
+		CertificateWithPrivateKey []*certificateWithKeyXML `xml:"tds:CertificateWithPrivateKey"`
 	}
 
 	type LoadCertificateWithPrivateKeyResponse struct {
@@ -711,21 +747,21 @@ func (s *Service) LoadCertificateWithPrivateKey(
 	}
 
 	request := LoadCertificateWithPrivateKeyBody{
-		Xmlns: device.Namespace,
+		Xmlns:   device.Namespace,
+		XmlnsTT: schemaNamespace,
 	}
 
 	// Build certificate with private key array
 	for i := range certificates {
-		item := struct {
-			CertificateID string       `xml:"CertificateID"`
-			Certificate   *Certificate `xml:"Certificate"`
-			PrivateKey    *BinaryData  `xml:"PrivateKey"`
-		}{
+		item := &certificateWithKeyXML{
 			CertificateID: certificateIDs[i],
-			Certificate:   certificates[i],
+			Certificate: &certificateLoadXML{
+				CertificateID: certificates[i].CertificateID,
+				Certificate:   toBinaryDataXML(&certificates[i].Certificate),
+			},
 		}
 		if i < len(privateKey) {
-			item.PrivateKey = privateKey[i]
+			item.PrivateKey = toBinaryDataXML(privateKey[i])
 		}
 		request.CertificateWithPrivateKey = append(request.CertificateWithPrivateKey, item)
 	}
