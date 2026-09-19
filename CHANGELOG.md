@@ -17,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   frame-rate/encoding-interval ranges, Mpeg4ProfilesSupported); encoder
   `Encoding` values pass through verbatim (pinned with `H265` — ver10 has
   no H.265/AV1 options; those live in Media2, see the README roadmap).
+- Analytics service client (`onvif.Client.Analytics()`, ver20 analytics
+  WSDL): GetServiceCapabilities, Get/GetSupported for rules and analytics
+  modules, Create/Modify/DeleteAnalyticsModules — the Profile M
+  configuration core. Requests follow the WSDL namespace contract
+  (tan-wrapped, tt:Config payloads with `xmlns:tt`); wire-namespace
+  envelope test included. Client endpoint discovery picks up a
+  capabilities-advertised analytics XAddr; `SetServiceEndpoint` works as
+  for the other services.
 
 ### Changed
 - Server request bodies are now extracted with full namespace context
