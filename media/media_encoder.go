@@ -121,6 +121,25 @@ type GetVideoEncoderConfigurationOptionsResponse struct {
 				Max int `xml:"Max"`
 			} `xml:"EncodingIntervalRange"`
 		} `xml:"JPEG"`
+		MPEG4 *struct {
+			ResolutionsAvailable []struct {
+				Width  int `xml:"Width"`
+				Height int `xml:"Height"`
+			} `xml:"ResolutionsAvailable"`
+			GovLengthRange *struct {
+				Min int `xml:"Min"`
+				Max int `xml:"Max"`
+			} `xml:"GovLengthRange"`
+			FrameRateRange *struct {
+				Min float64 `xml:"Min"`
+				Max float64 `xml:"Max"`
+			} `xml:"FrameRateRange"`
+			EncodingIntervalRange *struct {
+				Min int `xml:"Min"`
+				Max int `xml:"Max"`
+			} `xml:"EncodingIntervalRange"`
+			Mpeg4ProfilesSupported []string `xml:"Mpeg4ProfilesSupported"`
+		} `xml:"MPEG4"`
 		H264 *struct {
 			ResolutionsAvailable []struct {
 				Width  int `xml:"Width"`
@@ -537,6 +556,36 @@ func (s *Service) GetVideoEncoderConfigurationOptions(
 			})
 		}
 		options.JPEG = jpegOpts
+	}
+
+	if resp.Options.MPEG4 != nil {
+		mpeg4Opts := &Mpeg4Options{}
+		if resp.Options.MPEG4.FrameRateRange != nil {
+			mpeg4Opts.FrameRateRange = &types.FloatRange{
+				Min: resp.Options.MPEG4.FrameRateRange.Min,
+				Max: resp.Options.MPEG4.FrameRateRange.Max,
+			}
+		}
+		if resp.Options.MPEG4.GovLengthRange != nil {
+			mpeg4Opts.GovLengthRange = &types.IntRange{
+				Min: resp.Options.MPEG4.GovLengthRange.Min,
+				Max: resp.Options.MPEG4.GovLengthRange.Max,
+			}
+		}
+		if resp.Options.MPEG4.EncodingIntervalRange != nil {
+			mpeg4Opts.EncodingIntervalRange = &types.IntRange{
+				Min: resp.Options.MPEG4.EncodingIntervalRange.Min,
+				Max: resp.Options.MPEG4.EncodingIntervalRange.Max,
+			}
+		}
+		for _, res := range resp.Options.MPEG4.ResolutionsAvailable {
+			mpeg4Opts.ResolutionsAvailable = append(mpeg4Opts.ResolutionsAvailable, &VideoResolution{
+				Width:  res.Width,
+				Height: res.Height,
+			})
+		}
+		mpeg4Opts.Mpeg4ProfilesSupported = resp.Options.MPEG4.Mpeg4ProfilesSupported
+		options.MPEG4 = mpeg4Opts
 	}
 
 	if resp.Options.H264 != nil {

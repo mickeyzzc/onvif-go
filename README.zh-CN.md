@@ -171,6 +171,30 @@ diag, _ := client.DiagnoseAuth(ctx)
 // diag.Status: "ok" | "clock-skew"（修相机 NTP）| "bad-credentials"
 ```
 
+## 协议对齐与路线图
+
+线格式契约以官方 ONVIF WSDL/XSD 集（[onvif/specs](https://github.com/onvif/specs)，
+全部 schema `elementFormDefault="qualified"`）为真源：服务 WSDL 内本地声明的
+元素归属该 WSDL 命名空间，`ver10/schema` 类型的子元素归属 `tt`。全部已服务
+响应面由命名空间严格解码的契约套件钉死；客户端↔模拟器一致性回环覆盖全操作
+矩阵；客户端解码路径有敌意响应 fuzz。
+
+明确的范围边界（留待后续能力包）：
+
+- **Media2（ver20/media/wsdl）**——H.265/AV1 编码器选项与 Media2 配置模型属
+  Media2 服务，本库未实现。ver10 编码器配置对任意 `Encoding` 值原样透传
+  （已用 `H265` 测试），ver10 选项解码覆盖 JPEG/MPEG4/H264。
+- **Profile M**——事件 PullPoint 族与配置中的元数据配置已具备；analytics
+  服务客户端（规则/模块配置）尚未实现。
+- **Profile T**——服务端已支持 TLS 传输（`Config.TLSCertFile`/`TLSKeyFile`）；
+  高级安全置备（PKI、802.1X、UsernameToken 之外的 WS-Security）不在范围。
+- **GetEventProperties** 当前只应答固定主题集，不带
+  `TopicNamespaceLocation`/`TopicExpressionDialect`；订阅过滤器接受但忽略
+  （如实声明，不做虚假广告）。
+- **存储配置**——请求载荷仍把 `Data` 建模为扁平结构；WSDL 的 `xsi:type`
+  多态形态（`tt:FileSystemStorage` 等）需要重设计后严格设备才能接受。
+- **WebRTC**——保持关注，未实现。
+
 ## 文档
 
 专题手册已迁移至 MiBee 文档中心——库手册唯一真源（双语）：

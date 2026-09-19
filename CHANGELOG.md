@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Server: TLS transport (Profile T baseline) — `Config.TLSCertFile`/
+  `TLSKeyFile` serve the listener over HTTPS (`ServeTLS`); both must be
+  set together. `Start` now binds its listener explicitly, so
+  `Server.ListenAddr()` reports the bound address (with `Port: 0`, the
+  kernel-assigned port) as soon as Start runs.
+- Client media: MPEG-4 encoder options decode
+  (`VideoEncoderConfigurationOptions.MPEG4` — resolutions, gov-length/
+  frame-rate/encoding-interval ranges, Mpeg4ProfilesSupported); encoder
+  `Encoding` values pass through verbatim (pinned with `H265` — ver10 has
+  no H.265/AV1 options; those live in Media2, see the README roadmap).
 - Analytics service client (`onvif.Client.Analytics()`, ver20 analytics
   WSDL): GetServiceCapabilities, Get/GetSupported for rules and analytics
   modules, Create/Modify/DeleteAnalyticsModules — the Profile M
