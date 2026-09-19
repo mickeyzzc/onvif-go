@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Metadata stream parser (`metadata.Parse`, new package): decodes
+  tt:MetadataStream documents (metadatastream.xsd — the Profile M
+  analytics output channel) into frames, tracked objects (bounding box /
+  polygon / center of gravity, class types with likelihoods incl. the
+  deprecated candidate form, geo location, removed/idle behaviour,
+  frame/object transformations). Namespace-lenient decode — both
+  default-xmlns and prefixed documents parse; golden + garbage tests.
+- Analytics client `GetSupportedMetadata`: sample frames parsed through
+  the metadata package.
+### Added
 - Events service conformance: GetEventProperties now answers the
   spec-complete form — `TopicNamespaceLocation` (ONVIF topic namespace),
   the two mandatory topic-expression dialects, the spec-blessed single

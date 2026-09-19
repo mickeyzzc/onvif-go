@@ -231,8 +231,8 @@ Deliberate scope boundaries (tracked for future capability packages):
   dialects — honored by the pull-point filter — and the spec-blessed
   empty message-content dialect); message-content filtering is not
   applied and not advertised.
-- **WebRTC (Profile M-relevant later revisions)** — watched, not
-  implemented.
+- **WebRTC** — watched, not implemented. PTZ/Event/SensorData members of
+  the metadata stream are not modeled by `metadata.Parse` yet.
 
 ## Documentation
 
