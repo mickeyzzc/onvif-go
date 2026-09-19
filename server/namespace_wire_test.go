@@ -14,8 +14,6 @@ import (
 // responses and decode namespace-strictly: values only populate when the
 // elements resolve to the exact namespace.
 
-const schemaNS = "http://www.onvif.org/ver10/schema"
-
 type nsUri struct {
 	URI string `xml:"http://www.onvif.org/ver10/schema Uri"`
 }
@@ -50,8 +48,8 @@ func TestDeviceInformationResolvesToSchemaNamespace(t *testing.T) {
 	}
 
 	var resp struct {
-		XMLName      xml.Name        `xml:"http://www.onvif.org/ver10/device/wsdl GetDeviceInformationResponse"`
-		Manufacturer string `xml:"http://www.onvif.org/ver10/schema Manufacturer"`
+		XMLName      xml.Name `xml:"http://www.onvif.org/ver10/device/wsdl GetDeviceInformationResponse"`
+		Manufacturer string   `xml:"http://www.onvif.org/ver10/schema Manufacturer"`
 	}
 	if err := xml.Unmarshal(data, &resp); err != nil {
 		t.Fatalf("decode: %v\nxml: %s", err, data)
@@ -126,8 +124,8 @@ func TestImagingSettingsResolvesToSchemaNamespace(t *testing.T) {
 	}
 
 	var resp struct {
-		XMLName          xml.Name `xml:"http://www.onvif.org/ver20/imaging/wsdl GetImagingSettingsResponse"`
-		ImagingSettings  struct {
+		XMLName         xml.Name `xml:"http://www.onvif.org/ver20/imaging/wsdl GetImagingSettingsResponse"`
+		ImagingSettings struct {
 			Brightness *float64 `xml:"http://www.onvif.org/ver10/schema Brightness"`
 		} `xml:"http://www.onvif.org/ver20/imaging/wsdl ImagingSettings"`
 	}

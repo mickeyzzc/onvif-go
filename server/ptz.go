@@ -103,17 +103,6 @@ type respPTZVector struct {
 	Zoom    *respVector1D `xml:"http://www.onvif.org/ver10/schema Zoom,omitempty"`
 }
 
-func toRespPTZVector(v PTZVector) respPTZVector {
-	out := respPTZVector{}
-	if v.PanTilt != nil {
-		out.PanTilt = &respVector2D{X: v.PanTilt.X, Y: v.PanTilt.Y, Space: v.PanTilt.Space}
-	}
-	if v.Zoom != nil {
-		out.Zoom = &respVector1D{X: v.Zoom.X, Space: v.Zoom.Space}
-	}
-	return out
-}
-
 // PTZMoveStatus represents PTZ movement status.
 type PTZMoveStatus struct {
 	PanTilt string `xml:"http://www.onvif.org/ver10/schema PanTilt,omitempty"`
@@ -134,8 +123,8 @@ type GetPresetsResponse struct {
 
 // PTZPreset represents a PTZ preset.
 type PTZPreset struct {
-	Token       string        `xml:"token,attr"`
-	Name        string        `xml:"http://www.onvif.org/ver10/schema Name"`
+	Token       string         `xml:"token,attr"`
+	Name        string         `xml:"http://www.onvif.org/ver10/schema Name"`
 	PTZPosition *respPTZVector `xml:"http://www.onvif.org/ver10/schema PTZPosition,omitempty"`
 }
 
