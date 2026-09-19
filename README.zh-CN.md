@@ -194,6 +194,8 @@ diag, _ := client.DiagnoseAuth(ctx)
   主题表达式方言——pull-point 过滤器如实执行——以及规范规定的空消息内容
   方言）；消息内容过滤不应用也不广播。
 - **WebRTC**——保持关注，未实现。
+- **WebRTC**——保持关注，未实现。元数据流的 PTZ/Event/SensorData 成员
+  尚未建模进 `metadata.Parse`。
 
 ## 文档
 

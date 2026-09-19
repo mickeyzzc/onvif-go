@@ -226,3 +226,32 @@ func TestAnalyticsWriteOps(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestGetSupportedMetadata(t *testing.T) {
+	caller := testutil.NewFakeCaller("http://fake/analytics", func(action, _ string) (string, error) {
+		if action != "tan:GetSupportedMetadata" {
+			return "", errors.New("unexpected action " + action)
+		}
+
+		return `<GetSupportedMetadataResponse>
+			<AnalyticsModule>
+				<SampleFrame UtcTime="2026-09-19T12:00:00Z">
+					<Transformation><Scale x="1" y="1"/></Transformation>
+				</SampleFrame>
+			</AnalyticsModule>
+			</GetSupportedMetadataResponse>`, nil
+	})
+
+	infos, err := analytics.New(caller).GetSupportedMetadata(context.Background(), "tt:MyDetector")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(infos) != 1 || infos[0].SampleFrame == nil {
+		t.Fatalf("infos = %+v, want one sample frame", infos)
+	}
+
+	if infos[0].SampleFrame.Transformation == nil || infos[0].SampleFrame.Transformation.Scale == nil {
+		t.Errorf("sample frame transformation not parsed: %+v", infos[0].SampleFrame)
+	}
+}

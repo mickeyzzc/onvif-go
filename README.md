@@ -235,6 +235,8 @@ Deliberate scope boundaries (tracked for future capability packages):
   applied and not advertised.
 - **WebRTC (Profile M-relevant later revisions)** — watched, not
   implemented.
+- **WebRTC** — watched, not implemented. PTZ/Event/SensorData members of
+  the metadata stream are not modeled by `metadata.Parse` yet.
 
 ## Documentation
 
