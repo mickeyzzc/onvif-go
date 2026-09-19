@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Media2 service client (`onvif.Client.Media2()`, ver20/media/wsdl) — the
+  codec-agnostic configuration model: GetProfiles (inline configuration
+  set; video encoder fully modeled, other families by token/name),
+  GetVideoEncoderConfigurations, GetVideoEncoderConfigurationOptions
+  (one entry per supported encoding, `Encoding` a free media subtype name
+  — the H.265/AV1 answer; gov-length/frame-rate ranges decoded from the
+  xs:list attributes), SetVideoEncoderConfiguration (verbatim encoding
+  pass-through), GetStreamUri. Requests follow the WSDL contract
+  (tr2-wrapped, tt: payload children with `xmlns:tt`). Media2 rides the
+  media service endpoint unless pinned via `SetServiceEndpoint`.
+### Added
 - Events service conformance: GetEventProperties now answers the
   spec-complete form — `TopicNamespaceLocation` (ONVIF topic namespace),
   the two mandatory topic-expression dialects, the spec-blessed single

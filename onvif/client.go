@@ -17,6 +17,7 @@ import (
 	"github.com/mickeyzzc/onvif-go/v2/imaging"
 	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
 	"github.com/mickeyzzc/onvif-go/v2/media"
+	"github.com/mickeyzzc/onvif-go/v2/media2"
 	"github.com/mickeyzzc/onvif-go/v2/ptz"
 	"github.com/mickeyzzc/onvif-go/v2/security"
 )
@@ -105,6 +106,7 @@ type Client struct {
 	imagingEndpoint   string
 	eventEndpoint     string
 	analyticsEndpoint string
+	media2Endpoint    string
 
 	// Auth configuration. authMode is the primary mode; authFallback lists
 	// modes to try (in order) when the primary fails with an auth-class error.
@@ -128,6 +130,7 @@ type Client struct {
 	imagingSvc   *imaging.Service
 	eventsSvc    *events.Service
 	analyticsSvc *analytics.Service
+	media2Svc    *media2.Service
 	deviceioSvc  *deviceio.Service
 	securitySvc  *security.Service
 
@@ -259,6 +262,7 @@ func NewClient(endpoint string, opts ...ClientOption) (*Client, error) {
 	client.imagingSvc = imaging.New(client)
 	client.eventsSvc = events.New(client)
 	client.analyticsSvc = analytics.New(client)
+	client.media2Svc = media2.New(client)
 	client.deviceioSvc = deviceio.New(client)
 	client.securitySvc = security.New(client)
 
@@ -436,6 +440,10 @@ func (c *Client) Initialize(ctx context.Context) error {
 	}
 	if capabilities.Analytics != nil && capabilities.Analytics.XAddr != "" {
 		c.analyticsEndpoint = c.fixServiceURL(capabilities.Analytics.XAddr)
+	}
+	if c.media2Endpoint == "" && c.mediaEndpoint != "" {
+		// Media2 rides the media service endpoint unless pinned explicitly.
+		c.media2Endpoint = c.mediaEndpoint
 	}
 
 	return nil

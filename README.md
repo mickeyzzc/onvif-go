@@ -215,11 +215,13 @@ paths.
 
 Deliberate scope boundaries (tracked for future capability packages):
 
-- **Media2 (ver20/media/wsdl)** — H.265/AV1 codec options and the Media2
-  configuration model live in the Media2 service, which this library does
-  not implement. Ver10 encoder configurations pass any `Encoding` value
-  through verbatim (tested with `H265`), and the ver10 options decode
-  covers JPEG/MPEG4/H264.
+- **Media2 (ver20/media/wsdl)** — the codec-agnostic configuration model
+  is in (`onvif.Client.Media2()`: profiles with inline configurations,
+  video encoder configurations and per-encoding options — one entry per
+  codec with free-name `Encoding` (H264/H265/AV1/…), set with verbatim
+  encoding pass-through, stream URI). Profile create/delete and the
+  audio/OSD configuration families are not implemented yet; ver10 media
+  remains the full-coverage surface.
 - **Profile M** — the events PullPoint family and metadata configurations
   in profiles are in; an analytics-service client (rule/module
   configuration) is not implemented yet.

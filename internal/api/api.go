@@ -22,6 +22,8 @@ const (
 	ServiceEvents Service = "events"
 	// ServiceAnalytics is the ver20 analytics service (tan).
 	ServiceAnalytics Service = "analytics"
+	// ServiceMedia2 is the Media2 service (tr2, ver20/media/wsdl).
+	ServiceMedia2 Service = "media2"
 )
 
 // Caller performs an authenticated SOAP call through the client's auth
