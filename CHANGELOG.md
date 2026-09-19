@@ -21,8 +21,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   declared on the request root (the pattern `SetNetworkInterfaces` already
   used). **Wire-format change** on the affected requests. Response parsing
   is unchanged (unprefixed decode tags keep the lenient any-namespace
-  matching). The server-side response serialization has the same
-  namespace defect and is tracked in #90 for a follow-up change.
+  matching).
+- Server response serialization had the same namespace defect (#90):
+  ver10/schema-typed response children — the MediaUri family
+  (Uri/InvalidAfterConnect/InvalidAfterReboot/Timeout), SystemDateAndTime
+  and its date/time components, the device-information and capabilities
+  fields, the PTZ status/preset vectors, and the imaging settings/options
+  families — were marshaled unprefixed and inherited the response root's
+  service namespace. Strict ONVIF clients (ONVIF Device Manager &co.)
+  could not read the fields. They now resolve to ver10/schema: explicit
+  prefix mode renders them as `tt:` (matching the real-device capture in
+  testdata/captures), default mode emits per-element xmlns declarations.
+  **Wire-format change** on the affected responses. Request decoding is
+  unchanged — the shared provider model keeps unprefixed tags (lenient
+  any-namespace matching), so both prefix-style and default-xmlns
+  requests keep parsing.
 
 ## [v2.0.0] — 2026-09-17
 

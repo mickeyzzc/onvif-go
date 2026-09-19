@@ -435,10 +435,10 @@ func TestGetImagingSettingsResponseXML(t *testing.T) {
 	brightness := 75.0
 	contrast := 60.0
 	resp := &GetImagingSettingsResponse{
-		ImagingSettings: &ImagingSettings{
+		ImagingSettings: toRespImagingSettings(&ImagingSettings{
 			Brightness: &brightness,
 			Contrast:   &contrast,
-		},
+		}),
 	}
 
 	// Marshal to XML
