@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/mickeyzzc/onvif-go/v2/internal/api"
+	"github.com/mickeyzzc/onvif-go/v2/metadata"
 )
 
 // Request wire shapes. tan: covers elements locally declared in the
@@ -285,4 +286,42 @@ func (s *Service) DeleteAnalyticsModules(ctx context.Context, configurationToken
 
 func toConfigOut(c *Config) configOut {
 	return configOut{Name: c.Name, Type: c.Type, Parameters: parameterOut{SimpleItems: c.Parameters}}
+}
+
+// getSupportedMetadata is the GetSupportedMetadata request (Type is an
+// optional AnalyticsModule type QName).
+type getSupportedMetadata struct {
+	XMLName xml.Name `xml:"tan:GetSupportedMetadata"`
+	Xmlns   string   `xml:"xmlns:tan,attr"`
+	Type    string   `xml:"tan:Type,omitempty"`
+}
+
+// MetadataInfo is one tan:MetadataInfo answer: the sample frame
+// describing the metadata coordinate system.
+type MetadataInfo struct {
+	SampleFrame *metadata.Frame
+}
+
+// GetSupportedMetadata returns the metadata descriptions (sample frames)
+// of the analytics modules.
+func (s *Service) GetSupportedMetadata(ctx context.Context, moduleType string) ([]*MetadataInfo, error) {
+	type response struct {
+		XMLName         xml.Name `xml:"GetSupportedMetadataResponse"`
+		AnalyticsModule []struct {
+			SampleFrame *metadata.Frame `xml:"SampleFrame"`
+		} `xml:"AnalyticsModule"`
+	}
+
+	var resp response
+	req := &getSupportedMetadata{Xmlns: Namespace, Type: moduleType}
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceAnalytics), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetSupportedMetadata failed: %w", err)
+	}
+
+	infos := make([]*MetadataInfo, 0, len(resp.AnalyticsModule))
+	for _, m := range resp.AnalyticsModule {
+		infos = append(infos, &MetadataInfo{SampleFrame: m.SampleFrame})
+	}
+
+	return infos, nil
 }
