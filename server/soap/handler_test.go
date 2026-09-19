@@ -478,3 +478,55 @@ func TestServeHTTPAnonymousNoCredentialsWarns(t *testing.T) {
 	locked := NewHandlerWithOptions(HandlerOptions{AllowAnonymous: true, AuthFailureLimit: -1})
 	_ = locked // limiter disabled still constructs
 }
+
+// TestExtractBodyElementCanonicalizesNamespaces pins the request-body
+// extraction: whatever prefix style the client used (default xmlns,
+// prefixes declared on the request root, prefixes declared on the
+// Envelope), handlers receive a self-contained fragment whose elements
+// carry their real namespace URIs.
+func TestExtractBodyElementCanonicalizesNamespaces(t *testing.T) {
+	cases := []struct {
+		name string
+		env  string
+		want string
+	}{
+		{
+			name: "default xmlns on request root",
+			env:  `<Envelope xmlns="http://www.w3.org/2003/05/soap-envelope"><Body><ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl"><ProfileToken>p1</ProfileToken></ContinuousMove></Body></Envelope>`,
+			want: `<ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl"><ProfileToken>p1</ProfileToken></ContinuousMove>`,
+		},
+		{
+			name: "prefixes declared on the request root",
+			env:  `<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body><tptz:ContinuousMove xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"><tptz:ProfileToken>p1</tptz:ProfileToken></tptz:ContinuousMove></s:Body></s:Envelope>`,
+			want: `<ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl"><ProfileToken>p1</ProfileToken></ContinuousMove>`,
+		},
+		{
+			name: "prefixes declared on the envelope",
+			env:  `<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"><s:Body><tptz:ContinuousMove><tptz:ProfileToken>p1</tptz:ProfileToken></tptz:ContinuousMove></s:Body></s:Envelope>`,
+			want: `<ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl"><ProfileToken>p1</ProfileToken></ContinuousMove>`,
+		},
+		{
+			name: "mixed namespaces across levels",
+			env:  `<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:tt="http://www.onvif.org/ver10/schema"><s:Body><tptz:ContinuousMove xmlns:tptz="http://www.onvif.org/ver20/ptz/wsdl"><tptz:Velocity><tt:PanTilt x="0.5"/></tptz:Velocity></tptz:ContinuousMove></s:Body></s:Envelope>`,
+			want: `<ContinuousMove xmlns="http://www.onvif.org/ver20/ptz/wsdl"><Velocity><PanTilt x="0.5" xmlns="http://www.onvif.org/ver10/schema"></PanTilt></Velocity></ContinuousMove>`,
+		},
+		{
+			name: "namespace-less request element",
+			env:  `<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope"><s:Body><Legacy token="x"/></s:Body></s:Envelope>`,
+			want: `<Legacy token="x"></Legacy>`,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := extractBodyElement([]byte(tc.env))
+			if err != nil {
+				t.Fatalf("extractBodyElement: %v", err)
+			}
+
+			if string(got) != tc.want {
+				t.Errorf("fragment =\n%s\nwant\n%s", got, tc.want)
+			}
+		})
+	}
+}

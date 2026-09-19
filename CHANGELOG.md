@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Server request bodies are now extracted with full namespace context
+  instead of raw innerxml slicing: the first Body child is re-encoded as
+  a self-contained fragment (default-xmlns canonical form), with
+  bindings declared on Envelope/Header ancestors materialized on the
+  extracted elements. Clients that declare their namespace prefixes at
+  the envelope level (legal SOAP, previously answered with a Sender
+  fault once any handler decoded namespace-strictly) now parse; handlers
+  may decode requests with namespace-strict tags. Prefixed non-xmlns
+  attributes on request bodies (rare; `xsi:type`) lose their prefix in
+  the canonical fragment. The legacy exact-bytes handler-body assertion
+  now sees the equivalent explicit-end-tag form.
 
 ### Fixed (wire format)
 - Server responses misassigned several namespaces relative to the official

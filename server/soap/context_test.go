@@ -117,7 +117,10 @@ func TestLegacyMessageHandlerWrapper(t *testing.T) {
 	h.RegisterHandler("Legacy", func(body []byte) (interface{}, error) {
 		legacyCalled = true
 
-		if string(body) != `<Legacy token="x"/>` {
+		// The body arrives as the canonicalized, self-contained fragment
+		// (default-xmlns form; an element without a namespace stays
+		// bare). The token encoder writes explicit end tags.
+		if string(body) != `<Legacy token="x"></Legacy>` {
 			t.Errorf("legacy handler body = %q", string(body))
 		}
 
