@@ -137,7 +137,8 @@ func (s *Server) Start(ctx context.Context) error {
 		WriteTimeout: s.config.Timeout,
 	}
 
-	listener, err := net.Listen("tcp", httpServer.Addr)
+	var listener net.Listener
+	listener, err := (&net.ListenConfig{}).Listen(ctx, "tcp", httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("onvif server listen: %w", err)
 	}
