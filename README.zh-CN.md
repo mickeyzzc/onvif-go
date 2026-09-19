@@ -181,9 +181,11 @@ diag, _ := client.DiagnoseAuth(ctx)
 
 明确的范围边界（留待后续能力包）：
 
-- **Media2（ver20/media/wsdl）**——H.265/AV1 编码器选项与 Media2 配置模型属
-  Media2 服务，本库未实现。ver10 编码器配置对任意 `Encoding` 值原样透传
-  （已用 `H265` 测试），ver10 选项解码覆盖 JPEG/MPEG4/H264。
+- **Media2（ver20/media/wsdl）**——编解码无关的配置模型已具备
+  （`onvif.Client.Media2()`：带内联配置的 profile、视频编码器配置与按编码
+  的选项——每个编解码一条、`Encoding` 为自由名（H264/H265/AV1/…）、写入
+  原样透传、取流 URI）。Profile 增删与音频/OSD 配置族尚未实现；ver10
+  media 仍是全覆盖面。
 - **Profile M**——事件 PullPoint 族与配置中的元数据配置已具备；analytics
   服务客户端（规则/模块配置）尚未实现。
 - **Profile T**——服务端已支持 TLS 传输（`Config.TLSCertFile`/`TLSKeyFile`）；

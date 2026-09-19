@@ -8,6 +8,7 @@ import (
 	"github.com/mickeyzzc/onvif-go/v2/imaging"
 	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 	"github.com/mickeyzzc/onvif-go/v2/media"
+	"github.com/mickeyzzc/onvif-go/v2/media2"
 	"github.com/mickeyzzc/onvif-go/v2/ptz"
 	"github.com/mickeyzzc/onvif-go/v2/security"
 )
@@ -43,6 +44,10 @@ func (c *Client) Events() *events.Service { return c.eventsSvc }
 // Analytics returns the ver20 analytics service facade (tan).
 func (c *Client) Analytics() *analytics.Service { return c.analyticsSvc }
 
+// Media2 returns the Media2 service facade (tr2) — the codec-agnostic
+// configuration model (H.265/AV1 &co.).
+func (c *Client) Media2() *media2.Service { return c.media2Svc }
+
 // DeviceIO returns the Device IO service facade.
 func (c *Client) DeviceIO() *deviceio.Service { return c.deviceioSvc }
 
@@ -68,6 +73,8 @@ func (c *Client) EndpointFor(svc api.Service) string {
 		endpoint = c.eventEndpoint
 	case api.ServiceAnalytics:
 		endpoint = c.analyticsEndpoint
+	case api.ServiceMedia2:
+		endpoint = c.media2Endpoint
 	default:
 		return c.endpoint
 	}
@@ -98,6 +105,8 @@ func (c *Client) SetServiceEndpoint(svc api.Service, endpoint string) {
 		c.eventEndpoint = endpoint
 	case api.ServiceAnalytics:
 		c.analyticsEndpoint = endpoint
+	case api.ServiceMedia2:
+		c.media2Endpoint = endpoint
 	default:
 		c.endpoint = endpoint
 	}
