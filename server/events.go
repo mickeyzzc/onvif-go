@@ -65,15 +65,31 @@ type GetEventServiceCapabilitiesResponse struct {
 }
 
 // GetEventPropertiesResponse represents the GetEventProperties response:
-// a fixed, empty topic set and no filter dialects — this implementation
-// does not apply subscription filters (they are accepted and ignored).
+// a fixed, empty topic set and the two mandatory ONVIF topic-expression
+// dialects. Message-content filtering is not applied, so the spec-blessed
+// single empty MessageContentFilterDialect is returned; the mandatory
+// TopicNamespaceLocation/MessageContentSchemaLocation point at the ONVIF
+// topic namespace and schema files.
 type GetEventPropertiesResponse struct {
-	XMLName       xml.Name `xml:"http://www.onvif.org/ver10/events/wsdl GetEventPropertiesResponse"`
-	FixedTopicSet bool     `xml:"http://docs.oasis-open.org/wsn/b-2 FixedTopicSet"`
-	TopicSet      struct {
+	XMLName                xml.Name `xml:"http://www.onvif.org/ver10/events/wsdl GetEventPropertiesResponse"`
+	TopicNamespaceLocation []string `xml:"http://www.onvif.org/ver10/events/wsdl TopicNamespaceLocation"`
+	FixedTopicSet          bool     `xml:"http://docs.oasis-open.org/wsn/b-2 FixedTopicSet"`
+	TopicSet               struct {
 		XMLName xml.Name `xml:"http://docs.oasis-open.org/wsn/t-1 TopicSet"`
 	} `xml:"http://docs.oasis-open.org/wsn/t-1 TopicSet"`
+	TopicExpressionDialect       []string `xml:"http://docs.oasis-open.org/wsn/b-2 TopicExpressionDialect"`
+	MessageContentFilterDialect  []string `xml:"http://docs.oasis-open.org/wsn/b-2 MessageContentFilterDialect"`
+	MessageContentSchemaLocation []string `xml:"http://www.onvif.org/ver10/events/wsdl MessageContentSchemaLocation"`
 }
+
+// The mandatory ONVIF topic expression dialects (event.wsdl annotations)
+// and the canonical locations advertised in GetEventProperties.
+const (
+	topicNamespaceLocation = "http://www.onvif.org/ver10/tev/topicns.xml"
+	dialectConcrete        = "http://docs.oasis-open.org/wsn/t-1/TopicExpression/Concrete"
+	dialectConcreteSet     = "http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet"
+	messageSchemaLocation  = "http://www.onvif.org/ver10/schema/onvif.xsd"
+)
 
 // endpointReference is a WS-Addressing endpoint reference (the
 // SubscriptionReference / ProducerReference wire shape).
@@ -157,6 +173,12 @@ type UnsubscribeResponse struct {
 
 type createPullPointSubscriptionRequest struct {
 	InitialTerminationTime string `xml:"InitialTerminationTime"`
+	Filter                 *struct {
+		TopicExpression *struct {
+			Dialect string `xml:"Dialect,attr"`
+			Value   string `xml:",chardata"`
+		} `xml:"TopicExpression"`
+	} `xml:"Filter"`
 }
 
 type pullMessagesRequest struct {
@@ -180,6 +202,7 @@ type pullPoint struct {
 	termination time.Time
 	queue       []queuedNotification
 	notify      chan struct{} // cap-1 wakeup for long-polling PullMessages
+	filter      *topicFilter  // nil → every topic is delivered
 }
 
 // Event is one property-event notification handed to the server by the
@@ -225,6 +248,10 @@ func (s *Server) PublishEvent(ev Event) {
 	s.pruneExpiredPullPointsLocked(time.Now())
 
 	for _, pp := range s.pullPoints {
+		if pp.filter != nil && !pp.filter.matches(qn.topic) {
+			continue
+		}
+
 		if len(pp.queue) >= maxEventQueue {
 			pp.queue = pp.queue[1:]
 		}
@@ -269,9 +296,17 @@ func (s *Server) HandleGetEventServiceCapabilities(_ *soap.RequestContext, _ []b
 }
 
 // HandleGetEventProperties handles GetEventProperties: fixed empty topic
-// set, no filter dialects (filters are accepted and ignored).
+// set, the two mandatory topic-expression dialects (honored — see the
+// pull-point topic filter), and the empty message-content filter dialect
+// (content filters are not applied).
 func (s *Server) HandleGetEventProperties(_ *soap.RequestContext, _ []byte) (interface{}, error) {
-	return &GetEventPropertiesResponse{FixedTopicSet: true}, nil
+	return &GetEventPropertiesResponse{
+		TopicNamespaceLocation:       []string{topicNamespaceLocation},
+		FixedTopicSet:                true,
+		TopicExpressionDialect:       []string{dialectConcrete, dialectConcreteSet},
+		MessageContentFilterDialect:  []string{""},
+		MessageContentSchemaLocation: []string{messageSchemaLocation},
+	}, nil
 }
 
 // HandleCreatePullPointSubscription creates a pull point and answers its
@@ -280,6 +315,11 @@ func (s *Server) HandleCreatePullPointSubscription(rc *soap.RequestContext, body
 	var req createPullPointSubscriptionRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	filter, err := parseTopicFilter(req.Filter)
+	if err != nil {
+		return nil, err
 	}
 
 	termination := defaultPullPointTermination
@@ -318,6 +358,7 @@ func (s *Server) HandleCreatePullPointSubscription(rc *soap.RequestContext, body
 		id:          id,
 		termination: now.Add(termination),
 		notify:      make(chan struct{}, 1),
+		filter:      filter,
 	}
 
 	return &CreatePullPointSubscriptionResponse{
@@ -346,11 +387,13 @@ func (s *Server) HandlePullMessages(rc *soap.RequestContext, body []byte) (inter
 		}
 	}
 
+	// PT0S is legal: an immediate, non-blocking poll. Only unparsable
+	// timeouts fault.
 	wait, err := parseISO8601Duration(req.Timeout)
-	if err != nil || wait <= 0 {
+	if err != nil {
 		return nil, &soap.SenderFaultError{
 			Reason: "Invalid Timeout",
-			Detail: fmt.Sprintf("got %q, want a positive ISO 8601 duration", req.Timeout),
+			Detail: fmt.Sprintf("got %q, want an ISO 8601 duration", req.Timeout),
 		}
 	}
 
@@ -559,6 +602,106 @@ func simpleItemsToWire(items []SimpleItem) eventItemGroup {
 	}
 
 	return eventItemGroup{SimpleItems: wire}
+}
+
+// topicFilter is one subscription's topic-expression filter: the
+// Concrete dialect (exact topic path) or the ConcreteSet dialect ( '|'
+// alternatives with per-segment '*' wildcards), the two dialects
+// GetEventProperties advertises.
+type topicFilter struct {
+	dialect    string
+	expression string
+}
+
+// parseTopicFilter validates the CreatePullPointSubscription filter.
+// Empty dialect defaults to Concrete (the WS-BaseNotification default);
+// unsupported dialects fault instead of being silently ignored.
+func parseTopicFilter(req *struct {
+	TopicExpression *struct {
+		Dialect string `xml:"Dialect,attr"`
+		Value   string `xml:",chardata"`
+	} `xml:"TopicExpression"`
+},
+) (*topicFilter, error) {
+	if req == nil || req.TopicExpression == nil {
+		// No filter: every topic is delivered (nilnil-safe sentinel form).
+		return (*topicFilter)(nil), nil
+	}
+
+	expr := strings.TrimSpace(req.TopicExpression.Value)
+	dialect := req.TopicExpression.Dialect
+	if dialect == "" {
+		dialect = dialectConcrete
+	}
+
+	if dialect != dialectConcrete && dialect != dialectConcreteSet {
+		return nil, &soap.SenderFaultError{
+			Reason: "Unsupported TopicExpression dialect",
+			Detail: fmt.Sprintf("got %q, device supports the mandatory Concrete and ConcreteSet dialects", dialect),
+		}
+	}
+
+	if expr == "" {
+		return nil, &soap.SenderFaultError{
+			Reason: "Invalid TopicExpression",
+			Detail: "filter topic expression must not be empty",
+		}
+	}
+
+	return &topicFilter{dialect: dialect, expression: expr}, nil
+}
+
+// matches reports whether a notification topic satisfies the filter.
+// Prefixes are namespace bindings, not identity: matching compares the
+// local path segments ("tns1:VideoSource/MotionAlarm" matches
+// "tns1:VideoSource/MotionAlarm" and any equivalent binding).
+func (f *topicFilter) matches(topic string) bool {
+	topicSegs := topicPathSegments(topic)
+
+	for _, alternative := range strings.Split(f.expression, "|") {
+		if matchTopicPath(topicPathSegments(alternative), topicSegs) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// topicPathSegments splits a topic expression into local-name segments,
+// stripping any namespace prefix from each segment.
+func topicPathSegments(expr string) []string {
+	parts := strings.Split(strings.TrimSpace(expr), "/")
+	segs := make([]string, 0, len(parts))
+
+	for _, p := range parts {
+		if idx := strings.LastIndex(p, ":"); idx >= 0 {
+			p = p[idx+1:]
+		}
+
+		segs = append(segs, p)
+	}
+
+	return segs
+}
+
+// matchTopicPath compares a filter path against a topic path; a "*"
+// filter segment matches any single topic segment.
+func matchTopicPath(filter, topic []string) bool {
+	if len(filter) == 0 || len(filter) != len(topic) {
+		return false
+	}
+
+	for i := range filter {
+		if filter[i] == "*" {
+			continue
+		}
+
+		if filter[i] != topic[i] {
+			return false
+		}
+	}
+
+	return true
 }
 
 // parseISO8601Duration parses the ISO 8601 duration subset ONVIF uses on

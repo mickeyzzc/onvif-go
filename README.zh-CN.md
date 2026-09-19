@@ -188,11 +188,9 @@ diag, _ := client.DiagnoseAuth(ctx)
   服务客户端（规则/模块配置）尚未实现。
 - **Profile T**——服务端已支持 TLS 传输（`Config.TLSCertFile`/`TLSKeyFile`）；
   高级安全置备（PKI、802.1X、UsernameToken 之外的 WS-Security）不在范围。
-- **GetEventProperties** 当前只应答固定主题集，不带
-  `TopicNamespaceLocation`/`TopicExpressionDialect`；订阅过滤器接受但忽略
-  （如实声明，不做虚假广告）。
-- **存储配置**——请求载荷仍把 `Data` 建模为扁平结构；WSDL 的 `xsi:type`
-  多态形态（`tt:FileSystemStorage` 等）需要重设计后严格设备才能接受。
+- **GetEventProperties** 应答规格完整（主题命名空间/方言位置、两个强制
+  主题表达式方言——pull-point 过滤器如实执行——以及规范规定的空消息内容
+  方言）；消息内容过滤不应用也不广播。
 - **WebRTC**——保持关注，未实现。
 
 ## 文档

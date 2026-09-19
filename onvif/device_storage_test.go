@@ -25,21 +25,17 @@ func newMockDeviceStorageServer() *httptest.Server {
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope">
   <SOAP-ENV:Body>
     <tds:GetStorageConfigurationsResponse>
-      <tds:StorageConfigurations>
-        <tt:Token>storage-001</tt:Token>
-        <tt:Data>
-          <tt:LocalPath>/var/media/storage1</tt:LocalPath>
-          <tt:StorageUri>file:///var/media/storage1</tt:StorageUri>
-          <tt:Type>NFS</tt:Type>
-        </tt:Data>
+      <tds:StorageConfigurations token="storage-001">
+        <tds:Data>
+          <tds:LocalPath>/var/media/storage1</tds:LocalPath>
+          <tds:StorageUri>file:///var/media/storage1</tds:StorageUri>
+        </tds:Data>
       </tds:StorageConfigurations>
-      <tds:StorageConfigurations>
-        <tt:Token>storage-002</tt:Token>
-        <tt:Data>
-          <tt:LocalPath>/var/media/storage2</tt:LocalPath>
-          <tt:StorageUri>cifs://nas.local/recordings</tt:StorageUri>
-          <tt:Type>CIFS</tt:Type>
-        </tt:Data>
+      <tds:StorageConfigurations token="storage-002">
+        <tds:Data>
+          <tds:LocalPath>/var/media/storage2</tds:LocalPath>
+          <tds:StorageUri>cifs://nas.local/recordings</tds:StorageUri>
+        </tds:Data>
       </tds:StorageConfigurations>
     </tds:GetStorageConfigurationsResponse>
   </SOAP-ENV:Body>
@@ -50,13 +46,11 @@ func newMockDeviceStorageServer() *httptest.Server {
 <SOAP-ENV:Envelope xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope">
   <SOAP-ENV:Body>
     <tds:GetStorageConfigurationResponse>
-      <tds:StorageConfiguration>
-        <tt:Token>storage-001</tt:Token>
-        <tt:Data>
-          <tt:LocalPath>/var/media/storage1</tt:LocalPath>
-          <tt:StorageUri>file:///var/media/storage1</tt:StorageUri>
-          <tt:Type>NFS</tt:Type>
-        </tt:Data>
+      <tds:StorageConfiguration token="storage-001">
+        <tds:Data>
+          <tds:LocalPath>/var/media/storage1</tds:LocalPath>
+          <tds:StorageUri>file:///var/media/storage1</tds:StorageUri>
+        </tds:Data>
       </tds:StorageConfiguration>
     </tds:GetStorageConfigurationResponse>
   </SOAP-ENV:Body>
@@ -139,10 +133,6 @@ func TestGetStorageConfigurations(t *testing.T) {
 		t.Errorf("Expected first config path '/var/media/storage1', got '%s'", configs[0].Data.LocalPath)
 	}
 
-	if configs[0].Data.Type != "NFS" {
-		t.Errorf("Expected first config type 'NFS', got '%s'", configs[0].Data.Type)
-	}
-
 	if configs[1].Token != "storage-002" {
 		t.Errorf("Expected second config token 'storage-002', got '%s'", configs[1].Token)
 	}
@@ -178,10 +168,6 @@ func TestGetStorageConfiguration(t *testing.T) {
 	if config.Data.StorageURI != "file:///var/media/storage1" {
 		t.Errorf("Expected config URI 'file:///var/media/storage1', got '%s'", config.Data.StorageURI)
 	}
-
-	if config.Data.Type != "NFS" {
-		t.Errorf("Expected config type 'NFS', got '%s'", config.Data.Type)
-	}
 }
 
 func TestCreateStorageConfiguration(t *testing.T) {
@@ -199,7 +185,6 @@ func TestCreateStorageConfiguration(t *testing.T) {
 		Data: StorageConfigurationData{
 			LocalPath:  "/var/media/storage3",
 			StorageURI: "file:///var/media/storage3",
-			Type:       "Local",
 		},
 	}
 
@@ -228,7 +213,6 @@ func TestSetStorageConfiguration(t *testing.T) {
 		Data: StorageConfigurationData{
 			LocalPath:  "/var/media/updated",
 			StorageURI: "file:///var/media/updated",
-			Type:       "NFS",
 		},
 	}
 

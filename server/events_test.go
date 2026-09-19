@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 	"time"
@@ -207,8 +208,11 @@ func TestGetEventServiceCapabilitiesGolden(t *testing.T) {
 	}
 }
 
-// TestGetEventPropertiesResponse: minimal honest properties — fixed empty
-// topic set, no filter dialects (subscription filtering is not applied).
+// TestGetEventPropertiesResponse: the spec-complete answer — fixed empty
+// topic set, the two mandatory topic-expression dialects (both honored by
+// the pull-point filter), the spec-blessed empty message-content filter
+// dialect (content filters are not applied), and the ONVIF namespace/
+// schema locations.
 func TestGetEventPropertiesResponse(t *testing.T) {
 	_, mux := eventsTestServer(t)
 
@@ -223,12 +227,22 @@ func TestGetEventPropertiesResponse(t *testing.T) {
 		t.Fatalf("response missing GetEventPropertiesResponse:\n%s", body)
 	}
 
-	if !strings.Contains(body, "<FixedTopicSet xmlns=\"http://docs.oasis-open.org/wsn/b-2\">true</FixedTopicSet>") {
-		t.Errorf("FixedTopicSet not true:\n%s", body)
+	for _, want := range []string{
+		`<FixedTopicSet xmlns="http://docs.oasis-open.org/wsn/b-2">true</FixedTopicSet>`,
+		`http://docs.oasis-open.org/wsn/t-1/TopicExpression/Concrete`,
+		`http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet`,
+		`http://www.onvif.org/ver10/tev/topicns.xml`,
+		`http://www.onvif.org/ver10/schema/onvif.xsd`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("GetEventProperties body missing %q:\n%s", want, body)
+		}
 	}
 
-	if strings.Contains(body, "TopicExpressionDialect>") {
-		t.Errorf("no subscription filtering is applied, so no topic dialects may be advertised:\n%s", body)
+	// One empty message-content filter dialect: the no-content-filtering
+	// form the spec prescribes.
+	if strings.Count(body, "<MessageContentFilterDialect") != 1 {
+		t.Errorf("want exactly one MessageContentFilterDialect:\n%s", body)
 	}
 }
 
@@ -767,3 +781,108 @@ func TestParseISO8601Duration(t *testing.T) {
 // compile-time guard: the SOAP layer must expose the Sender-fault channel
 // used by the events handlers for client mistakes.
 var _ error = (*soap.SenderFaultError)(nil)
+
+// TestPullPointTopicFiltering pins the honored topic-expression filter:
+// Concrete (exact local path), ConcreteSet (alternatives with '*'
+// wildcards), no-filter subscriptions keep receiving everything, and an
+// unsupported dialect faults instead of being silently ignored.
+func TestPullPointTopicFiltering(t *testing.T) {
+	srv, mux := eventsTestServer(t)
+
+	subscribe := func(t *testing.T, filterXML string) string {
+		t.Helper()
+
+		status, body := postEventsSOAP(t, mux, "/onvif/events_service",
+			`<CreatePullPointSubscription xmlns="http://www.onvif.org/ver10/events/wsdl">`+
+				filterXML+
+				`<InitialTerminationTime>PT1M</InitialTerminationTime>`+
+				`</CreatePullPointSubscription>`)
+		if status != http.StatusOK {
+			t.Fatalf("subscribe status = %d: %s", status, body)
+		}
+
+		resp := decodeCreateResponse(t, body)
+
+		return resp.SubscriptionReference.Address
+	}
+
+	pull := func(t *testing.T, address string) []string {
+		t.Helper()
+
+		u, err := url.Parse(address)
+		if err != nil {
+			t.Fatalf("parse subscription address %q: %v", address, err)
+		}
+
+		status, body := postEventsSOAP(t, mux, u.Path,
+			`<PullMessages xmlns="http://www.onvif.org/ver10/events/wsdl">`+
+				`<Timeout>PT0S</Timeout><MessageLimit>10</MessageLimit></PullMessages>`)
+		if status != http.StatusOK {
+			t.Fatalf("pull status = %d: %s", status, body)
+		}
+
+		var topics []string
+
+		var resp struct {
+			Body struct {
+				Response struct {
+					Messages []struct {
+						Topic struct {
+							Value string `xml:",chardata"`
+						} `xml:"Topic"`
+					} `xml:"NotificationMessage"`
+				} `xml:"PullMessagesResponse"`
+			} `xml:"Body"`
+		}
+		if err := xml.Unmarshal([]byte(body), &resp); err != nil {
+			t.Fatalf("decode pull: %v", err)
+		}
+
+		for _, m := range resp.Body.Response.Messages {
+			topics = append(topics, m.Topic.Value)
+		}
+
+		return topics
+	}
+
+	srv.PublishEvent(Event{Topic: "tns1:VideoSource/MotionAlarm", Data: []SimpleItem{{Name: "State", Value: "active"}}})
+	srv.PublishEvent(Event{Topic: "tns1:Device/HardwareFailure/StorageFailure"})
+
+	concrete := subscribe(t, `<Filter><TopicExpression Dialect="http://docs.oasis-open.org/wsn/t-1/TopicExpression/Concrete">tns1:VideoSource/MotionAlarm</TopicExpression></Filter>`)
+	wildcard := subscribe(t, `<Filter><wsnt:TopicExpression xmlns:wsnt="http://docs.oasis-open.org/wsn/b-2" Dialect="http://www.onvif.org/ver10/tev/topicExpression/ConcreteSet">tns1:Device/*/*|tns1:VideoSource/*</wsnt:TopicExpression></Filter>`)
+	unfiltered := subscribe(t, ``)
+
+	srv.PublishEvent(Event{Topic: "tns1:VideoSource/MotionAlarm"})
+	srv.PublishEvent(Event{Topic: "tns1:Device/HardwareFailure/StorageFailure"})
+	srv.PublishEvent(Event{Topic: "tns1:VideoAnalytics/LineDetector/Crossed"})
+
+	if got := pull(t, concrete); len(got) != 1 || got[0] != "tns1:VideoSource/MotionAlarm" {
+		t.Errorf("Concrete filter delivered %v, want exactly MotionAlarm", got)
+	}
+
+	if got := pull(t, wildcard); len(got) != 2 {
+		t.Errorf("ConcreteSet filter delivered %v, want StorageFailure + MotionAlarm", got)
+	}
+
+	if got := pull(t, unfiltered); len(got) != 3 {
+		t.Errorf("unfiltered subscriber received %v, want all 3 post-subscribe events", got)
+	}
+
+	srv.PublishEvent(Event{Topic: "tns1:VideoAnalytics/LineDetector/Crossed"})
+
+	if got := pull(t, wildcard); len(got) != 0 {
+		t.Errorf("ConcreteSet filter leaked non-matching topic: %v", got)
+	}
+
+	if got := pull(t, unfiltered); len(got) != 1 {
+		t.Errorf("unfiltered subscriber missing event: %v", got)
+	}
+
+	status, body := postEventsSOAP(t, mux, "/onvif/events_service",
+		`<CreatePullPointSubscription xmlns="http://www.onvif.org/ver10/events/wsdl">`+
+			`<Filter><TopicExpression Dialect="http://www.w3.org/TR/1999/REC-xpath-19991116">tns1:VideoSource</TopicExpression></Filter>`+
+			`</CreatePullPointSubscription>`)
+	if status == http.StatusOK {
+		t.Errorf("unsupported dialect accepted:\n%s", body)
+	}
+}

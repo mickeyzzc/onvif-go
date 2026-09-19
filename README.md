@@ -226,13 +226,11 @@ Deliberate scope boundaries (tracked for future capability packages):
 - **Profile T** — TLS transport is supported on the server
   (`Config.TLSCertFile`/`TLSKeyFile`); advanced onboarding (PKI,
   802.1X, WS-Security beyond UsernameToken) is out of scope.
-- **GetEventProperties** currently serves the fixed-topic-set answer
-  without `TopicNamespaceLocation`/`TopicExpressionDialect`; subscription
-  filters are accepted and ignored (documented, no false advertising).
-- **Storage configurations** — the request payload still models `Data`
-  as a flat struct; the WSDL's `xsi:type`-polymorphic shape
-  (`tt:FileSystemStorage` &co.) needs a redesign before strict devices
-  accept it.
+- **GetEventProperties** serves the spec-complete answer (topic
+  namespace/dialect locations, the two mandatory topic-expression
+  dialects — honored by the pull-point filter — and the spec-blessed
+  empty message-content dialect); message-content filtering is not
+  applied and not advertised.
 - **WebRTC (Profile M-relevant later revisions)** — watched, not
   implemented.
 
