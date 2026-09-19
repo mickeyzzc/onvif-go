@@ -55,22 +55,24 @@ func (s *Service) CreateUsers(ctx context.Context, users []*User) error {
 	type CreateUsers struct {
 		XMLName xml.Name `xml:"tds:CreateUsers"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
+		XmlnsTT string   `xml:"xmlns:tt,attr"`
 		User    []struct {
-			Username  string `xml:"tds:Username"`
-			Password  string `xml:"tds:Password"`
-			UserLevel string `xml:"tds:UserLevel"`
+			Username  string `xml:"tt:Username"`
+			Password  string `xml:"tt:Password"`
+			UserLevel string `xml:"tt:UserLevel"`
 		} `xml:"tds:User"`
 	}
 
 	req := CreateUsers{
-		Xmlns: usersNamespace,
+		Xmlns:   usersNamespace,
+		XmlnsTT: "http://www.onvif.org/ver10/schema",
 	}
 
 	for _, user := range users {
 		req.User = append(req.User, struct {
-			Username  string `xml:"tds:Username"`
-			Password  string `xml:"tds:Password"`
-			UserLevel string `xml:"tds:UserLevel"`
+			Username  string `xml:"tt:Username"`
+			Password  string `xml:"tt:Password"`
+			UserLevel string `xml:"tt:UserLevel"`
 		}{
 			Username:  user.Username,
 			Password:  user.Password,
@@ -112,15 +114,17 @@ func (s *Service) SetUser(ctx context.Context, user *User) error {
 	type SetUser struct {
 		XMLName xml.Name `xml:"tds:SetUser"`
 		Xmlns   string   `xml:"xmlns:tds,attr"`
+		XmlnsTT string   `xml:"xmlns:tt,attr"`
 		User    struct {
-			Username  string  `xml:"tds:Username"`
-			Password  *string `xml:"tds:Password,omitempty"`
-			UserLevel string  `xml:"tds:UserLevel"`
+			Username  string  `xml:"tt:Username"`
+			Password  *string `xml:"tt:Password,omitempty"`
+			UserLevel string  `xml:"tt:UserLevel"`
 		} `xml:"tds:User"`
 	}
 
 	req := SetUser{
-		Xmlns: usersNamespace,
+		Xmlns:   usersNamespace,
+		XmlnsTT: "http://www.onvif.org/ver10/schema",
 	}
 	req.User.Username = user.Username
 	if user.Password != "" {
