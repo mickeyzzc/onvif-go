@@ -5,7 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [v2.1.0] — 2026-09-20
+
+The wire-format correctness release. Ground truth is now the official
+WSDL/XSD set (github.com/onvif/specs): every element this library sends
+or serves sits in the namespace the schemas assign it — the #90 defect
+(strict devices parsed empty payloads, answered HTTP 200 and silently did
+nothing) is closed end to end, and a follow-up WSDL audit corrected the
+remaining misassignments in both directions. New surfaces: the Media2
+client (the codec-agnostic H.265/AV1 configuration model), the Profile M
+analytics client, the metadata stream parser, and server-side TLS.
+
+**Breaking within the v2 line** (minor-versioned deliberately — see the
+release notes for the reasoning): the wire-format fixes change
+request/response bytes on the affected surfaces; GetScopes moves from
+the `Scopeitem` attribute to the schema's `ScopeDef`/`ScopeItem`
+elements; and `StorageConfigurationData.Type` is removed from the public
+model (no WSDL counterpart — a phantom field no conformant device ever
+populated).
+
 ### Added
 
 - Metadata stream parser (`metadata.Parse`, new package): decodes
@@ -14,9 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   polygon / center of gravity, class types with likelihoods incl. the
   deprecated candidate form, geo location, removed/idle behaviour,
   frame/object transformations). Namespace-lenient decode — both
-  default-xmlns and prefixed documents parse; golden + garbage tests.
+  default-xmlns and prefixed documents parse; golden + garbage tests. (#102)
 - Analytics client `GetSupportedMetadata`: sample frames parsed through
-  the metadata package.
+  the metadata package. (#102)
 - Media2 service client (`onvif.Client.Media2()`, ver20/media/wsdl) — the
   codec-agnostic configuration model: GetProfiles (inline configuration
   set; video encoder fully modeled, other families by token/name),
@@ -26,8 +44,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   xs:list attributes), SetVideoEncoderConfiguration (verbatim encoding
   pass-through), GetStreamUri. Requests follow the WSDL contract
   (tr2-wrapped, tt: payload children with `xmlns:tt`). Media2 rides the
-  media service endpoint unless pinned via `SetServiceEndpoint`.
-### Added
+  media service endpoint unless pinned via `SetServiceEndpoint`. (#103)
+- Server: TLS transport (Profile T baseline) — `Config.TLSCertFile`/
+  `TLSKeyFile` serve the listener over HTTPS (`ServeTLS`); both must be
+  set together. `Start` now binds its listener explicitly, so
+  `Server.ListenAddr()` reports the bound address (with `Port: 0`, the
+  kernel-assigned port) as soon as Start runs. (#98)
+- Client media: MPEG-4 encoder options decode
+  (`VideoEncoderConfigurationOptions.MPEG4` — resolutions, gov-length/
+  frame-rate/encoding-interval ranges, Mpeg4ProfilesSupported); encoder
+  `Encoding` values pass through verbatim (pinned with `H265` — ver10 has
+  no H.265/AV1 options; those live in Media2, see the README roadmap). (#98)
+- Analytics service client (`onvif.Client.Analytics()`, ver20 analytics
+  WSDL): GetServiceCapabilities, Get/GetSupported for rules and analytics
+  modules, Create/Modify/DeleteAnalyticsModules — the Profile M
+  configuration core. Requests follow the WSDL namespace contract
+  (tan-wrapped, tt:Config payloads with `xmlns:tt`); wire-namespace
+  envelope test included. Client endpoint discovery picks up a
+  capabilities-advertised analytics XAddr; `SetServiceEndpoint` works as
+  for the other services. (#99)
 - Events service conformance: GetEventProperties now answers the
   spec-complete form — `TopicNamespaceLocation` (ONVIF topic namespace),
   the two mandatory topic-expression dialects, the spec-blessed single
@@ -39,40 +74,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subscription delivers (previously filters were accepted and ignored);
   unsupported dialects and empty expressions fault; an absent dialect
   defaults to Concrete. PullMessages with `Timeout PT0S` is now a legal
-  immediate poll.
-
-### Fixed (wire format)
-- Storage configuration requests were non-conformant: the payload structs
-  carried no namespaces, the WSDL spells the element `StorageUri` (not
-  `StorageURI`), Create's `StorageConfiguration` element is typed as the
-  *data* type (children directly under it, no Data wrapper, no token),
-  Set's is the full type (token attribute + Data wrapper), and the token
-  is an attribute, not an element. Rewritten accordingly with
-  tds-qualified children; `StorageConfigurationData.Type` (no WSDL
-  counterpart) removed from the public model — **breaking** for anyone
-  setting it. Wire-namespace test pins both payloads.
-
-### Added
-- Server: TLS transport (Profile T baseline) — `Config.TLSCertFile`/
-  `TLSKeyFile` serve the listener over HTTPS (`ServeTLS`); both must be
-  set together. `Start` now binds its listener explicitly, so
-  `Server.ListenAddr()` reports the bound address (with `Port: 0`, the
-  kernel-assigned port) as soon as Start runs.
-- Client media: MPEG-4 encoder options decode
-  (`VideoEncoderConfigurationOptions.MPEG4` — resolutions, gov-length/
-  frame-rate/encoding-interval ranges, Mpeg4ProfilesSupported); encoder
-  `Encoding` values pass through verbatim (pinned with `H265` — ver10 has
-  no H.265/AV1 options; those live in Media2, see the README roadmap).
-- Analytics service client (`onvif.Client.Analytics()`, ver20 analytics
-  WSDL): GetServiceCapabilities, Get/GetSupported for rules and analytics
-  modules, Create/Modify/DeleteAnalyticsModules — the Profile M
-  configuration core. Requests follow the WSDL namespace contract
-  (tan-wrapped, tt:Config payloads with `xmlns:tt`); wire-namespace
-  envelope test included. Client endpoint discovery picks up a
-  capabilities-advertised analytics XAddr; `SetServiceEndpoint` works as
-  for the other services.
+  immediate poll. (#101)
+- Added a WSDL-grounded namespace contract suite: every served response
+  surface is marshaled and decoded namespace-strictly (values populate
+  only when elements resolve to the exact WSDL-assigned namespace), plus
+  an explicit-prefix end-to-end check pinning the conventional prefixes. (#93)
+- Test: conformance loopback — the library's own client and simulator
+  exchange real HTTP across the full operation matrix (device, PTZ,
+  imaging; including the GetScopes element-form round-trip). (#95)
+- Test: native fuzz targets drive the real per-op response parsers
+  (device/media/events) against hostile bodies, seeded from the contract
+  wire formats. (#96)
+- Test: the `cmd/onvif-server` config builders are covered (6.8% →
+  21.6%). (#100)
 
 ### Changed
+
 - Server request bodies are now extracted with full namespace context
   instead of raw innerxml slicing: the first Body child is re-encoded as
   a self-contained fragment (default-xmlns canonical form), with
@@ -83,9 +100,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   may decode requests with namespace-strict tags. Prefixed non-xmlns
   attributes on request bodies (rare; `xsi:type`) lose their prefix in
   the canonical fragment. The legacy exact-bytes handler-body assertion
-  now sees the equivalent explicit-end-tag form.
+  now sees the equivalent explicit-end-tag form. (#97)
+- Toolchain floor `go1.26.6` (stdlib security fixes); the module and
+  CI are govulncheck-clean. (#89)
 
 ### Fixed (wire format)
+
+- Client request serialization put `ver10/schema` elements into the SOAP
+  envelope namespace (#90): the PTZ vectors (`PanTilt`/`Zoom` inside
+  Velocity/Position/Translation/Speed), the imaging settings children
+  (`Brightness`, `Contrast`, `Exposure`, `Focus`, …) and focus-move
+  payloads, and the certificate load children (`CertificateID`/
+  `Certificate`/`PrivateKey`) were emitted unprefixed. Because the SOAP
+  `Body` declares `xmlns="…soap-envelope"`, those elements resolved into
+  the envelope namespace — strict devices (Dahua &co.) parsed empty
+  payloads, answered HTTP 200 and silently did nothing. They now carry
+  the `tt:` prefix with `xmlns:tt="http://www.onvif.org/ver10/schema"`
+  declared on the request root (the pattern `SetNetworkInterfaces` already
+  used). **Wire-format change** on the affected requests. Response parsing
+  is unchanged (unprefixed decode tags keep the lenient any-namespace
+  matching). (#90, #91)
+- Server response serialization had the same namespace defect (#90):
+  ver10/schema-typed response children — the MediaUri family
+  (Uri/InvalidAfterConnect/InvalidAfterReboot/Timeout), SystemDateAndTime
+  and its date/time components, the device-information and capabilities
+  fields, the PTZ status/preset vectors, and the imaging settings/options
+  families — were marshaled unprefixed and inherited the response root's
+  service namespace. Strict ONVIF clients (ONVIF Device Manager &co.)
+  could not read the fields. They now resolve to ver10/schema: explicit
+  prefix mode renders them as `tt:` (matching the real-device capture in
+  testdata/captures), default mode emits per-element xmlns declarations.
+  **Wire-format change** on the affected responses. Request decoding is
+  unchanged — the shared provider model keeps unprefixed tags (lenient
+  any-namespace matching), so both prefix-style and default-xmlns
+  requests keep parsing. (#90, #92)
 - Server responses misassigned several namespaces relative to the official
   WSDL/XSD set (github.com/onvif/specs, all schemas
   elementFormDefault="qualified"; follow-up audit to #90). Elements
@@ -110,7 +158,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `wsa:`/`wstop:` prefixes). **Wire-format change** on the affected
   responses. gSOAP-style strict clients previously read empty values for
   the #92-placed elements (e.g. `tt:Manufacturer` where the WSDL requires
-  `tds:`).
+  `tds:`). (#93)
 - GetScopes responses used a non-conformant wire shape — `<ScopeDefinition
   Scopeitem="…">` — where the WSDL's `tt:Scope` type is a `ScopeDef` enum
   element ("Fixed"/"Configurable") followed by the `ScopeItem` URI
@@ -118,13 +166,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ScopeDef><tt:ScopeItem>…</tt:ScopeItem></tds:Scopes>`, the shape
   spec-faithful clients (and this library's own client) parse.
   **Wire-format change**; consumers reading the `Scopeitem` attribute
-  must switch to the `ScopeItem` element.
-- Added a WSDL-grounded namespace contract suite: every served response
-  surface is marshaled and decoded namespace-strictly (values populate
-  only when elements resolve to the exact WSDL-assigned namespace), plus
-  an explicit-prefix end-to-end check pinning the conventional prefixes.
-
-### Fixed (wire format, #90 request side)
+  must switch to the `ScopeItem` element. (#93)
 - Client request payloads misnamespaced two more schema-typed families
   (WSDL audit follow-up to #90/#91): CreateUsers/SetUser carried
   Username/Password/UserLevel in `tds:` where the WSDL types the User
@@ -133,39 +175,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   DNSname) in `tds:` where the wrappers are typed `tt:IPAddress` /
   `tt:NetworkHost`. Strict devices dropped the user records and manual
   DNS/NTP entries. Both now send `tt:` children with `xmlns:tt` declared
-  on the request root; wire-namespace tests pin the envelopes. Known gap
-  (documented in the roadmap): the storage configuration payload still
-  needs its `xsi:type`-polymorphic `Data` shape redesigned.
-
-### Fixed (wire format)
-- Client request serialization put `ver10/schema` elements into the SOAP
-  envelope namespace (#90): the PTZ vectors (`PanTilt`/`Zoom` inside
-  Velocity/Position/Translation/Speed), the imaging settings children
-  (`Brightness`, `Contrast`, `Exposure`, `Focus`, …) and focus-move
-  payloads, and the certificate load children (`CertificateID`/
-  `Certificate`/`PrivateKey`) were emitted unprefixed. Because the SOAP
-  `Body` declares `xmlns="…soap-envelope"`, those elements resolved into
-  the envelope namespace — strict devices (Dahua &co.) parsed empty
-  payloads, answered HTTP 200 and silently did nothing. They now carry
-  the `tt:` prefix with `xmlns:tt="http://www.onvif.org/ver10/schema"`
-  declared on the request root (the pattern `SetNetworkInterfaces` already
-  used). **Wire-format change** on the affected requests. Response parsing
-  is unchanged (unprefixed decode tags keep the lenient any-namespace
-  matching).
-- Server response serialization had the same namespace defect (#90):
-  ver10/schema-typed response children — the MediaUri family
-  (Uri/InvalidAfterConnect/InvalidAfterReboot/Timeout), SystemDateAndTime
-  and its date/time components, the device-information and capabilities
-  fields, the PTZ status/preset vectors, and the imaging settings/options
-  families — were marshaled unprefixed and inherited the response root's
-  service namespace. Strict ONVIF clients (ONVIF Device Manager &co.)
-  could not read the fields. They now resolve to ver10/schema: explicit
-  prefix mode renders them as `tt:` (matching the real-device capture in
-  testdata/captures), default mode emits per-element xmlns declarations.
-  **Wire-format change** on the affected responses. Request decoding is
-  unchanged — the shared provider model keeps unprefixed tags (lenient
-  any-namespace matching), so both prefix-style and default-xmlns
-  requests keep parsing.
+  on the request root; wire-namespace tests pin the envelopes.
+- Storage configuration requests were non-conformant: the payload structs
+  carried no namespaces, the WSDL spells the element `StorageUri` (not
+  `StorageURI`), Create's `StorageConfiguration` element is typed as the
+  *data* type (children directly under it, no Data wrapper, no token),
+  Set's is the full type (token attribute + Data wrapper), and the token
+  is an attribute, not an element. Rewritten accordingly with
+  tds-qualified children; `StorageConfigurationData.Type` (no WSDL
+  counterpart) removed from the public model — **breaking** for anyone
+  setting it. Wire-namespace test pins both payloads. (#101)
 
 ## [v2.0.0] — 2026-09-17
 
