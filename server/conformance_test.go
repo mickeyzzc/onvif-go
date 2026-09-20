@@ -213,6 +213,62 @@ func TestConformancePTZMatrix(t *testing.T) {
 	if err := client.PTZ().GotoPreset(ctx, token, preset.Token, nil); err != nil {
 		t.Fatalf("GotoPreset: %v", err)
 	}
+
+	// The parity closure: preset writes + configuration/node enumeration
+	// (SetPreset/RemovePreset behind PTZPresetWriter; GetConfigurations
+	// and GetNodes from the profile configuration).
+	configs, err := client.PTZ().GetConfigurations(ctx)
+	if err != nil {
+		t.Fatalf("GetConfigurations: %v", err)
+	}
+
+	if len(configs) != 1 || configs[0].NodeToken != config.Profiles[0].PTZ.NodeToken {
+		t.Fatalf("GetConfigurations = %+v, want one entry with node %s",
+			configs, config.Profiles[0].PTZ.NodeToken)
+	}
+
+	if configs[0].PanTiltLimits == nil || configs[0].PanTiltLimits.Range.XRange == nil {
+		t.Errorf("GetConfigurations pan limits not parsed: %+v", configs[0].PanTiltLimits)
+	}
+
+	newToken, err := client.PTZ().SetPreset(ctx, token, "Entrance", "")
+	if err != nil {
+		t.Fatalf("SetPreset (generated): %v", err)
+	}
+
+	if newToken == "" {
+		t.Fatal("SetPreset returned an empty token")
+	}
+
+	if _, err := client.PTZ().SetPreset(ctx, token, "Entrance-East", newToken); err != nil {
+		t.Fatalf("SetPreset (update by token): %v", err)
+	}
+
+	presets, err = client.PTZ().GetPresets(ctx, token)
+	if err != nil {
+		t.Fatalf("GetPresets after SetPreset: %v", err)
+	}
+
+	if len(presets) != 2 || presets[1].Token != newToken || presets[1].Name != "Entrance-East" {
+		t.Fatalf("presets after SetPreset = %+v, want the configured one plus renamed %s", presets, newToken)
+	}
+
+	if err := client.PTZ().GotoPreset(ctx, token, newToken, nil); err != nil {
+		t.Fatalf("GotoPreset to the generated preset: %v", err)
+	}
+
+	if err := client.PTZ().RemovePreset(ctx, token, newToken); err != nil {
+		t.Fatalf("RemovePreset: %v", err)
+	}
+
+	presets, err = client.PTZ().GetPresets(ctx, token)
+	if err != nil {
+		t.Fatalf("GetPresets after RemovePreset: %v", err)
+	}
+
+	if len(presets) != 1 || presets[0].Token != "preset_gate" {
+		t.Fatalf("presets after RemovePreset = %+v, want only preset_gate back", presets)
+	}
 }
 
 func TestConformanceImagingMatrix(t *testing.T) {

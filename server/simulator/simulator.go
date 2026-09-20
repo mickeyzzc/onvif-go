@@ -23,6 +23,8 @@ type Simulator struct {
 	mu        sync.RWMutex
 	streams   map[string]provider.StreamInfo
 	ptz       map[string]*provider.PTZState
+	presets   map[string][]provider.Preset
+	presetSeq int
 	imaging   map[string]*provider.ImagingState
 	jpegCache map[string][]byte
 }
@@ -36,6 +38,7 @@ func New(profiles []provider.ProfileConfig, info provider.DeviceInfo) *Simulator
 		profiles:  profiles,
 		streams:   make(map[string]provider.StreamInfo),
 		ptz:       make(map[string]*provider.PTZState),
+		presets:   make(map[string][]provider.Preset),
 		imaging:   make(map[string]*provider.ImagingState),
 		jpegCache: make(map[string][]byte),
 	}
@@ -51,6 +54,20 @@ func New(profiles []provider.ProfileConfig, info provider.DeviceInfo) *Simulator
 				Position:   provider.PTZPosition{Pan: 0, Tilt: 0, Zoom: 0},
 				LastUpdate: time.Now(),
 			}
+
+			// Seed the mutable preset store from the configured presets,
+			// so SetPreset/RemovePreset start from what GetPresets showed.
+			configured := make([]provider.Preset, len(profile.PTZ.Presets))
+			for j, preset := range profile.PTZ.Presets {
+				configured[j] = provider.Preset{
+					Token:    preset.Token,
+					Name:     preset.Name,
+					Position: preset.Position,
+				}
+			}
+
+			sim.presets[profile.Token] = configured
+			sim.presetSeq = max(sim.presetSeq, len(configured))
 		}
 
 		sim.imaging[profile.VideoSource.Token] = defaultImagingState()

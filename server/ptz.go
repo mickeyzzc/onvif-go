@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/server/provider"
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
@@ -153,50 +154,129 @@ type SetPresetRequest struct {
 	PresetToken  string   `xml:"PresetToken,omitempty"`
 }
 
-// SetPresetResponse represents SetPreset response.
+// SetPresetResponse represents SetPreset response. The WSDL declares the
+// response empty; the PresetToken echo is kept (tptz-namespaced) to
+// match the Rust twin and common device practice — clients need the
+// generated token when they did not supply one.
 type SetPresetResponse struct {
 	XMLName     xml.Name `xml:"http://www.onvif.org/ver20/ptz/wsdl SetPresetResponse"`
-	PresetToken string   `xml:"PresetToken"`
+	PresetToken string   `xml:"http://www.onvif.org/ver20/ptz/wsdl PresetToken,omitempty"`
 }
 
-// GetConfigurationsResponse represents GetConfigurations response.
+// RemovePresetRequest represents RemovePreset request.
+type RemovePresetRequest struct {
+	XMLName      xml.Name `xml:"http://www.onvif.org/ver20/ptz/wsdl RemovePreset"`
+	ProfileToken string   `xml:"ProfileToken"`
+	PresetName   string   `xml:"PresetName,omitempty"`
+	PresetToken  string   `xml:"PresetToken,omitempty"`
+}
+
+// RemovePresetResponse represents RemovePreset response.
+type RemovePresetResponse struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver20/ptz/wsdl RemovePresetResponse"`
+}
+
+// GetConfigurationsRequest represents GetConfigurations request (no
+// parameters).
+type GetConfigurationsRequest struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver20/ptz/wsdl GetConfigurations"`
+}
+
+// GetConfigurationsResponse represents GetConfigurations response. The
+// PTZConfiguration wrapper elements are locally declared in the PTZ WSDL
+// (tptz); the configuration's own children are ver10/schema.
 type GetConfigurationsResponse struct {
 	XMLName          xml.Name              `xml:"http://www.onvif.org/ver20/ptz/wsdl GetConfigurationsResponse"`
-	PTZConfiguration []PTZConfigurationExt `xml:"PTZConfiguration"`
+	PTZConfiguration []PTZConfigurationExt `xml:"http://www.onvif.org/ver20/ptz/wsdl PTZConfiguration"`
 }
 
 // PTZConfigurationExt represents PTZ configuration with extensions.
 type PTZConfigurationExt struct {
 	Token         string         `xml:"token,attr"`
-	Name          string         `xml:"Name"`
-	UseCount      int            `xml:"UseCount"`
-	NodeToken     string         `xml:"NodeToken"`
-	PanTiltLimits *PanTiltLimits `xml:"PanTiltLimits,omitempty"`
-	ZoomLimits    *ZoomLimits    `xml:"ZoomLimits,omitempty"`
+	Name          string         `xml:"http://www.onvif.org/ver10/schema Name"`
+	UseCount      int            `xml:"http://www.onvif.org/ver10/schema UseCount"`
+	NodeToken     string         `xml:"http://www.onvif.org/ver10/schema NodeToken"`
+	PanTiltLimits *PanTiltLimits `xml:"http://www.onvif.org/ver10/schema PanTiltLimits,omitempty"`
+	ZoomLimits    *ZoomLimits    `xml:"http://www.onvif.org/ver10/schema ZoomLimits,omitempty"`
 }
 
 // PanTiltLimits represents pan/tilt limits.
 type PanTiltLimits struct {
-	Range Space2DDescription `xml:"Range"`
+	Range Space2DDescription `xml:"http://www.onvif.org/ver10/schema Range"`
 }
 
 // ZoomLimits represents zoom limits.
 type ZoomLimits struct {
-	Range Space1DDescription `xml:"Range"`
+	Range Space1DDescription `xml:"http://www.onvif.org/ver10/schema Range"`
 }
 
 // Space2DDescription represents 2D space description.
 type Space2DDescription struct {
-	URI    string     `xml:"URI"`
-	XRange FloatRange `xml:"XRange"`
-	YRange FloatRange `xml:"YRange"`
+	URI    string         `xml:"http://www.onvif.org/ver10/schema URI"`
+	XRange respFloatRange `xml:"http://www.onvif.org/ver10/schema XRange"`
+	YRange respFloatRange `xml:"http://www.onvif.org/ver10/schema YRange"`
 }
 
 // Space1DDescription represents 1D space description.
 type Space1DDescription struct {
-	URI    string     `xml:"URI"`
-	XRange FloatRange `xml:"XRange"`
+	URI    string         `xml:"http://www.onvif.org/ver10/schema URI"`
+	XRange respFloatRange `xml:"http://www.onvif.org/ver10/schema XRange"`
 }
+
+// respFloatRange is shared with the imaging service (imaging.go): the
+// ns-correct serialization shape of tt:FloatRange.
+
+// GetNodesRequest represents GetNodes request (no parameters).
+type GetNodesRequest struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver20/ptz/wsdl GetNodes"`
+}
+
+// GetNodesResponse represents GetNodes response. PTZNode is tptz-local;
+// its children (per tt:PTZNode) are ver10/schema. The token attribute
+// is inherited from tt:DeviceEntity.
+type GetNodesResponse struct {
+	XMLName xml.Name      `xml:"http://www.onvif.org/ver20/ptz/wsdl GetNodesResponse"`
+	PTZNode []respPTZNode `xml:"http://www.onvif.org/ver20/ptz/wsdl PTZNode"`
+}
+
+// respPTZNode is the ns-correct serialization shape of tt:PTZNode.
+type respPTZNode struct {
+	Token                  string         `xml:"token,attr"`
+	Name                   string         `xml:"http://www.onvif.org/ver10/schema Name"`
+	SupportedPTZSpaces     *respPTZSpaces `xml:"http://www.onvif.org/ver10/schema SupportedPTZSpaces,omitempty"`
+	MaximumNumberOfPresets int            `xml:"http://www.onvif.org/ver10/schema MaximumNumberOfPresets"`
+	HomeSupported          bool           `xml:"http://www.onvif.org/ver10/schema HomeSupported"`
+}
+
+// respPTZSpaces is tt:SupportedPTZSpaces — the movement spaces the node
+// serves, emitted per the configuration's capability flags.
+type respPTZSpaces struct {
+	AbsolutePanTiltPositionSpace   *respSpace2D `xml:"http://www.onvif.org/ver10/schema AbsolutePanTiltPositionSpace,omitempty"`
+	AbsoluteZoomPositionSpace      *respSpace1D `xml:"http://www.onvif.org/ver10/schema AbsoluteZoomPositionSpace,omitempty"`
+	ContinuousPanTiltVelocitySpace *respSpace2D `xml:"http://www.onvif.org/ver10/schema ContinuousPanTiltVelocitySpace,omitempty"`
+	ContinuousZoomVelocitySpace    *respSpace1D `xml:"http://www.onvif.org/ver10/schema ContinuousZoomVelocitySpace,omitempty"`
+}
+
+// respSpace2D is one tt:Space2DDescription entry inside SupportedPTZSpaces.
+type respSpace2D struct {
+	URI    string         `xml:"http://www.onvif.org/ver10/schema URI"`
+	XRange respFloatRange `xml:"http://www.onvif.org/ver10/schema XRange"`
+	YRange respFloatRange `xml:"http://www.onvif.org/ver10/schema YRange"`
+}
+
+// respSpace1D is one tt:Space1DDescription entry inside SupportedPTZSpaces.
+type respSpace1D struct {
+	URI    string         `xml:"http://www.onvif.org/ver10/schema URI"`
+	XRange respFloatRange `xml:"http://www.onvif.org/ver10/schema XRange"`
+}
+
+// Canonical PTZ space URIs (ver10/tptz).
+const (
+	spacePanTiltPosition = "http://www.onvif.org/ver10/tptz/PanTiltSpaces/PositionGenericSpace"
+	spaceZoomPosition    = "http://www.onvif.org/ver10/tptz/ZoomSpaces/PositionGenericSpace"
+	spacePanTiltVelocity = "http://www.onvif.org/ver10/tptz/PanTiltSpaces/VelocityGenericSpace"
+	spaceZoomVelocity    = "http://www.onvif.org/ver10/tptz/ZoomSpaces/VelocityGenericSpace"
+)
 
 // PTZ service handlers - stateless translations between SOAP and the
 // PTZ provider.
@@ -294,11 +374,28 @@ func (s *Server) HandleGetStatus(rc *soap.RequestContext, body []byte) (interfac
 	}, nil
 }
 
-// HandleGetPresets handles GetPresets request.
+// HandleGetPresets handles GetPresets request. When the PTZ provider
+// implements PTZPresetReader (mutable storage — the simulator does), the
+// live store is served; otherwise presets come from the static profile
+// configuration.
 func (s *Server) HandleGetPresets(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req GetPresetsRequest
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	if reader, ok := s.ptz.(provider.PTZPresetReader); ok {
+		presets, err := reader.Presets(req.ProfileToken)
+		if err != nil {
+			return nil, err
+		}
+
+		out := make([]PTZPreset, len(presets))
+		for i, preset := range presets {
+			out[i] = presetToWire(preset)
+		}
+
+		return &GetPresetsResponse{Preset: out}, nil
 	}
 
 	// Find the profile configuration
@@ -318,24 +415,29 @@ func (s *Server) HandleGetPresets(rc *soap.RequestContext, body []byte) (interfa
 	// Build presets response
 	presets := make([]PTZPreset, len(profileCfg.PTZ.Presets))
 	for i, preset := range profileCfg.PTZ.Presets {
-		presets[i] = PTZPreset{
-			Token: preset.Token,
-			Name:  preset.Name,
-			PTZPosition: &respPTZVector{
-				PanTilt: &respVector2D{
-					X: preset.Position.Pan,
-					Y: preset.Position.Tilt,
-				},
-				Zoom: &respVector1D{
-					X: preset.Position.Zoom,
-				},
-			},
-		}
+		presets[i] = presetToWire(preset)
 	}
 
 	return &GetPresetsResponse{
 		Preset: presets,
 	}, nil
+}
+
+// presetToWire maps a provider.Preset onto the response shape.
+func presetToWire(preset provider.Preset) PTZPreset {
+	return PTZPreset{
+		Token: preset.Token,
+		Name:  preset.Name,
+		PTZPosition: &respPTZVector{
+			PanTilt: &respVector2D{
+				X: preset.Position.Pan,
+				Y: preset.Position.Tilt,
+			},
+			Zoom: &respVector1D{
+				X: preset.Position.Zoom,
+			},
+		},
+	}
 }
 
 // HandleGotoPreset handles GotoPreset request.
@@ -351,6 +453,144 @@ func (s *Server) HandleGotoPreset(rc *soap.RequestContext, body []byte) (interfa
 
 	return &GotoPresetResponse{}, nil
 }
+
+// HandleSetPreset handles SetPreset request — registered only when the
+// PTZ provider implements PTZPresetWriter.
+func (s *Server) HandleSetPreset(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	var req SetPresetRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	writer, ok := s.ptz.(provider.PTZPresetWriter)
+	if !ok {
+		return nil, fmt.Errorf("%w: SetPreset", ErrPTZNotSupported)
+	}
+
+	token, err := writer.SetPreset(req.ProfileToken, req.PresetName, req.PresetToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SetPresetResponse{PresetToken: token}, nil
+}
+
+// HandleRemovePreset handles RemovePreset request — registered only when
+// the PTZ provider implements PTZPresetWriter.
+func (s *Server) HandleRemovePreset(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	var req RemovePresetRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	writer, ok := s.ptz.(provider.PTZPresetWriter)
+	if !ok {
+		return nil, fmt.Errorf("%w: RemovePreset", ErrPTZNotSupported)
+	}
+
+	if err := writer.RemovePreset(req.ProfileToken, req.PresetToken); err != nil {
+		return nil, err
+	}
+
+	return &RemovePresetResponse{}, nil
+}
+
+// HandleGetConfigurations handles GetConfigurations request — one
+// PTZConfiguration per PTZ-capable profile, from the static profile
+// configuration.
+func (s *Server) HandleGetConfigurations(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	var req GetConfigurationsRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	configs := make([]PTZConfigurationExt, 0, len(s.config.Profiles))
+	for i := range s.config.Profiles {
+		profile := &s.config.Profiles[i]
+		if profile.PTZ == nil {
+			continue
+		}
+
+		configs = append(configs, PTZConfigurationExt{
+			Token:     profile.Token,
+			Name:      profile.Name,
+			UseCount:  1,
+			NodeToken: profile.PTZ.NodeToken,
+			PanTiltLimits: &PanTiltLimits{Range: Space2DDescription{
+				URI:    spacePanTiltPosition,
+				XRange: respFloatRange{Min: profile.PTZ.PanRange.Min, Max: profile.PTZ.PanRange.Max},
+				YRange: respFloatRange{Min: profile.PTZ.TiltRange.Min, Max: profile.PTZ.TiltRange.Max},
+			}},
+			ZoomLimits: &ZoomLimits{Range: Space1DDescription{
+				URI:    spaceZoomPosition,
+				XRange: respFloatRange{Min: profile.PTZ.ZoomRange.Min, Max: profile.PTZ.ZoomRange.Max},
+			}},
+		})
+	}
+
+	return &GetConfigurationsResponse{PTZConfiguration: configs}, nil
+}
+
+// HandleGetNodes handles GetNodes request — the distinct PTZ nodes
+// behind the profile set, with the movement spaces the configuration
+// flags advertise.
+func (s *Server) HandleGetNodes(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	var req GetNodesRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	seen := make(map[string]bool)
+	nodes := make([]respPTZNode, 0, len(s.config.Profiles))
+	for i := range s.config.Profiles {
+		profile := &s.config.Profiles[i]
+		if profile.PTZ == nil || seen[profile.PTZ.NodeToken] {
+			continue
+		}
+
+		seen[profile.PTZ.NodeToken] = true
+
+		var spaces *respPTZSpaces
+		if profile.PTZ.SupportsAbsolute || profile.PTZ.SupportsContinuous {
+			spaces = &respPTZSpaces{}
+			if profile.PTZ.SupportsAbsolute {
+				spaces.AbsolutePanTiltPositionSpace = &respSpace2D{
+					URI:    spacePanTiltPosition,
+					XRange: respFloatRange{Min: profile.PTZ.PanRange.Min, Max: profile.PTZ.PanRange.Max},
+					YRange: respFloatRange{Min: profile.PTZ.TiltRange.Min, Max: profile.PTZ.TiltRange.Max},
+				}
+				spaces.AbsoluteZoomPositionSpace = &respSpace1D{
+					URI:    spaceZoomPosition,
+					XRange: respFloatRange{Min: profile.PTZ.ZoomRange.Min, Max: profile.PTZ.ZoomRange.Max},
+				}
+			}
+			if profile.PTZ.SupportsContinuous {
+				spaces.ContinuousPanTiltVelocitySpace = &respSpace2D{
+					URI:    spacePanTiltVelocity,
+					XRange: respFloatRange{Min: -1, Max: 1},
+					YRange: respFloatRange{Min: -1, Max: 1},
+				}
+				spaces.ContinuousZoomVelocitySpace = &respSpace1D{
+					URI:    spaceZoomVelocity,
+					XRange: respFloatRange{Min: -1, Max: 1},
+				}
+			}
+		}
+
+		nodes = append(nodes, respPTZNode{
+			Token:                  profile.PTZ.NodeToken,
+			Name:                   profile.PTZ.NodeToken,
+			SupportedPTZSpaces:     spaces,
+			MaximumNumberOfPresets: maxPresetsPerNode,
+			HomeSupported:          false,
+		})
+	}
+
+	return &GetNodesResponse{PTZNode: nodes}, nil
+}
+
+// maxPresetsPerNode is the simulator's advertised preset capacity.
+const maxPresetsPerNode = 32
 
 // Helper functions
 

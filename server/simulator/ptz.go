@@ -148,28 +148,115 @@ func (s *Simulator) Status(profileToken string) (provider.PTZState, error) {
 }
 
 // GotoPreset implements provider.PTZProvider. The preset position is
-// resolved from the profile configuration (kept by the server) — the
-// simulator accepts the resolved position via MoveToPreset.
+// resolved from the mutable preset store (seeded from the profile
+// configuration) so presets created via SetPreset are reachable too.
 func (s *Simulator) GotoPreset(profileToken, presetToken string) error {
-	profile, ok := s.Profile(profileToken)
-	if !ok || profile.PTZ == nil {
+	s.mu.RLock()
+	presets, ok := s.presets[profileToken]
+	if !ok {
+		s.mu.RUnlock()
+
 		return fmt.Errorf("%w: %s", provider.ErrPTZNotSupported, profileToken)
 	}
 
 	var presetPos *provider.PTZPosition
-	for i := range profile.PTZ.Presets {
-		if profile.PTZ.Presets[i].Token == presetToken {
-			presetPos = &profile.PTZ.Presets[i].Position
+	for i := range presets {
+		if presets[i].Token == presetToken {
+			presetPos = &presets[i].Position
 
 			break
 		}
 	}
+	s.mu.RUnlock()
 
 	if presetPos == nil {
 		return fmt.Errorf("%w: %s", provider.ErrPresetNotFound, presetToken)
 	}
 
 	return s.MoveToPreset(profileToken, *presetPos)
+}
+
+// Presets implements provider.PTZPresetReader: the mutable store's
+// current contents for a profile.
+func (s *Simulator) Presets(profileToken string) ([]provider.Preset, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	presets, ok := s.presets[profileToken]
+	if !ok {
+		return nil, fmt.Errorf("%w: %s", provider.ErrPTZNotSupported, profileToken)
+	}
+
+	out := make([]provider.Preset, len(presets))
+	copy(out, presets)
+
+	return out, nil
+}
+
+// SetPreset implements provider.PTZPresetWriter. A non-empty
+// presetToken updates or creates that exact token; an empty one
+// generates `preset_N`. The captured position is the current one.
+func (s *Simulator) SetPreset(profileToken, presetName, presetToken string) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	presets, ok := s.presets[profileToken]
+	if !ok {
+		return "", fmt.Errorf("%w: %s", provider.ErrPTZNotSupported, profileToken)
+	}
+
+	state := s.ptz[profileToken]
+
+	if presetName == "" {
+		presetName = "Preset"
+	}
+
+	if presetToken != "" {
+		for i := range presets {
+			if presets[i].Token == presetToken {
+				presets[i].Name = presetName
+				presets[i].Position = state.Position
+
+				return presetToken, nil
+			}
+		}
+	}
+
+	s.presetSeq++
+	token := presetToken
+	if token == "" {
+		token = fmt.Sprintf("preset_%d", s.presetSeq)
+	}
+
+	presets = append(presets, provider.Preset{
+		Token:    token,
+		Name:     presetName,
+		Position: state.Position,
+	})
+	s.presets[profileToken] = presets
+
+	return token, nil
+}
+
+// RemovePreset implements provider.PTZPresetWriter.
+func (s *Simulator) RemovePreset(profileToken, presetToken string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	presets, ok := s.presets[profileToken]
+	if !ok {
+		return fmt.Errorf("%w: %s", provider.ErrPTZNotSupported, profileToken)
+	}
+
+	for i := range presets {
+		if presets[i].Token == presetToken {
+			s.presets[profileToken] = append(presets[:i:i], presets[i+1:]...)
+
+			return nil
+		}
+	}
+
+	return fmt.Errorf("%w: %s", provider.ErrPresetNotFound, presetToken)
 }
 
 // MoveToPreset snaps the PTZ state to a resolved preset position and

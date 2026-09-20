@@ -564,6 +564,19 @@ func (s *Service) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, e
 			Name      string `xml:"Name"`
 			UseCount  int    `xml:"UseCount"`
 			NodeToken string `xml:"NodeToken"`
+			PanTilt   *struct {
+				Range *struct {
+					URI    string            `xml:"URI"`
+					XRange *types.FloatRange `xml:"XRange"`
+					YRange *types.FloatRange `xml:"YRange"`
+				} `xml:"Range"`
+			} `xml:"PanTiltLimits"`
+			Zoom *struct {
+				Range *struct {
+					URI    string            `xml:"URI"`
+					XRange *types.FloatRange `xml:"XRange"`
+				} `xml:"Range"`
+			} `xml:"ZoomLimits"`
 		} `xml:"PTZConfiguration"`
 	}
 
@@ -584,6 +597,21 @@ func (s *Service) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, e
 			Name:      cfg.Name,
 			UseCount:  cfg.UseCount,
 			NodeToken: cfg.NodeToken,
+		}
+
+		if cfg.PanTilt != nil && cfg.PanTilt.Range != nil {
+			configs[i].PanTiltLimits = &PanTiltLimits{Range: &Space2DDescription{
+				URI:    cfg.PanTilt.Range.URI,
+				XRange: cfg.PanTilt.Range.XRange,
+				YRange: cfg.PanTilt.Range.YRange,
+			}}
+		}
+
+		if cfg.Zoom != nil && cfg.Zoom.Range != nil {
+			configs[i].ZoomLimits = &ZoomLimits{Range: &Space1DDescription{
+				URI:    cfg.Zoom.Range.URI,
+				XRange: cfg.Zoom.Range.XRange,
+			}}
 		}
 	}
 

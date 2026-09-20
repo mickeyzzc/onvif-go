@@ -65,7 +65,8 @@ type ImagingProvider interface {
 
 // PTZProvider drives PTZ state. The simulator keeps positions in memory
 // with fake completion timers; real devices wrap their motor controls.
-// Presets stay part of the profile configuration (PTZConfig.Presets).
+// Presets stay part of the profile configuration (PTZConfig.Presets)
+// unless the host also implements the mutable preset interfaces below.
 type PTZProvider interface {
 	ContinuousMove(profileToken string, velocity PTZVector, timeout string) error
 	AbsoluteMove(profileToken string, position PTZVector) error
@@ -73,4 +74,24 @@ type PTZProvider interface {
 	Stop(profileToken string, panTilt, zoom bool) error
 	Status(profileToken string) (PTZState, error)
 	GotoPreset(profileToken, presetToken string) error
+}
+
+// PTZPresetReader is the optional read side of mutable preset storage.
+// When the PTZ provider implements it, GetPresets serves its answer;
+// otherwise presets come straight from the static profile configuration
+// (the historical behavior).
+type PTZPresetReader interface {
+	Presets(profileToken string) ([]Preset, error)
+}
+
+// PTZPresetWriter is the optional write side behind SetPreset /
+// RemovePreset. Hosts that do not implement it simply do not get those
+// actions served (mirroring the StreamURISetter pattern).
+//
+// SetPreset: a non-empty presetToken updates (or creates) that exact
+// token; an empty one lets the device generate one — both return the
+// effective token. The position is the provider's current position.
+type PTZPresetWriter interface {
+	SetPreset(profileToken, presetName, presetToken string) (string, error)
+	RemovePreset(profileToken, presetToken string) error
 }
