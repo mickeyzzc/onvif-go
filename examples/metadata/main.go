@@ -10,6 +10,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/mickeyzzc/onvif-go/v2/metadata"
 )
@@ -52,29 +53,30 @@ func main() {
 	for _, frame := range stream.Frames {
 		fmt.Printf("frame %s — %d object(s)\n", frame.UtcTime.Format("15:04:05.000"), len(frame.Objects))
 
-		for _, obj := range frame.Objects {
-			line := fmt.Sprintf("  object %d", obj.ObjectID)
+			for _, obj := range frame.Objects {
+				parts := []string{fmt.Sprintf("  object %d", obj.ObjectID)}
 
-			if app := obj.Appearance; app != nil {
-				if app.Shape != nil && app.Shape.BoundingBox != nil {
-					b := app.Shape.BoundingBox
-					line += fmt.Sprintf(" bbox[%.2f,%.2f–%.2f,%.2f]", b.Left, b.Top, b.Right, b.Bottom)
-				}
-				if app.Class != nil {
-					for _, t := range app.Class.Types {
-						likelihood := "?"
-						if t.Likelihood != nil {
-							likelihood = fmt.Sprintf("%.0f%%", *t.Likelihood*100)
+				if app := obj.Appearance; app != nil {
+					if app.Shape != nil && app.Shape.BoundingBox != nil {
+						b := app.Shape.BoundingBox
+						parts = append(parts, fmt.Sprintf("bbox[%.2f,%.2f–%.2f,%.2f]",
+							b.Left, b.Top, b.Right, b.Bottom))
+					}
+					if app.Class != nil {
+						for _, t := range app.Class.Types {
+							likelihood := "?"
+							if t.Likelihood != nil {
+								likelihood = fmt.Sprintf("%.0f%%", *t.Likelihood*100)
+							}
+							parts = append(parts, fmt.Sprintf("%s(%s)", t.Type, likelihood))
 						}
-						line += fmt.Sprintf(" %s(%s)", t.Type, likelihood)
 					}
 				}
+				if obj.Behaviour != nil && obj.Behaviour.Removed != nil {
+					parts = append(parts, "[removed]")
+				}
+				fmt.Println(strings.Join(parts, " "))
 			}
-			if obj.Behaviour != nil && obj.Behaviour.Removed != nil {
-				line += " [removed]"
-			}
-			fmt.Println(line)
-		}
 	}
 
 	// Namespace-lenient: documents that declare the schema namespace as
