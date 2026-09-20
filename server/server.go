@@ -409,8 +409,16 @@ func (s *Server) registerPTZService(mux *http.ServeMux) {
 	handler.RegisterContextHandler("RelativeMove", s.HandleRelativeMove)
 	handler.RegisterContextHandler("Stop", s.HandleStop)
 	handler.RegisterContextHandler("GetStatus", s.HandleGetStatus)
+	handler.RegisterContextHandler("GetConfigurations", s.HandleGetConfigurations)
+	handler.RegisterContextHandler("GetNodes", s.HandleGetNodes)
 	handler.RegisterContextHandler("GetPresets", s.HandleGetPresets)
 	handler.RegisterContextHandler("GotoPreset", s.HandleGotoPreset)
+
+	// Preset writes exist only behind a PTZPresetWriter provider.
+	if _, ok := s.ptz.(provider.PTZPresetWriter); ok {
+		handler.RegisterContextHandler("SetPreset", s.HandleSetPreset)
+		handler.RegisterContextHandler("RemovePreset", s.HandleRemovePreset)
+	}
 
 	mux.Handle(s.config.BasePath+"/ptz_service", handler)
 }

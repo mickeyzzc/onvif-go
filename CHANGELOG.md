@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+
+- Server: the PTZ parity closure with the Rust twin — **SetPreset /
+  RemovePreset** (behind an optional `provider.PTZPresetWriter`; the
+  simulator implements a mutable preset store seeded from the
+  configuration, so set → list → goto → remove works end to end),
+  **GetConfigurations** and **GetNodes** served from the profile
+  configuration with WSDL-correct namespaces (tptz wrappers, ver10/schema
+  children; the PTZNode `token` attribute per tt:DeviceEntity — not the
+  twin's `NodeToken` spelling). GetPresets now prefers an optional
+  `provider.PTZPresetReader`, falling back to the static configuration.
+  The conformance PTZ matrix drives the whole family client↔simulator.
+- Client: `PTZ().GetConfigurations` now decodes the pan/tilt and zoom
+  limits (previously parsed and dropped).
+
 ## [v2.1.0] — 2026-09-20
 
 The wire-format correctness release. Ground truth is now the official
