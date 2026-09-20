@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/xml"
-	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -343,7 +342,7 @@ func TestSimulatorPresetStoreIsolation(t *testing.T) {
 		t.Fatalf("RemovePreset(): %v", err)
 	}
 
-	if err := sim.RemovePreset("profile_token_1", fmt.Sprintf("%s-x", token)); err == nil {
+	if err := sim.RemovePreset("profile_token_1", token+"-x"); err == nil {
 		t.Fatal("removing an unknown preset must fail")
 	}
 }
