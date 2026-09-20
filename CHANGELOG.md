@@ -6,6 +6,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+
+## [v2.2.0] — 2026-09-20
+
+PTZ parity closure with the Rust twin, plus a hardened coverage floor.
+
 ### Added
 
 - Server: the PTZ parity closure with the Rust twin — **SetPreset /
@@ -20,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   The conformance PTZ matrix drives the whole family client↔simulator.
 - Client: `PTZ().GetConfigurations` now decodes the pan/tilt and zoom
   limits (previously parsed and dropped).
+
+### Changed
+
+- `ci`: library coverage gate raised 70% → 80% statements (#107) —
+  the conformance/ns-contract/fuzz suites put the measured total at
+  85.5%; the old floor no longer bound anything.
 
 ## [v2.1.0] — 2026-09-20
 

@@ -243,7 +243,7 @@ The four helper CLIs ship as prebuilt, zero-dependency binaries for
 linux (amd64/arm64/arm), macOS (amd64/arm64), and Windows (amd64) on
 [every release](https://github.com/mickeyzzc/onvif-go/releases) since
 v2.0.0 — download, `chmod +x`, verify against `SHA256SUMS`. Or
-`go install github.com/mickeyzzc/onvif-go/v2/cmd/<tool>@v2.1.0`.
+`go install github.com/mickeyzzc/onvif-go/v2/cmd/<tool>@v2.2.0`.
 
 Which tool for which job: `discover` scans the LAN (WS-Discovery),
 `onvif-quick` interactively sanity-checks one camera (connect, stream

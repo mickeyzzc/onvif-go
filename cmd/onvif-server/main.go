@@ -13,7 +13,7 @@ import (
 	"github.com/mickeyzzc/onvif-go/v2/server"
 )
 
-var version = "2.1.0"
+var version = "2.2.0"
 
 const (
 	defaultPort    = 8080

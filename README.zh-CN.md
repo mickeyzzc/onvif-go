@@ -202,7 +202,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 四个辅助 CLI 自 v2.0.0 起随[每个 release](https://github.com/mickeyzzc/onvif-go/releases)
 发布预编译零依赖单文件：linux（amd64/arm64/arm）、macOS（amd64/arm64）、
 Windows（amd64）——下载、`chmod +x`、对照 `SHA256SUMS` 校验即可；或
-`go install github.com/mickeyzzc/onvif-go/v2/cmd/<工具>@v2.1.0`。
+`go install github.com/mickeyzzc/onvif-go/v2/cmd/<工具>@v2.2.0`。
 
 哪个工具干什么：`discover` 扫描局域网（WS-Discovery）；`onvif-quick`
 交互式体检单台相机（连接、流地址、带防护的 PTZ 演示）；`onvif-diagnostics`
