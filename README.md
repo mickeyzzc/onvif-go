@@ -199,8 +199,8 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `server/` | Virtual ONVIF camera server (simulator for testing) |
 | `docs/` | Redirect to the documentation hub |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
-| `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` |
-| `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), simple-server, onvif-server, complete-demo |
+| `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` (+ `generate-tests`, the capture→fixture developer tool) |
+| `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), media2 (H.265 options), analytics (Profile M), metadata (stream parsing), simple-server, tls-server, onvif-server, complete-demo |
 
 ## Protocol alignment & roadmap
 
@@ -222,9 +222,11 @@ Deliberate scope boundaries (tracked for future capability packages):
   encoding pass-through, stream URI). Profile create/delete and the
   audio/OSD configuration families are not implemented yet; ver10 media
   remains the full-coverage surface.
-- **Profile M** — the events PullPoint family and metadata configurations
-  in profiles are in; an analytics-service client (rule/module
-  configuration) is not implemented yet.
+- **Profile M** — the events PullPoint family, metadata configurations
+  in profiles, and the analytics-service client (rule/module
+  configuration CRUD, `onvif.Client.Analytics()`, v2.1.0) are in;
+  message descriptions in analytics `ConfigDescription` and the
+  metadata stream's PTZ/Event/SensorData members are not modeled yet.
 - **Profile T** — TLS transport is supported on the server
   (`Config.TLSCertFile`/`TLSKeyFile`); advanced onboarding (PKI,
   802.1X, WS-Security beyond UsernameToken) is out of scope.
@@ -233,10 +235,23 @@ Deliberate scope boundaries (tracked for future capability packages):
   dialects — honored by the pull-point filter — and the spec-blessed
   empty message-content dialect); message-content filtering is not
   applied and not advertised.
-- **WebRTC (Profile M-relevant later revisions)** — watched, not
-  implemented.
-- **WebRTC** — watched, not implemented. PTZ/Event/SensorData members of
-  the metadata stream are not modeled by `metadata.Parse` yet.
+- **WebRTC** — watched, not implemented.
+
+## CLI tools
+
+The four helper CLIs ship as prebuilt, zero-dependency binaries for
+linux (amd64/arm64/arm), macOS (amd64/arm64), and Windows (amd64) on
+[every release](https://github.com/mickeyzzc/onvif-go/releases) since
+v2.0.0 — download, `chmod +x`, verify against `SHA256SUMS`. Or
+`go install github.com/mickeyzzc/onvif-go/v2/cmd/<tool>@v2.1.0`.
+
+Which tool for which job: `discover` scans the LAN (WS-Discovery),
+`onvif-quick` interactively sanity-checks one camera (connect, stream
+URLs, a guarded PTZ demo), `onvif-diagnostics` sweeps all eleven major
+operations into a JSON report — the tool to run before
+[filing an issue](https://github.com/mickeyzzc/onvif-go/issues) — and `onvif-server` stands up a
+virtual multi-lens camera for testing without hardware. Per-tool
+manuals with scenarios live in the documentation hub (below).
 
 ## Documentation
 

@@ -1,144 +1,69 @@
 #!/bin/bash
 
-# Go ONVIF Library Demo Script
-# This script demonstrates the capabilities of the Go ONVIF library
+# onvif-go demo script — a tour of what the library and its CLIs do.
+# Nothing here talks to the network; run the tools for real.
 
-echo "🎥 Go ONVIF Library - Complete Implementation Demo"
-echo "=================================================="
+echo "🎥 onvif-go — ONVIF client + virtual-device library (v2 line)"
+echo "=============================================================="
 echo
 
-echo "📁 Project Structure:"
-echo "├── Core Library (client.go, types.go, device.go, media.go, ptz.go, imaging.go)"
-echo "├── SOAP Client (soap/soap.go) with WS-Security authentication"
-echo "├── Discovery Service (discovery/discovery.go) for network camera detection"
-echo "├── Examples (examples/*) showing various use cases"
-echo "├── CLI Tools:"
-echo "│   ├── 🔧 onvif-cli - Comprehensive interactive tool"
-echo "│   └── ⚡ onvif-quick - Simple quick-start tool"
-echo "└── Tests with mock ONVIF server"
+echo "📁 Project layout:"
+echo "├── onvif/          Client facade (auth ladder, service endpoints)"
+echo "├── device/ media/ media2/ ptz/ imaging/ events/ analytics/ deviceio/"
+echo "│                   Domain service packages (v2 split)"
+echo "├── metadata/       Profile M metadata stream parser"
+echo "├── discovery/      WS-Discovery: active probe, passive listener, directed HTTP"
+echo "├── server/         Virtual ONVIF camera (HTTP or TLS)"
+echo "└── cmd/            CLI tools (also published prebuilt on every release)"
 echo
 
-echo "🚀 Available Commands:"
+echo "🔧 CLI tools (pick per job):"
+echo "   discover          Scan the LAN for ONVIF cameras"
+echo "   onvif-quick       Interactive sanity check of one camera (connect/streams/PTZ demo)"
+echo "   onvif-diagnostics 11-operation sweep + JSON report — run before filing an issue"
+echo "   onvif-server      Stand up a virtual multi-lens camera for testing"
+echo "   generate-tests    (dev) turn captured SOAP into regression fixtures"
 echo
 
-echo "1. Build & Test:"
-echo "   make build        # Build both CLI tools"
-echo "   make test         # Run test suite"
-echo "   make examples     # Build example programs"
-echo "   make build-all    # Build for multiple platforms"
+echo "🚀 Typical commands:"
+echo "   make build        # go build ./... (fastest compile check)"
+echo "   make test         # go test -race ./..."
+echo "   make lint         # golangci-lint run"
+echo "   make cross        # CGO_ENABLED=0 linux/arm64 binaries into build/"
+echo "   go run ./cmd/discover -timeout 5s"
+echo "   go run ./cmd/onvif-server -password change-me -profiles 5"
 echo
 
-echo "2. CLI Tools:"
-echo "   ./bin/onvif-cli   # Interactive comprehensive tool"
-echo "   ./bin/onvif-quick # Simple quick-start tool"
-echo
-
-echo "3. Library Usage Example:"
+echo "📖 Library usage (v2 facade API):"
 cat << 'EOF'
 ```go
-package main
-
-import (
-    "context"
-    "fmt"
-    "time"
-    
-    "github.com/0x524A/onvif-go"
+client, _ := onvif.NewClient(
+    "http://192.0.2.100/onvif/device_service",
+    onvif.WithCredentials("admin", "password"),
+    onvif.WithTimeout(30*time.Second),
 )
+ctx := context.Background()
 
-func main() {
-    // Create client with credentials
-    client, err := onvif.NewClient(
-        "http://192.168.1.100/onvif/device_service",
-        onvif.WithCredentials("admin", "password"),
-        onvif.WithTimeout(30*time.Second),
-    )
-    if err != nil {
-        panic(err)
-    }
-    
-    ctx := context.Background()
-    
-    // Get device information
-    info, err := client.GetDeviceInformation(ctx)
-    if err != nil {
-        panic(err)
-    }
-    
-    fmt.Printf("Camera: %s %s\n", info.Manufacturer, info.Model)
-    
-    // Initialize for additional services
-    client.Initialize(ctx)
-    
-    // Get media profiles
-    profiles, err := client.GetProfiles(ctx)
-    if err != nil {
-        panic(err)
-    }
-    
-    // Get stream URI
-    streamURI, err := client.GetStreamURI(ctx, profiles[0].Token)
-    if err == nil {
-        fmt.Printf("Stream: %s\n", streamURI.URI)
-    }
-    
-    // PTZ Control (if supported)
-    velocity := &onvif.PTZSpeed{
-        PanTilt: &onvif.Vector2D{X: 0.5, Y: 0.0},
-    }
-    timeout := "PT5S"
-    client.ContinuousMove(ctx, profiles[0].Token, velocity, &timeout)
-}
+info, _ := client.Device().GetDeviceInformation(ctx)
+profiles, _ := client.Media().GetProfiles(ctx)
+uri, _ := client.Media().GetStreamURI(ctx, profiles[0].Token)
+
+// v2.1.0 surfaces:
+opts, _ := client.Media2().GetVideoEncoderConfigurationOptions(ctx, "", "") // H.265/AV1 options
+rules, _ := client.Analytics().GetRules(ctx, "VideoAnalytics_1")            // Profile M
+stream, _ := metadata.Parse(rtpPayload)                                      // metadata stream
 ```
 EOF
 
 echo
-echo "🌟 Key Features:"
-echo "✅ Complete ONVIF Profile S implementation"
-echo "✅ WS-Discovery for automatic camera detection"
-echo "✅ WS-Security authentication with digest"
-echo "✅ PTZ control (pan, tilt, zoom)"
-echo "✅ Media profile management"
-echo "✅ Imaging settings control"
-echo "✅ Device information and capabilities"
-echo "✅ Stream URI generation (RTSP/HTTP)"
-echo "✅ Context-based timeout and cancellation"
-echo "✅ Comprehensive error handling"
-echo "✅ Thread-safe credential management"
-echo "✅ Interactive CLI tools"
-echo "✅ Docker support"
-echo "✅ Cross-platform builds"
-echo "✅ Extensive test coverage"
+echo "🌟 Highlights:"
+echo "✅ Wire contracts grounded in the official ONVIF WSDL/XSD set (onvif/specs)"
+echo "✅ Authentication ladder that survives weird firmware (digest, clock skew, retries)"
+echo "✅ Media2 client — codec-agnostic configuration model (H.264/H.265/AV1)"
+echo "✅ Profile M: analytics client + metadata stream parser + events pull-point"
+echo "✅ Virtual camera server, HTTP or TLS, with PTZ presets and 10 lens templates"
+echo "✅ Namespace-strict contract suite + client↔simulator conformance loopback + fuzz"
+echo "✅ Runnable examples per feature area under examples/"
 echo
-
-echo "🛠️  Development Features:"
-echo "✅ Modern Go 1.21+ with generics support"
-echo "✅ Functional options pattern"
-echo "✅ Comprehensive type definitions"
-echo "✅ Mock server for testing"
-echo "✅ Benchmark tests"
-echo "✅ CI/CD ready"
-echo "✅ Docker containerization"
-echo "✅ Multi-platform builds"
-echo
-
-echo "📋 Quick Start:"
-echo "1. go mod tidy                    # Install dependencies"
-echo "2. make build                     # Build CLI tools"
-echo "3. ./bin/onvif-quick             # Run quick tool"
-echo "4. ./bin/onvif-cli               # Run comprehensive tool"
-echo
-
-echo "🔗 For real camera testing:"
-echo "- Set up a test camera with known IP/credentials"
-echo "- Run discovery to find cameras: ./bin/onvif-quick"
-echo "- Use device info to verify connection"
-echo "- Test PTZ movements if camera supports it"
-echo "- Get stream URLs for media playback"
-echo
-
-echo "🎯 This implementation provides a production-ready,"
-echo "   comprehensive ONVIF library with full CLI tooling!"
-
-echo
-echo "Run 'make help' for all available commands."
+echo "📚 Manuals: https://www.mlsbs.top/docs/mibeelibs"
+echo "   Releases carry prebuilt CLIs for 6 platforms: https://github.com/mickeyzzc/onvif-go/releases"

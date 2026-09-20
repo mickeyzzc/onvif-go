@@ -186,16 +186,29 @@ diag, _ := client.DiagnoseAuth(ctx)
   的选项——每个编解码一条、`Encoding` 为自由名（H264/H265/AV1/…）、写入
   原样透传、取流 URI）。Profile 增删与音频/OSD 配置族尚未实现；ver10
   media 仍是全覆盖面。
-- **Profile M**——事件 PullPoint 族与配置中的元数据配置已具备；analytics
-  服务客户端（规则/模块配置）尚未实现。
+- **Profile M**——事件 PullPoint 族、配置中的元数据配置、analytics 服务
+  客户端（规则/模块配置 CRUD，`onvif.Client.Analytics()`，v2.1.0）均已具备；
+  analytics `ConfigDescription` 的消息描述与元数据流的
+  PTZ/Event/SensorData 成员尚未建模。
 - **Profile T**——服务端已支持 TLS 传输（`Config.TLSCertFile`/`TLSKeyFile`）；
   高级安全置备（PKI、802.1X、UsernameToken 之外的 WS-Security）不在范围。
 - **GetEventProperties** 应答规格完整（主题命名空间/方言位置、两个强制
   主题表达式方言——pull-point 过滤器如实执行——以及规范规定的空消息内容
   方言）；消息内容过滤不应用也不广播。
 - **WebRTC**——保持关注，未实现。
-- **WebRTC**——保持关注，未实现。元数据流的 PTZ/Event/SensorData 成员
-  尚未建模进 `metadata.Parse`。
+
+## CLI 工具
+
+四个辅助 CLI 自 v2.0.0 起随[每个 release](https://github.com/mickeyzzc/onvif-go/releases)
+发布预编译零依赖单文件：linux（amd64/arm64/arm）、macOS（amd64/arm64）、
+Windows（amd64）——下载、`chmod +x`、对照 `SHA256SUMS` 校验即可；或
+`go install github.com/mickeyzzc/onvif-go/v2/cmd/<工具>@v2.1.0`。
+
+哪个工具干什么：`discover` 扫描局域网（WS-Discovery）；`onvif-quick`
+交互式体检单台相机（连接、流地址、带防护的 PTZ 演示）；`onvif-diagnostics`
+对十一个主要操作做全量体检并出 JSON 报告——[提 issue](https://github.com/mickeyzzc/onvif-go/issues)
+前先跑它；`onvif-server` 起一台虚拟多镜头相机，无硬件测试。各工具的
+分场景手册见下方文档中心。
 
 ## 文档
 
@@ -217,8 +230,8 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `internal/onviftesting/` | 测试助手：mock server、抓包回放、golden 文件（内部包，不进消费方二进制） |
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
 | `docs/` | 引导至文档中心 |
-| `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server` |
-| `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、simple-server、onvif-server、complete-demo |
+| `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server`（另有 `generate-tests`，抓包→fixture 的开发者工具） |
+| `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、media2（H.265 选项）、analytics（Profile M）、metadata（流解析）、simple-server、tls-server、onvif-server、complete-demo |
 
 ## 开发
 
