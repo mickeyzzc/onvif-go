@@ -7,6 +7,7 @@ package xmlstrict
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"io"
 	"strings"
@@ -27,7 +28,7 @@ func Check(data []byte) error {
 	dec := xml.NewDecoder(strings.NewReader(string(data)))
 	for {
 		tok, err := dec.Token()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			return nil
 		}
 		if err != nil {
