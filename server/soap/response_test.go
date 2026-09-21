@@ -1,11 +1,16 @@
 package soap
 
 import (
+	"bytes"
 	"encoding/xml"
+	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/mickeyzzc/onvif-go/v2/internal/xmlstrict"
 )
 
 // goldenStreamUri mirrors the server's GetStreamUriResponse wire shape.
@@ -79,6 +84,9 @@ func TestGoldenEnvelopeExplicitPrefixes(t *testing.T) {
 
 	if got := w.Body.String(); got != want {
 		t.Errorf("golden prefixed envelope mismatch\n got: %q\nwant: %q", got, want)
+	}
+	if err := xmlstrict.Check(w.Body.Bytes()); err != nil {
+		t.Errorf("golden prefixed envelope not strictly parseable: %v", err)
 	}
 }
 
@@ -188,5 +196,69 @@ func TestNilResponseYieldsEmptyBody(t *testing.T) {
 
 	if got := w.Body.String(); got != want {
 		t.Errorf("nil response envelope mismatch\n got: %q\nwant: %q", got, want)
+	}
+}
+
+// prefixURIs inverts namespacePrefixes: decoding with encoding/xml
+// resolves a BOUND prefix to its URI, but leaves an UNBOUND prefix as
+// the literal Space — so an element whose Space equals a conventional
+// wire prefix is a well-formedness violation strict parsers reject.
+func conventionalPrefixes() map[string]bool {
+	set := make(map[string]bool)
+	for _, prefix := range namespacePrefixes {
+		set[prefix] = true
+	}
+	return set
+}
+
+// assertNoUnboundPrefixes walks the serialized form and fails when any
+// element name uses a prefix without an in-scope xmlns declaration.
+func assertNoUnboundPrefixes(t *testing.T, data []byte) {
+	t.Helper()
+	prefixes := conventionalPrefixes()
+	dec := xml.NewDecoder(bytes.NewReader(data))
+	for {
+		tok, err := dec.Token()
+		if errors.Is(err, io.EOF) {
+			break
+		}
+		if err != nil {
+			t.Fatalf("parse serialized form: %v", err)
+		}
+		if el, ok := tok.(xml.StartElement); ok {
+			if prefixes[el.Name.Space] {
+				t.Fatalf("element <%s:%s> uses prefix %q with no in-scope xmlns declaration (strict parsers reject the whole document):\n%s",
+					el.Name.Space, el.Name.Local, el.Name.Space, data)
+			}
+		}
+	}
+}
+
+// Sibling elements sharing a namespace each need the declaration in
+// scope: a declaration rides on ONE element and siblings do not inherit
+// it. Caught live on rpi3b-cam (.118): wsnt:TerminationTime next to a
+// self-declaring wsnt:CurrentTime produced an unbound prefix that expat
+// (and every strict stack) rejects.
+func TestWithExplicitPrefixesSiblingScopes(t *testing.T) {
+	type siblingPair struct {
+		XMLName         xml.Name `xml:"http://www.onvif.org/ver10/events/wsdl CreatePullPointSubscriptionResponse"`
+		CurrentTime     string   `xml:"http://docs.oasis-open.org/wsn/b-2 CurrentTime"`
+		TerminationTime string   `xml:"http://docs.oasis-open.org/wsn/b-2 TerminationTime"`
+	}
+	raw, err := xml.MarshalIndent(siblingPair{
+		CurrentTime:     "2026-09-21T02:08:56Z",
+		TerminationTime: "2026-09-21T02:09:56Z",
+	}, "", "  ")
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	out, err := withExplicitPrefixes(raw)
+	if err != nil {
+		t.Fatalf("withExplicitPrefixes: %v", err)
+	}
+	assertNoUnboundPrefixes(t, out)
+	// Both siblings must carry their own declaration bytes.
+	if got := strings.Count(string(out), `xmlns:wsnt=`); got != 2 {
+		t.Fatalf("xmlns:wsnt declarations = %d, want 2 (one per sibling):\n%s", got, out)
 	}
 }

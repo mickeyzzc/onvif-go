@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Fixed: unbound namespace prefixes on sibling elements in
+  explicit-prefix responses.** `withExplicitPrefixes` tracked
+  declarations in one document-wide set, so a namespace shared by
+  SIBLING elements got its `xmlns` declaration on the first sibling
+  only — siblings do not inherit declarations, leaving the rest with
+  unbound prefixes. Strict XML stacks (expat, libxml, .NET) reject the
+  whole document. Live-caught on a Raspberry Pi device: the events
+  `CreatePullPointSubscription` response (`wsnt:TerminationTime` next
+  to a self-declaring `wsnt:CurrentTime`) failed an expat-based
+  client. Declarations are now scoped per element (ancestor chain),
+  and a new `internal/xmlstrict` checker guards the golden envelope
+  and the events create/pull wire forms against regressions.
+
 ## [v2.2.0] — 2026-09-20
 
 PTZ parity closure with the Rust twin, plus a hardened coverage floor.

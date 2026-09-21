@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/mickeyzzc/onvif-go/v2/internal/xmlstrict"
 	onvif "github.com/mickeyzzc/onvif-go/v2/onvif"
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 	"github.com/mickeyzzc/onvif-go/v2/types"
@@ -884,5 +885,38 @@ func TestPullPointTopicFiltering(t *testing.T) {
 			`</CreatePullPointSubscription>`)
 	if status == http.StatusOK {
 		t.Errorf("unsupported dialect accepted:\n%s", body)
+	}
+}
+
+// The serialized CreatePullPointSubscription and PullMessages responses
+// must survive strict XML parsers: every emitted prefix needs an
+// in-scope declaration (sibling elements do NOT inherit a declaration
+// written on a sibling). Live-caught on rpi3b-cam 2026-09-21 — expat
+// rejected the whole create response over one unbound wsnt prefix.
+func TestEventsResponsesStrictParseable(t *testing.T) {
+	srv, mux := eventsTestServer(t)
+
+	create := `<CreatePullPointSubscription xmlns="http://www.onvif.org/ver10/events/wsdl">` +
+		`<InitialTerminationTime>PT10M</InitialTerminationTime>` +
+		`</CreatePullPointSubscription>`
+	status, body := postEventsSOAP(t, mux, "/onvif/events_service", create)
+	if status != http.StatusOK {
+		t.Fatalf("create status = %d; body: %s", status, body)
+	}
+	if err := xmlstrict.Check([]byte(body)); err != nil {
+		t.Fatalf("create response not strictly parseable: %v", err)
+	}
+
+	sub := decodeCreateResponse(t, body).SubscriptionReference.Address
+	srv.PublishEvent(Event{Topic: "tns1:VideoSource/MotionAlarm"})
+
+	pull := `<PullMessages xmlns="http://www.onvif.org/ver10/events/wsdl">` +
+		`<Timeout>PT0S</Timeout><MessageLimit>5</MessageLimit></PullMessages>`
+	status, body = postEventsSOAP(t, mux, sub, pull)
+	if status != http.StatusOK {
+		t.Fatalf("pull status = %d; body: %s", status, body)
+	}
+	if err := xmlstrict.Check([]byte(body)); err != nil {
+		t.Fatalf("pull response not strictly parseable: %v", err)
 	}
 }
