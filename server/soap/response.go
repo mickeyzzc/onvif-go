@@ -197,6 +197,32 @@ func escapeXMLText(s string) string {
 // encoding/xml cannot emit prefixes natively (golang/go#14211); the
 // prefix is placed in the element's local name, which the encoder writes
 // verbatim.
+// prefixScopes tracks xmlns declarations per element scope: a
+// declaration rides on the element it is written to and covers only its
+// DESCENDANTS — siblings do not inherit it. Skipping a re-declaration
+// for a sibling produced unbound prefixes that strict XML parsers
+// (expat, libxml, .NET) reject wholesale — caught live on the events
+// CreatePullPointSubscriptionResponse (wsnt:CurrentTime self-declaring
+// next to an undeclared wsnt:TerminationTime).
+type prefixScopes []map[string]bool
+
+func (s *prefixScopes) push() {
+	*s = append(*s, make(map[string]bool))
+}
+
+func (s *prefixScopes) pop() {
+	*s = (*s)[:len(*s)-1]
+}
+
+func (s *prefixScopes) declared(prefix string) bool {
+	for _, frame := range *s {
+		if frame[prefix] {
+			return true
+		}
+	}
+	return false
+}
+
 func withExplicitPrefixes(data []byte) ([]byte, error) {
 	decoder := xml.NewDecoder(bytes.NewReader(data))
 
@@ -204,7 +230,7 @@ func withExplicitPrefixes(data []byte) ([]byte, error) {
 	encoder := xml.NewEncoder(&buf)
 	encoder.Indent("", "  ")
 
-	declared := make(map[string]bool)
+	var scopes prefixScopes
 
 	for {
 		token, err := decoder.Token()
@@ -218,6 +244,7 @@ func withExplicitPrefixes(data []byte) ([]byte, error) {
 
 		switch t := token.(type) {
 		case xml.StartElement:
+			scopes.push()
 			t.Attr = stripNamespaceDecls(t.Attr)
 
 			if prefix, ok := namespacePrefixes[t.Name.Space]; ok {
@@ -225,12 +252,12 @@ func withExplicitPrefixes(data []byte) ([]byte, error) {
 				t.Name.Local = prefix + ":" + t.Name.Local
 				t.Name.Space = ""
 
-				if !declared[prefix] {
+				if !scopes.declared(prefix) {
 					t.Attr = append(t.Attr, xml.Attr{
 						Name:  xml.Name{Local: "xmlns:" + prefix},
 						Value: namespace,
 					})
-					declared[prefix] = true
+					scopes[len(scopes)-1][prefix] = true
 				}
 			} else if t.Name.Space != "" {
 				// Unknown namespace: keep correctness with a local default
@@ -245,6 +272,7 @@ func withExplicitPrefixes(data []byte) ([]byte, error) {
 
 			token = t
 		case xml.EndElement:
+			scopes.pop()
 			if prefix, ok := namespacePrefixes[t.Name.Space]; ok {
 				t.Name.Local = prefix + ":" + t.Name.Local
 			}
