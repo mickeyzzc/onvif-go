@@ -148,3 +148,57 @@ func TestAbsoluteMoveVectorsResolveToSchemaNamespace(t *testing.T) {
 			env.Body.Move.Position, body)
 	}
 }
+
+// SetConfiguration carries the whole tt:PTZConfiguration payload — every
+// schema-typed child (Name, NodeToken, DefaultPTZSpeed vectors, limits)
+// must resolve to ver10/schema or strict devices persist an empty
+// configuration (issue #111 on top of the #90 namespace contract).
+type nsSetConfigEnvelope struct {
+	XMLName xml.Name `xml:"http://www.w3.org/2003/05/soap-envelope Envelope"`
+	Body    struct {
+		Set struct {
+			ForcePersistence bool `xml:"http://www.onvif.org/ver20/ptz/wsdl ForcePersistence"`
+			Config           struct {
+				Token     string     `xml:"token,attr"`
+				Name      string     `xml:"http://www.onvif.org/ver10/schema Name"`
+				NodeToken string     `xml:"http://www.onvif.org/ver10/schema NodeToken"`
+				Speed     nsVelocity `xml:"http://www.onvif.org/ver10/schema DefaultPTZSpeed"`
+			} `xml:"http://www.onvif.org/ver20/ptz/wsdl PTZConfiguration"`
+		} `xml:"http://www.onvif.org/ver20/ptz/wsdl SetConfiguration"`
+	} `xml:"http://www.w3.org/2003/05/soap-envelope Body"`
+}
+
+func TestSetConfigurationResolvesToSchemaNamespace(t *testing.T) {
+	c, bodies := captureClient(t)
+
+	err := c.PTZ().SetConfiguration(context.Background(), &ptz.PTZConfiguration{
+		Token:     "ptz-conf-1",
+		Name:      "Main",
+		NodeToken: "ptz-node-1",
+		DefaultPTZSpeed: &ptz.PTZSpeed{
+			PanTilt: &ptz.Vector2D{X: 0.5, Y: 0.5},
+			Zoom:    &ptz.Vector1D{X: 0.25},
+		},
+	}, true)
+	if err != nil {
+		t.Fatalf("SetConfiguration: %v", err)
+	}
+
+	body := (*bodies)[0]
+	var env nsSetConfigEnvelope
+	if err := xml.Unmarshal([]byte(body), &env); err != nil {
+		t.Fatalf("decode envelope: %v\nbody: %s", err, body)
+	}
+
+	set := env.Body.Set
+	if set.Config.Token != "ptz-conf-1" || set.Config.Name != "Main" || set.Config.NodeToken != "ptz-node-1" {
+		t.Errorf("configuration fields = token %q name %q node %q (schema namespace missing?)\nbody: %s",
+			set.Config.Token, set.Config.Name, set.Config.NodeToken, body)
+	}
+	if set.Config.Speed.PanTilt.X != 0.5 || set.Config.Speed.Zoom.X != 0.25 {
+		t.Errorf("DefaultPTZSpeed = %+v, want pan 0.5 / zoom 0.25\nbody: %s", set.Config.Speed, body)
+	}
+	if !set.ForcePersistence {
+		t.Error("ForcePersistence not carried in the tptz namespace")
+	}
+}

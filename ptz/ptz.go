@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 	"github.com/mickeyzzc/onvif-go/v2/types"
@@ -616,4 +619,432 @@ func (s *Service) GetConfigurations(ctx context.Context) ([]*PTZConfiguration, e
 	}
 
 	return configs, nil
+}
+
+// GetConfigurationOptions retrieves the valid ranges (spaces, speeds,
+// timeouts) of one PTZ configuration — the data a PTZ control UI needs.
+func (s *Service) GetConfigurationOptions(ctx context.Context, configurationToken string) (*PTZConfigurationOptions, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
+	if endpoint == "" {
+		return nil, types.ErrServiceNotSupported
+	}
+
+	type GetConfigurationOptions struct {
+		XMLName               xml.Name `xml:"tptz:GetConfigurationOptions"`
+		Xmlns                 string   `xml:"xmlns:tptz,attr"`
+		PTZConfigurationToken string   `xml:"tptz:PTZConfigurationToken"`
+	}
+
+	type space2DOut struct {
+		URI    string            `xml:"URI"`
+		XRange *types.FloatRange `xml:"XRange"`
+		YRange *types.FloatRange `xml:"YRange"`
+	}
+
+	type space1DOut struct {
+		URI    string            `xml:"URI"`
+		XRange *types.FloatRange `xml:"XRange"`
+	}
+
+	type GetConfigurationOptionsResponse struct {
+		XMLName xml.Name `xml:"GetConfigurationOptionsResponse"`
+		Options struct {
+			Spaces struct {
+				AbsolutePanTiltPositionSpace    []space2DOut `xml:"AbsolutePanTiltPositionSpace"`
+				AbsoluteZoomPositionSpace       []space1DOut `xml:"AbsoluteZoomPositionSpace"`
+				RelativePanTiltTranslationSpace []space2DOut `xml:"RelativePanTiltTranslationSpace"`
+				RelativeZoomTranslationSpace    []space1DOut `xml:"RelativeZoomTranslationSpace"`
+				ContinuousPanTiltVelocitySpace  []space2DOut `xml:"ContinuousPanTiltVelocitySpace"`
+				ContinuousZoomVelocitySpace     []space1DOut `xml:"ContinuousZoomVelocitySpace"`
+			} `xml:"Spaces"`
+			PTZTimeout string `xml:"PTZTimeout"`
+		} `xml:"PTZConfigurationOptions"`
+	}
+
+	req := GetConfigurationOptions{
+		Xmlns:                 Namespace,
+		PTZConfigurationToken: configurationToken,
+	}
+
+	var resp GetConfigurationOptionsResponse
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetConfigurationOptions failed: %w", err)
+	}
+
+	to2D := func(in []space2DOut) []Space2DDescription {
+		out := make([]Space2DDescription, 0, len(in))
+		for _, sp := range in {
+			out = append(out, Space2DDescription(sp))
+		}
+
+		return out
+	}
+	to1D := func(in []space1DOut) []Space1DDescription {
+		out := make([]Space1DDescription, 0, len(in))
+		for _, sp := range in {
+			out = append(out, Space1DDescription(sp))
+		}
+
+		return out
+	}
+
+	return &PTZConfigurationOptions{
+		Spaces: PTZSpaces{
+			AbsolutePanTiltPositionSpace:    to2D(resp.Options.Spaces.AbsolutePanTiltPositionSpace),
+			AbsoluteZoomPositionSpace:       to1D(resp.Options.Spaces.AbsoluteZoomPositionSpace),
+			RelativePanTiltTranslationSpace: to2D(resp.Options.Spaces.RelativePanTiltTranslationSpace),
+			RelativeZoomTranslationSpace:    to1D(resp.Options.Spaces.RelativeZoomTranslationSpace),
+			ContinuousPanTiltVelocitySpace:  to2D(resp.Options.Spaces.ContinuousPanTiltVelocitySpace),
+			ContinuousZoomVelocitySpace:     to1D(resp.Options.Spaces.ContinuousZoomVelocitySpace),
+		},
+		PTZTimeout: parseXsDuration(resp.Options.PTZTimeout),
+	}, nil
+}
+
+// ptzConfigurationOut is the tt:PTZConfiguration serialization shape for
+// SetConfiguration — schema-typed children carry the tt: prefix (#90).
+type ptzConfigurationOut struct {
+	Token         string               `xml:"token,attr"`
+	Name          string               `xml:"tt:Name"`
+	UseCount      int                  `xml:"tt:UseCount"`
+	NodeToken     string               `xml:"tt:NodeToken"`
+	DefaultSpeed  *ptzSpeedXML         `xml:"tt:DefaultPTZSpeed,omitempty"`
+	PTZTimeout    string               `xml:"tt:DefaultPTZTimeout,omitempty"`
+	PanTiltLimits *ptzPanTiltLimitsOut `xml:"tt:PanTiltLimits,omitempty"`
+	ZoomLimits    *ptzZoomLimitsOut    `xml:"tt:ZoomLimits,omitempty"`
+}
+
+type ptzPanTiltLimitsOut struct {
+	Range *ptzSpace2DOut `xml:"tt:Range"`
+}
+
+type ptzZoomLimitsOut struct {
+	Range *ptzSpace1DOut `xml:"tt:Range"`
+}
+
+type ptzSpace2DOut struct {
+	URI    string            `xml:"tt:URI"`
+	XRange *types.FloatRange `xml:"tt:XRange"`
+	YRange *types.FloatRange `xml:"tt:YRange"`
+}
+
+type ptzSpace1DOut struct {
+	URI    string            `xml:"tt:URI"`
+	XRange *types.FloatRange `xml:"tt:XRange"`
+}
+
+// SetConfiguration pushes a modified PTZ configuration back to the device.
+// forcePersistence asks the device to keep the change across reboots.
+func (s *Service) SetConfiguration(ctx context.Context, configuration *PTZConfiguration, forcePersistence bool) error {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
+	if endpoint == "" {
+		return types.ErrServiceNotSupported
+	}
+
+	type SetConfiguration struct {
+		XMLName          xml.Name            `xml:"tptz:SetConfiguration"`
+		Xmlns            string              `xml:"xmlns:tptz,attr"`
+		XmlnsTT          string              `xml:"xmlns:tt,attr"`
+		Configuration    ptzConfigurationOut `xml:"tptz:PTZConfiguration"`
+		ForcePersistence bool                `xml:"tptz:ForcePersistence"`
+	}
+
+	out := ptzConfigurationOut{
+		Token:     configuration.Token,
+		Name:      configuration.Name,
+		UseCount:  configuration.UseCount,
+		NodeToken: configuration.NodeToken,
+	}
+	if configuration.DefaultPTZSpeed != nil {
+		out.DefaultSpeed = convertToPTZSpeedXML(configuration.DefaultPTZSpeed)
+	}
+	if configuration.DefaultPTZTimeout > 0 {
+		out.PTZTimeout = formatXsDuration(configuration.DefaultPTZTimeout)
+	}
+	if configuration.PanTiltLimits != nil && configuration.PanTiltLimits.Range != nil {
+		out.PanTiltLimits = &ptzPanTiltLimitsOut{Range: &ptzSpace2DOut{
+			URI:    configuration.PanTiltLimits.Range.URI,
+			XRange: configuration.PanTiltLimits.Range.XRange,
+			YRange: configuration.PanTiltLimits.Range.YRange,
+		}}
+	}
+	if configuration.ZoomLimits != nil && configuration.ZoomLimits.Range != nil {
+		out.ZoomLimits = &ptzZoomLimitsOut{Range: &ptzSpace1DOut{
+			URI:    configuration.ZoomLimits.Range.URI,
+			XRange: configuration.ZoomLimits.Range.XRange,
+		}}
+	}
+
+	req := SetConfiguration{
+		Xmlns:            Namespace,
+		XmlnsTT:          schemaNamespace,
+		Configuration:    out,
+		ForcePersistence: forcePersistence,
+	}
+
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
+		return fmt.Errorf("SetConfiguration failed: %w", err)
+	}
+
+	return nil
+}
+
+// SendAuxiliaryCommand triggers a vendor-specific auxiliary action
+// (wipers, heaters, IR lamps, ...) and returns the device's reply data.
+func (s *Service) SendAuxiliaryCommand(ctx context.Context, profileToken string, auxData AuxiliaryData) (AuxiliaryData, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
+	if endpoint == "" {
+		return "", types.ErrServiceNotSupported
+	}
+
+	type SendAuxiliaryCommand struct {
+		XMLName      xml.Name      `xml:"tptz:SendAuxiliaryCommand"`
+		Xmlns        string        `xml:"xmlns:tptz,attr"`
+		XmlnsTT      string        `xml:"xmlns:tt,attr"`
+		ProfileToken string        `xml:"tptz:ProfileToken"`
+		Auxiliary    AuxiliaryData `xml:"tt:AuxiliaryData"`
+	}
+
+	type AuxiliaryCommandResponse struct {
+		XMLName   xml.Name      `xml:"AuxiliaryCommandResponse"`
+		Auxiliary AuxiliaryData `xml:"AuxiliaryData"`
+	}
+
+	req := SendAuxiliaryCommand{
+		Xmlns:        Namespace,
+		XmlnsTT:      schemaNamespace,
+		ProfileToken: profileToken,
+		Auxiliary:    auxData,
+	}
+
+	var resp AuxiliaryCommandResponse
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return "", fmt.Errorf("SendAuxiliaryCommand failed: %w", err)
+	}
+
+	return resp.Auxiliary, nil
+}
+
+// GetNodes enumerates the PTZ nodes of the device.
+func (s *Service) GetNodes(ctx context.Context) ([]*PTZNode, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
+	if endpoint == "" {
+		return nil, types.ErrServiceNotSupported
+	}
+
+	type space2DOut struct {
+		URI    string            `xml:"URI"`
+		XRange *types.FloatRange `xml:"XRange"`
+		YRange *types.FloatRange `xml:"YRange"`
+	}
+
+	type space1DOut struct {
+		URI    string            `xml:"URI"`
+		XRange *types.FloatRange `xml:"XRange"`
+	}
+
+	type nodeOut struct {
+		Token             string `xml:"token,attr"`
+		Name              string `xml:"Name"`
+		FixedHomePosition bool   `xml:"FixedHomePosition,attr"`
+		HomeSupported     *bool  `xml:"HomeSupported,attr"`
+		MaxPresets        int    `xml:"MaximumNumberOfPresets"`
+		Spaces            *struct {
+			AbsolutePanTiltPositionSpace    []space2DOut `xml:"AbsolutePanTiltPositionSpace"`
+			AbsoluteZoomPositionSpace       []space1DOut `xml:"AbsoluteZoomPositionSpace"`
+			RelativePanTiltTranslationSpace []space2DOut `xml:"RelativePanTiltTranslationSpace"`
+			RelativeZoomTranslationSpace    []space1DOut `xml:"RelativeZoomTranslationSpace"`
+			ContinuousPanTiltVelocitySpace  []space2DOut `xml:"ContinuousPanTiltVelocitySpace"`
+			ContinuousZoomVelocitySpace     []space1DOut `xml:"ContinuousZoomVelocitySpace"`
+		} `xml:"SupportedPTZSpaces"`
+	}
+
+	type GetNodesResponse struct {
+		XMLName xml.Name  `xml:"GetNodesResponse"`
+		Nodes   []nodeOut `xml:"PTZNode"`
+	}
+
+	req := struct {
+		XMLName xml.Name `xml:"tptz:GetNodes"`
+		Xmlns   string   `xml:"xmlns:tptz,attr"`
+	}{Xmlns: Namespace}
+
+	var resp GetNodesResponse
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetNodes failed: %w", err)
+	}
+
+	to2D := func(in []space2DOut) []Space2DDescription {
+		out := make([]Space2DDescription, 0, len(in))
+		for _, sp := range in {
+			out = append(out, Space2DDescription(sp))
+		}
+
+		return out
+	}
+	to1D := func(in []space1DOut) []Space1DDescription {
+		out := make([]Space1DDescription, 0, len(in))
+		for _, sp := range in {
+			out = append(out, Space1DDescription(sp))
+		}
+
+		return out
+	}
+
+	nodes := make([]*PTZNode, 0, len(resp.Nodes))
+	for _, n := range resp.Nodes {
+		node := &PTZNode{
+			Token:                  n.Token,
+			Name:                   n.Name,
+			FixedHomePosition:      n.FixedHomePosition,
+			MaximumNumberOfPresets: n.MaxPresets,
+		}
+		if n.HomeSupported != nil {
+			node.HomeSupported = *n.HomeSupported
+		}
+		if n.Spaces != nil {
+			node.SupportedPTZSpaces = &PTZSpaces{
+				AbsolutePanTiltPositionSpace:    to2D(n.Spaces.AbsolutePanTiltPositionSpace),
+				AbsoluteZoomPositionSpace:       to1D(n.Spaces.AbsoluteZoomPositionSpace),
+				RelativePanTiltTranslationSpace: to2D(n.Spaces.RelativePanTiltTranslationSpace),
+				RelativeZoomTranslationSpace:    to1D(n.Spaces.RelativeZoomTranslationSpace),
+				ContinuousPanTiltVelocitySpace:  to2D(n.Spaces.ContinuousPanTiltVelocitySpace),
+				ContinuousZoomVelocitySpace:     to1D(n.Spaces.ContinuousZoomVelocitySpace),
+			}
+		}
+		nodes = append(nodes, node)
+	}
+
+	return nodes, nil
+}
+
+// GetServiceCapabilities reports the device's optional PTZ operations.
+func (s *Service) GetServiceCapabilities(ctx context.Context) (*PTZServiceCapabilities, error) {
+	endpoint := s.c.EndpointFor(api.ServicePTZ)
+	if endpoint == "" {
+		return nil, types.ErrServiceNotSupported
+	}
+
+	type GetServiceCapabilities struct {
+		XMLName xml.Name `xml:"tptz:GetServiceCapabilities"`
+		Xmlns   string   `xml:"xmlns:tptz,attr"`
+	}
+
+	type GetServiceCapabilitiesResponse struct {
+		XMLName xml.Name `xml:"GetServiceCapabilitiesResponse"`
+		Caps    struct {
+			EFlip                       bool `xml:"EFlip,attr"`
+			Reverse                     bool `xml:"Reverse,attr"`
+			GetCompatibleConfigurations bool `xml:"GetCompatibleConfigurations,attr"`
+		} `xml:"Capabilities"`
+	}
+
+	req := GetServiceCapabilities{Xmlns: Namespace}
+
+	var resp GetServiceCapabilitiesResponse
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetServiceCapabilities failed: %w", err)
+	}
+
+	return &PTZServiceCapabilities{
+		EFlip:                       resp.Caps.EFlip,
+		Reverse:                     resp.Caps.Reverse,
+		GetCompatibleConfigurations: resp.Caps.GetCompatibleConfigurations,
+	}, nil
+}
+
+// parseXsDuration parses the subset of xs:duration PTZ fields actually
+// carry: PT[hH][mM][s[.f]S] (and days PTnD). Anything unparseable yields 0.
+func parseXsDuration(s string) time.Duration {
+	if s == "" {
+		return 0
+	}
+
+	neg := false
+	rest := s
+	if rest[0] == '-' || rest[0] == '+' {
+		neg = rest[0] == '-'
+		rest = rest[1:]
+	}
+	var d time.Duration
+	// Forms without PT prefix (rare, per-spec invalid) parse as plain time.
+	if len(rest) >= 2 && rest[0] == 'P' {
+		if rest[1] == 'T' {
+			rest = rest[2:]
+		} else {
+			// PnD: days only.
+			if end := strings.IndexByte(rest, 'D'); end > 1 {
+				if days, err := strconv.Atoi(rest[1:end]); err == nil {
+					d = time.Duration(days) * 24 * time.Hour
+				}
+			}
+
+			return durSigned(d, neg)
+		}
+	}
+
+	var num []byte
+	flush := func(unit time.Duration) {
+		if len(num) == 0 {
+			return
+		}
+		if v, err := strconv.ParseFloat(string(num), 64); err == nil {
+			d += time.Duration(v * float64(unit))
+		}
+		num = num[:0]
+	}
+	for i := range len(rest) {
+		switch c := rest[i]; {
+		case (c >= '0' && c <= '9') || c == '.':
+			num = append(num, c)
+		case c == 'H':
+			flush(time.Hour)
+		case c == 'M':
+			flush(time.Minute)
+		case c == 'S':
+			flush(time.Second)
+		case c == 'D':
+			flush(24 * time.Hour)
+		}
+	}
+
+	return durSigned(d, neg)
+}
+
+func durSigned(d time.Duration, neg bool) time.Duration {
+	if neg {
+		return -d
+	}
+
+	return d
+}
+
+// formatXsDuration renders a duration as xs:duration (PT5S style) — the
+// inverse of parseXsDuration for the round-trip SetConfiguration path.
+func formatXsDuration(d time.Duration) string {
+	if d <= 0 {
+		return "PT0S"
+	}
+
+	secs := int64(d.Seconds())
+	h := secs / 3600
+	m := (secs % 3600) / 60
+	s := secs % 60
+
+	var b strings.Builder
+	b.WriteString("PT")
+	if h > 0 {
+		b.WriteString(strconv.FormatInt(h, 10))
+		b.WriteByte('H')
+	}
+	if m > 0 {
+		b.WriteString(strconv.FormatInt(m, 10))
+		b.WriteByte('M')
+	}
+	if s > 0 || b.Len() == 2 {
+		b.WriteString(strconv.FormatInt(s, 10))
+		b.WriteByte('S')
+	}
+
+	return b.String()
 }

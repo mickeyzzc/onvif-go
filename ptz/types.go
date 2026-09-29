@@ -102,3 +102,40 @@ type PTZPreset struct {
 
 // AuxiliaryData represents auxiliary command data.
 type AuxiliaryData string
+
+// PTZSpaces enumerates the coordinate spaces a device supports (part of
+// PTZConfigurationOptions and PTZNode).
+type PTZSpaces struct {
+	AbsolutePanTiltPositionSpace    []Space2DDescription
+	AbsoluteZoomPositionSpace       []Space1DDescription
+	RelativePanTiltTranslationSpace []Space2DDescription
+	RelativeZoomTranslationSpace    []Space1DDescription
+	ContinuousPanTiltVelocitySpace  []Space2DDescription
+	ContinuousZoomVelocitySpace     []Space1DDescription
+}
+
+// PTZConfigurationOptions describes the valid ranges of a PTZ
+// configuration (speeds, spaces, timeouts) — the data a UI needs to
+// render PTZ controls.
+type PTZConfigurationOptions struct {
+	Spaces     PTZSpaces
+	PTZTimeout time.Duration
+}
+
+// PTZNode is a physical or virtual PTZ unit with the spaces it supports.
+type PTZNode struct {
+	Token                  string
+	Name                   string
+	FixedHomePosition      bool
+	HomeSupported          bool
+	SupportedPTZSpaces     *PTZSpaces
+	MaximumNumberOfPresets int
+}
+
+// PTZServiceCapabilities reports the optional PTZ operations a device
+// supports (attributes of GetServiceCapabilities/Capabilities).
+type PTZServiceCapabilities struct {
+	EFlip                       bool
+	Reverse                     bool
+	GetCompatibleConfigurations bool
+}
