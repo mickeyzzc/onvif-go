@@ -19,6 +19,8 @@ import (
 type Simulator struct {
 	info     provider.DeviceInfo
 	profiles []provider.ProfileConfig
+	osd      *osdStore
+	io       *ioSimulator
 
 	mu        sync.RWMutex
 	streams   map[string]provider.StreamInfo
@@ -36,6 +38,8 @@ func New(profiles []provider.ProfileConfig, info provider.DeviceInfo) *Simulator
 	sim := &Simulator{
 		info:      info,
 		profiles:  profiles,
+		osd:       &osdStore{},
+		io:        newIOSimulator(),
 		streams:   make(map[string]provider.StreamInfo),
 		ptz:       make(map[string]*provider.PTZState),
 		presets:   make(map[string][]provider.Preset),
@@ -176,3 +180,9 @@ func (s *Simulator) Snapshot(profileToken string) (provider.SnapshotResult, erro
 
 	return provider.SnapshotResult{Data: data}, nil
 }
+
+// OSDStore exposes the simulator's OSD set (the media OSD family seam).
+func (s *Simulator) OSDStore() provider.OSDStore { return s.osd }
+
+// RelayController exposes the simulator's alarm I/O (DeviceIO seam).
+func (s *Simulator) RelayController() provider.RelayController { return s.io }

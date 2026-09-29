@@ -884,8 +884,9 @@ func (s *Service) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
 	type GetRelayOutputsResponse struct {
 		XMLName      xml.Name `xml:"GetRelayOutputsResponse"`
 		RelayOutputs []struct {
-			Token      string `xml:"token,attr"`
-			Properties struct {
+			Token        string `xml:"token,attr"`
+			LogicalState string `xml:"LogicalState"`
+			Properties   struct {
 				Mode      string `xml:"Mode"`
 				DelayTime string `xml:"DelayTime"`
 				IdleState string `xml:"IdleState"`
@@ -906,7 +907,8 @@ func (s *Service) GetRelayOutputs(ctx context.Context) ([]*RelayOutput, error) {
 	relays := make([]*RelayOutput, len(resp.RelayOutputs))
 	for i, relay := range resp.RelayOutputs {
 		relays[i] = &RelayOutput{
-			Token: relay.Token,
+			Token:        relay.Token,
+			LogicalState: RelayLogicalState(relay.LogicalState),
 			Properties: RelayOutputSettings{
 				Mode:      RelayMode(relay.Properties.Mode),
 				IdleState: RelayIdleState(relay.Properties.IdleState),

@@ -27,7 +27,9 @@ A complete ONVIF-compliant server implementation that simulates multi-lens IP ca
 
 ### 🌐 ONVIF Services
 - ✅ **Device Service**: Device information, capabilities, system time
-- ✅ **Media Service**: Profiles, stream URIs (RTSP), snapshots
+- ✅ **Media Service**: Profiles, stream URIs (RTSP), snapshots, OSD create/set/delete loop, audio configuration family (valid empty sets)
+- ✅ **DeviceIO Service** (opt-in `SupportDeviceIO`): relay outputs with live logical state + digital inputs — the NVR alarm-linkage surface, served on the device service endpoint
+- ✅ **Media2 Service** (opt-in `SupportMedia2`): the minimal Profile-T face — GetProfiles / GetStreamUri / SetSynchronizationPoint on `{BasePath}/media2_service`, advertised via GetServices
 - ✅ **PTZ Service**: Full PTZ control and preset management
 - ✅ **Imaging Service**: Complete imaging settings control
 - ✅ **Events Service** (issue #83, `-events`): pull-point subscriptions —

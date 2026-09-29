@@ -234,6 +234,7 @@ Windows（amd64）——下载、`chmod +x`、对照 `SHA256SUMS` 校验即可�
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
 | `docs/` | 引导至文档中心 |
 | `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server`（另有 `generate-tests`，抓包→fixture 的开发者工具） |
+| `server/` | 虚拟相机模拟器 + 可嵌入服务端：DeviceIO（继电器/数字输入，opt-in）、Media2 最小面（opt-in）、媒体 OSD 闭环 + 音频空集族 |
 | `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、media2（H.265 选项）、analytics（Profile M）、metadata（流解析）、simple-server、tls-server、onvif-server、complete-demo |
 
 ## 开发

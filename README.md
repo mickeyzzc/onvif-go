@@ -202,6 +202,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `docs/` | Redirect to the documentation hub |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` (+ `generate-tests`, the capture→fixture developer tool) |
+| `server/` | Virtual camera simulator + embeddable server: DeviceIO (relays/digital inputs, opt-in), Media2 minimal face (opt-in), media OSD loop + audio empty sets |
 | `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), media2 (H.265 options), analytics (Profile M), metadata (stream parsing), simple-server, tls-server, onvif-server, complete-demo |
 
 ## Protocol alignment & roadmap

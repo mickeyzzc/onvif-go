@@ -111,6 +111,8 @@ func New(config *Config, opts ...Option) (*Server, error) {
 		snapshot:    sim,
 		imaging:     sim,
 		ptz:         sim,
+		osd:         sim.OSDStore(),
+		relays:      sim.RelayController(),
 		systemTime:  time.Now(),
 		advertiseFn: config.AdvertiseHostProvider,
 		pullPoints:  make(map[string]*pullPoint),
@@ -208,6 +210,10 @@ func (s *Server) RegisterServices(mux *http.ServeMux) {
 
 	if s.config.SupportEvents {
 		s.registerEventsService(mux)
+	}
+
+	if s.config.SupportMedia2 {
+		s.registerMedia2Service(mux)
 	}
 
 	// Snapshot endpoint (SnapshotPath; defaults to BasePath/snapshot)
@@ -377,6 +383,15 @@ func (s *Server) registerDeviceService(mux *http.ServeMux) {
 
 	// Register device service handlers
 	handler.RegisterContextHandler("GetDeviceInformation", s.HandleGetDeviceInformation)
+
+	if s.config.SupportDeviceIO {
+		// The alarm I/O family rides the device service endpoint — where
+		// the onvif-go client (and several major vendors) send it.
+		handler.RegisterContextHandler("GetRelayOutputs", s.HandleGetRelayOutputs)
+		handler.RegisterContextHandler("SetRelayOutputState", s.HandleSetRelayOutputState)
+		handler.RegisterContextHandler("GetDigitalInputs", s.HandleGetDigitalInputs)
+		handler.RegisterContextHandler("GetDeviceIOServiceCapabilities", s.HandleGetDeviceIOServiceCapabilities)
+	}
 	handler.RegisterContextHandler("GetCapabilities", s.HandleGetCapabilities)
 	handler.RegisterContextHandler("GetSystemDateAndTime", s.HandleGetSystemDateAndTime)
 	handler.RegisterContextHandler("GetServices", s.HandleGetServices)
@@ -395,6 +410,19 @@ func (s *Server) registerMediaService(mux *http.ServeMux) {
 	handler.RegisterContextHandler("GetStreamUri", s.HandleGetStreamUri)
 	handler.RegisterContextHandler("GetSnapshotUri", s.HandleGetSnapshotUri)
 	handler.RegisterContextHandler("GetVideoSources", s.HandleGetVideoSources)
+
+	// OSD minimal closed loop + the audio configuration family (valid
+	// empty sets — this virtual camera has no audio hardware).
+	handler.RegisterContextHandler("GetOSDs", s.HandleGetOSDs)
+	handler.RegisterContextHandler("GetOSD", s.HandleGetOSD)
+	handler.RegisterContextHandler("CreateOSD", s.HandleCreateOSD)
+	handler.RegisterContextHandler("SetOSD", s.HandleSetOSD)
+	handler.RegisterContextHandler("DeleteOSD", s.HandleDeleteOSD)
+	handler.RegisterContextHandler("GetAudioSources", s.HandleGetAudioSources)
+	handler.RegisterContextHandler("GetAudioSourceConfigurations", s.HandleGetAudioSourceConfigurations)
+	handler.RegisterContextHandler("GetAudioEncoderConfigurations", s.HandleGetAudioEncoderConfigurations)
+	handler.RegisterContextHandler("GetAudioOutputs", s.HandleGetAudioOutputs)
+	handler.RegisterContextHandler("GetAudioDecoderConfigurations", s.HandleGetAudioDecoderConfigurations)
 
 	mux.Handle(s.config.BasePath+"/media_service", handler)
 }
@@ -586,4 +614,16 @@ func (s *Server) ServerInfo() string {
 	info += fmt.Sprintf("  Events: %v\n", s.config.SupportEvents)
 
 	return info
+}
+
+// registerMedia2Service registers the minimal Media2 (tr2) face on its
+// own endpoint; action local names can repeat the media service's map
+// because each SOAP handler dispatches only its own path.
+func (s *Server) registerMedia2Service(mux *http.ServeMux) {
+	handler := s.newSOAPHandler()
+	handler.RegisterContextHandler("GetProfiles", s.HandleMedia2GetProfiles)
+	handler.RegisterContextHandler("GetStreamUri", s.HandleMedia2GetStreamUri)
+	handler.RegisterContextHandler("SetSynchronizationPoint", s.HandleMedia2SetSynchronizationPoint)
+
+	mux.Handle(s.config.BasePath+"/media2_service", handler)
 }
