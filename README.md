@@ -51,7 +51,9 @@ mirroring the ONVIF service model:
   URIs (`GetStreamURIWithOptions`: RTSP/HTTP/UDP × unicast/multicast,
   namespace-tolerant response parsing), snapshots, encoder/audio/OSD
   configuration
-- `client.PTZ()` — moves, status, presets
+- `client.PTZ()` — moves, status, presets, configurations + options,
+  home position, auxiliary commands (wipers/heaters), nodes, service
+  capabilities
 - `client.Imaging()` — exposure, focus, imaging settings
 - `client.Events()` — managed pull-point subscriptions (background polling,
   auto-renewal, `ErrEventsNotSupported` sentinel) plus the raw primitives

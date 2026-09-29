@@ -43,7 +43,7 @@
 - `client.Media()` —— profile 与主/子码流选择助手、流 URI
   （`GetStreamURIWithOptions`：RTSP/HTTP/UDP × 单播/组播，命名空间宽容解析）、
   快照、编码/音频/OSD 配置
-- `client.PTZ()` —— 转动、状态、预置位
+- `client.PTZ()` —— 转动、状态、预置位、配置与选项、Home 位、辅助命令（雨刷/加热器）、节点、服务能力
 - `client.Imaging()` —— 曝光、聚焦、成像设置
 - `client.Events()` —— 托管 PullPoint 订阅（后台轮询、自动续订、
   `ErrEventsNotSupported` 哨兵）+ 原始原语
