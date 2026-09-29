@@ -54,10 +54,13 @@ mirroring the ONVIF service model:
 - `client.PTZ()` — moves, status, presets, configurations + options,
   home position, auxiliary commands (wipers/heaters), nodes, service
   capabilities
-- `client.Imaging()` — exposure, focus, imaging settings
+- `client.Imaging()` — exposure, focus, imaging settings, move options,
+  spec-named `Stop`, service capabilities, imaging presets (18.12)
 - `client.Events()` — managed pull-point subscriptions (background polling,
   auto-renewal, `ErrEventsNotSupported` sentinel) plus the raw primitives
-- `client.DeviceIO()`, `client.Security()` — relays, I/O, user management
+- `client.DeviceIO()`, `client.Security()` — relays, I/O, user management,
+  audio output configuration family (audio *decoder* configurations live in
+  the Media service per the WSDLs and are covered there)
 
 **Authentication built for real firmware** — `WithAuthMode` selects
 digest / password-text / HTTP Basic / none; `WithAuthFallback` adds an
@@ -202,7 +205,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `docs/` | Redirect to the documentation hub |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` (+ `generate-tests`, the capture→fixture developer tool) |
-| `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), media2 (H.265 options), analytics (Profile M), metadata (stream parsing), simple-server, tls-server, onvif-server, complete-demo |
+| `examples/` | Runnable examples per feature area: discovery, device-info, imaging-settings, ptz-control, events (PullPoint subscription), media2 (H.265 options), analytics (Profile M, incl. rules create/modify/delete + options), metadata (stream parsing), simple-server, tls-server, onvif-server, complete-demo |
 
 ## Protocol alignment & roadmap
 

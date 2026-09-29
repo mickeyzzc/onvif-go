@@ -325,3 +325,172 @@ func (s *Service) GetSupportedMetadata(ctx context.Context, moduleType string) (
 
 	return infos, nil
 }
+
+// RuleOptions is one tan:ConfigOptions entry of GetRuleOptions — the
+// vendor parameter tree is preserved verbatim in InnerXML for callers
+// that need the typed ranges.
+type RuleOptions struct {
+	RuleType string
+	Name     string
+	Type     string
+	InnerXML string
+}
+
+// ModuleOptions is one tan:ConfigOptions entry of GetAnalyticsModuleOptions.
+type ModuleOptions struct {
+	AnalyticsModule string
+	Name            string
+	Type            string
+	InnerXML        string
+}
+
+type createRules struct {
+	XMLName            xml.Name    `xml:"tan:CreateRules"`
+	Xmlns              string      `xml:"xmlns:tan,attr"`
+	XmlnsTT            string      `xml:"xmlns:tt,attr"`
+	ConfigurationToken string      `xml:"tan:ConfigurationToken"`
+	Rule               []configOut `xml:"tan:Rule"`
+}
+
+type modifyRules struct {
+	XMLName            xml.Name    `xml:"tan:ModifyRules"`
+	Xmlns              string      `xml:"xmlns:tan,attr"`
+	XmlnsTT            string      `xml:"xmlns:tt,attr"`
+	ConfigurationToken string      `xml:"tan:ConfigurationToken"`
+	Rule               []configOut `xml:"tan:Rule"`
+}
+
+type deleteRules struct {
+	XMLName            xml.Name `xml:"tan:DeleteRules"`
+	Xmlns              string   `xml:"xmlns:tan,attr"`
+	ConfigurationToken string   `xml:"tan:ConfigurationToken"`
+	RuleName           []string `xml:"tan:RuleName"`
+}
+
+// CreateRules adds rules to a VideoAnalyticsConfiguration (e.g. Hikvision
+// / Axis MotionDetector / FieldDetector provisioning).
+func (s *Service) CreateRules(ctx context.Context, configurationToken string, rules []*Config) error {
+	req := &createRules{
+		Xmlns:              Namespace,
+		XmlnsTT:            SchemaNamespace,
+		ConfigurationToken: configurationToken,
+	}
+	for _, r := range rules {
+		req.Rule = append(req.Rule, toConfigOut(r))
+	}
+
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceAnalytics), "", req, nil); err != nil {
+		return fmt.Errorf("CreateRules failed: %w", err)
+	}
+
+	return nil
+}
+
+// ModifyRules updates existing rules of a VideoAnalyticsConfiguration.
+func (s *Service) ModifyRules(ctx context.Context, configurationToken string, rules []*Config) error {
+	req := &modifyRules{
+		Xmlns:              Namespace,
+		XmlnsTT:            SchemaNamespace,
+		ConfigurationToken: configurationToken,
+	}
+	for _, r := range rules {
+		req.Rule = append(req.Rule, toConfigOut(r))
+	}
+
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceAnalytics), "", req, nil); err != nil {
+		return fmt.Errorf("ModifyRules failed: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteRules removes named rules from a VideoAnalyticsConfiguration.
+func (s *Service) DeleteRules(ctx context.Context, configurationToken string, ruleNames []string) error {
+	req := &deleteRules{
+		Xmlns:              Namespace,
+		ConfigurationToken: configurationToken,
+		RuleName:           ruleNames,
+	}
+
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceAnalytics), "", req, nil); err != nil {
+		return fmt.Errorf("DeleteRules failed: %w", err)
+	}
+
+	return nil
+}
+
+// GetRuleOptions returns the configurable parameter ranges for a rule
+// type (empty ruleType = all types; each entry then carries RuleType).
+func (s *Service) GetRuleOptions(ctx context.Context, ruleType, configurationToken string) ([]*RuleOptions, error) {
+	type getRuleOptions struct {
+		XMLName            xml.Name `xml:"tan:GetRuleOptions"`
+		Xmlns              string   `xml:"xmlns:tan,attr"`
+		RuleType           string   `xml:"tan:RuleType,omitempty"`
+		ConfigurationToken string   `xml:"tan:ConfigurationToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetRuleOptionsResponse"`
+		Options []struct {
+			RuleType string `xml:"RuleType,attr"`
+			Name     string `xml:"Name,attr"`
+			Type     string `xml:"Type,attr"`
+			Inner    string `xml:",innerxml"`
+		} `xml:"RuleOptions"`
+	}
+
+	req := &getRuleOptions{
+		Xmlns:              Namespace,
+		RuleType:           ruleType,
+		ConfigurationToken: configurationToken,
+	}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceAnalytics), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetRuleOptions failed: %w", err)
+	}
+
+	out := make([]*RuleOptions, 0, len(resp.Options))
+	for _, o := range resp.Options {
+		out = append(out, &RuleOptions{RuleType: o.RuleType, Name: o.Name, Type: o.Type, InnerXML: o.Inner})
+	}
+
+	return out, nil
+}
+
+// GetAnalyticsModuleOptions returns the configurable parameter ranges
+// for an analytics module type (empty moduleType = all types).
+func (s *Service) GetAnalyticsModuleOptions(ctx context.Context, moduleType, configurationToken string) ([]*ModuleOptions, error) {
+	type getAnalyticsModuleOptions struct {
+		XMLName            xml.Name `xml:"tan:GetAnalyticsModuleOptions"`
+		Xmlns              string   `xml:"xmlns:tan,attr"`
+		Type               string   `xml:"tan:Type,omitempty"`
+		ConfigurationToken string   `xml:"tan:ConfigurationToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetAnalyticsModuleOptionsResponse"`
+		Options []struct {
+			AnalyticsModule string `xml:"AnalyticsModule,attr"`
+			Name            string `xml:"Name,attr"`
+			Type            string `xml:"Type,attr"`
+			Inner           string `xml:",innerxml"`
+		} `xml:"Options"`
+	}
+
+	req := &getAnalyticsModuleOptions{
+		Xmlns:              Namespace,
+		Type:               moduleType,
+		ConfigurationToken: configurationToken,
+	}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceAnalytics), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetAnalyticsModuleOptions failed: %w", err)
+	}
+
+	out := make([]*ModuleOptions, 0, len(resp.Options))
+	for _, o := range resp.Options {
+		out = append(out, &ModuleOptions{AnalyticsModule: o.AnalyticsModule, Name: o.Name, Type: o.Type, InnerXML: o.Inner})
+	}
+
+	return out, nil
+}
