@@ -69,6 +69,19 @@ func WithPTZProvider(p provider.PTZProvider) Option {
 	}
 }
 
+// WithRelayController replaces the DeviceIO alarm I/O backend (the #115
+// host seam): real cameras whose hardware has no relay outputs or
+// digital inputs inject an empty controller, keeping the family
+// answerable with honest empty sets instead of the simulator's
+// fabricated alarm I/O.
+func WithRelayController(p provider.RelayController) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.relays = p
+		}
+	}
+}
+
 // WithMetrics wires the observability seam (issue #66): dispatched
 // requests, handler faults, and auth failures fire on the given Hooks
 // (bridged to Prometheus or any backend by the host; nil-safe).
