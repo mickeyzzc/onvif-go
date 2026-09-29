@@ -44,10 +44,10 @@
   （`GetStreamURIWithOptions`：RTSP/HTTP/UDP × 单播/组播，命名空间宽容解析）、
   快照、编码/音频/OSD 配置
 - `client.PTZ()` —— 转动、状态、预置位、配置与选项、Home 位、辅助命令（雨刷/加热器）、节点、服务能力
-- `client.Imaging()` —— 曝光、聚焦、成像设置
+- `client.Imaging()` —— 曝光、聚焦、成像设置、移动选项、规范名 `Stop`、服务能力、成像预置位（18.12）
 - `client.Events()` —— 托管 PullPoint 订阅（后台轮询、自动续订、
   `ErrEventsNotSupported` 哨兵）+ 原始原语
-- `client.DeviceIO()`、`client.Security()` —— 继电器、I/O、用户管理
+- `client.DeviceIO()`、`client.Security()` —— 继电器、I/O、用户管理、音频输出配置族（音频**解码器**配置按 WSDL 归属 Media 服务，已在 media 包覆盖）
 
 **为真实固件打造的鉴权** —— `WithAuthMode` 选择 digest / 明文 token /
 HTTP Basic / 不鉴权；`WithAuthFallback` 提供自动回退梯队，并记住设备接受的
@@ -234,7 +234,7 @@ Windows（amd64）——下载、`chmod +x`、对照 `SHA256SUMS` 校验即可�
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
 | `docs/` | 引导至文档中心 |
 | `cmd/` | 辅助 CLI：`discover`、`onvif-quick`、`onvif-diagnostics`、`onvif-server`（另有 `generate-tests`，抓包→fixture 的开发者工具） |
-| `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、media2（H.265 选项）、analytics（Profile M）、metadata（流解析）、simple-server、tls-server、onvif-server、complete-demo |
+| `examples/` | 按功能划分的可运行示例：discovery、device-info、imaging-settings、ptz-control、events（PullPoint 订阅）、media2（H.265 选项）、analytics（Profile M，含规则增删改+选项探测）、metadata（流解析）、simple-server、tls-server、onvif-server、complete-demo |
 
 ## 开发
 

@@ -724,3 +724,123 @@ func (s *Service) GetImagingStatus(ctx context.Context, videoSourceToken string)
 		},
 	}, nil
 }
+
+// ImagingServiceCapabilities reports the imaging service feature flags
+// (attributes of GetServiceCapabilities/Capabilities).
+type ImagingServiceCapabilities struct {
+	ImageStabilization bool
+	Presets            bool
+	AdaptablePreset    bool
+}
+
+// GetImagingServiceCapabilities reports whether image stabilization and
+// imaging presets are supported.
+func (s *Service) GetImagingServiceCapabilities(ctx context.Context) (*ImagingServiceCapabilities, error) {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
+	if endpoint == "" {
+		return nil, types.ErrServiceNotSupported
+	}
+
+	type GetServiceCapabilities struct {
+		XMLName xml.Name `xml:"timg:GetServiceCapabilities"`
+		Xmlns   string   `xml:"xmlns:timg,attr"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetServiceCapabilitiesResponse"`
+		Caps    struct {
+			ImageStabilization bool `xml:"ImageStabilization,attr"`
+			Presets            bool `xml:"Presets,attr"`
+			AdaptablePreset    bool `xml:"AdaptablePreset,attr"`
+		} `xml:"Capabilities"`
+	}
+
+	req := GetServiceCapabilities{Xmlns: Namespace}
+	var resp response
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetServiceCapabilities failed: %w", err)
+	}
+
+	return &ImagingServiceCapabilities{
+		ImageStabilization: resp.Caps.ImageStabilization,
+		Presets:            resp.Caps.Presets,
+		AdaptablePreset:    resp.Caps.AdaptablePreset,
+	}, nil
+}
+
+// Stop stops the focus movement of a video source. This is the
+// spec-named form of StopFocus — ver20 imaging defines exactly one Stop
+// (focus); there is no separate iris/zoom stop operation.
+func (s *Service) Stop(ctx context.Context, videoSourceToken string) error {
+	return s.StopFocus(ctx, videoSourceToken)
+}
+
+// ImagingPreset is one named imaging preset (day/night profiles &co.).
+type ImagingPreset struct {
+	Token string
+	Name  string
+	Type  string
+}
+
+// GetPresets lists the imaging presets of a video source.
+func (s *Service) GetPresets(ctx context.Context, videoSourceToken string) ([]*ImagingPreset, error) {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
+	if endpoint == "" {
+		return nil, types.ErrServiceNotSupported
+	}
+
+	type GetPresets struct {
+		XMLName          xml.Name `xml:"timg:GetPresets"`
+		Xmlns            string   `xml:"xmlns:timg,attr"`
+		VideoSourceToken string   `xml:"timg:VideoSourceToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetPresetsResponse"`
+		Presets []struct {
+			Token string `xml:"token,attr"`
+			Name  string `xml:"Name"`
+			Type  string `xml:"Type"`
+		} `xml:"Preset"`
+	}
+
+	req := GetPresets{Xmlns: Namespace, VideoSourceToken: videoSourceToken}
+	var resp response
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetPresets failed: %w", err)
+	}
+
+	out := make([]*ImagingPreset, 0, len(resp.Presets))
+	for i := range resp.Presets {
+		p := resp.Presets[i]
+		out = append(out, &ImagingPreset{Token: p.Token, Name: p.Name, Type: p.Type})
+	}
+
+	return out, nil
+}
+
+// SetCurrentPreset applies an imaging preset to a video source.
+func (s *Service) SetCurrentPreset(ctx context.Context, videoSourceToken, presetToken string) error {
+	endpoint := s.c.EndpointFor(api.ServiceImaging)
+	if endpoint == "" {
+		return types.ErrServiceNotSupported
+	}
+
+	type SetCurrentPreset struct {
+		XMLName          xml.Name `xml:"timg:SetCurrentPreset"`
+		Xmlns            string   `xml:"xmlns:timg,attr"`
+		VideoSourceToken string   `xml:"timg:VideoSourceToken"`
+		PresetToken      string   `xml:"timg:PresetToken"`
+	}
+
+	req := SetCurrentPreset{
+		Xmlns:            Namespace,
+		VideoSourceToken: videoSourceToken,
+		PresetToken:      presetToken,
+	}
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
+		return fmt.Errorf("SetCurrentPreset failed: %w", err)
+	}
+
+	return nil
+}

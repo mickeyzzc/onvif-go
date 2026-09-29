@@ -5,9 +5,11 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/mickeyzzc/onvif-go/v2/internal/api"
 	"github.com/mickeyzzc/onvif-go/v2/media"
+	"github.com/mickeyzzc/onvif-go/v2/types"
 )
 
 // Namespace is the device IO service WSDL namespace (tmd).
@@ -971,3 +973,158 @@ func (s *Service) SetRelayOutputState(ctx context.Context, token string, state R
 }
 
 // SendAuxiliaryCommand sends an auxiliary command to the device.
+
+// AudioOutputConfiguration is tt:AudioOutputConfiguration — how a
+// physical audio output renders its source (level, primacy).
+type AudioOutputConfiguration struct {
+	Token       string
+	Name        string
+	UseCount    int
+	SourceToken string
+	OutputLevel int
+	SendPrimacy string
+}
+
+// AudioOutputConfigurationOptions is tt:AudioOutputConfigurationOptions.
+type AudioOutputConfigurationOptions struct {
+	OutputLevelsRange  *types.IntRange
+	SendPrimacyOptions []string
+}
+
+// GetAudioOutputs lists the physical audio output tokens (the tmd:Get
+// flavor: a bare token list; full AudioOutput entities come from the
+// Media service).
+func (s *Service) GetAudioOutputs(ctx context.Context) ([]string, error) {
+	endpoint := s.getDeviceIOEndpoint()
+
+	type GetAudioOutputs struct {
+		XMLName xml.Name `xml:"tmd:GetAudioOutputs"`
+		Xmlns   string   `xml:"xmlns:tmd,attr"`
+	}
+
+	type GetAudioOutputsResponse struct {
+		XMLName xml.Name `xml:"GetAudioOutputsResponse"`
+		Tokens  []string `xml:"Token"`
+	}
+
+	req := GetAudioOutputs{Xmlns: deviceIONamespace}
+	var resp GetAudioOutputsResponse
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetAudioOutputs failed: %w", err)
+	}
+
+	return resp.Tokens, nil
+}
+
+// GetAudioOutputConfiguration returns the current configuration of a
+// physical audio output.
+func (s *Service) GetAudioOutputConfiguration(ctx context.Context, audioOutputToken string) (*AudioOutputConfiguration, error) {
+	endpoint := s.getDeviceIOEndpoint()
+
+	type GetAudioOutputConfiguration struct {
+		XMLName          xml.Name `xml:"tmd:GetAudioOutputConfiguration"`
+		Xmlns            string   `xml:"xmlns:tmd,attr"`
+		AudioOutputToken string   `xml:"tmd:AudioOutputToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetAudioOutputConfigurationResponse"`
+		Config  struct {
+			Token       string `xml:"token,attr"`
+			Name        string `xml:"Name"`
+			UseCount    int    `xml:"UseCount"`
+			SourceToken string `xml:"SourceToken"`
+			OutputLevel int    `xml:"OutputLevel"`
+			SendPrimacy string `xml:"SendPrimacy"`
+		} `xml:"AudioOutputConfiguration"`
+	}
+
+	req := GetAudioOutputConfiguration{Xmlns: deviceIONamespace, AudioOutputToken: audioOutputToken}
+	var resp response
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetAudioOutputConfiguration failed: %w", err)
+	}
+
+	return &AudioOutputConfiguration{
+		Token:       resp.Config.Token,
+		Name:        resp.Config.Name,
+		UseCount:    resp.Config.UseCount,
+		SourceToken: resp.Config.SourceToken,
+		OutputLevel: resp.Config.OutputLevel,
+		SendPrimacy: resp.Config.SendPrimacy,
+	}, nil
+}
+
+// GetAudioOutputConfigurationOptions returns the valid ranges (output
+// level, send-primacy modes) for a physical audio output.
+func (s *Service) GetAudioOutputConfigurationOptions(ctx context.Context, audioOutputToken string) (*AudioOutputConfigurationOptions, error) {
+	endpoint := s.getDeviceIOEndpoint()
+
+	type GetAudioOutputConfigurationOptions struct {
+		XMLName          xml.Name `xml:"tmd:GetAudioOutputConfigurationOptions"`
+		Xmlns            string   `xml:"xmlns:tmd,attr"`
+		AudioOutputToken string   `xml:"tmd:AudioOutputToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetAudioOutputConfigurationOptionsResponse"`
+		Options struct {
+			OutputLevelsRange *types.IntRange `xml:"OutputLevelsRange"`
+			SendPrimacy       string          `xml:"SendPrimacyOptions"`
+		} `xml:"AudioOutputOptions"`
+	}
+
+	req := GetAudioOutputConfigurationOptions{Xmlns: deviceIONamespace, AudioOutputToken: audioOutputToken}
+	var resp response
+	if err := s.c.Call(ctx, endpoint, "", req, &resp); err != nil {
+		return nil, fmt.Errorf("GetAudioOutputConfigurationOptions failed: %w", err)
+	}
+
+	return &AudioOutputConfigurationOptions{
+		OutputLevelsRange:  resp.Options.OutputLevelsRange,
+		SendPrimacyOptions: strings.Fields(resp.Options.SendPrimacy),
+	}, nil
+}
+
+// SetAudioOutputConfiguration pushes a modified audio output
+// configuration; forcePersistence asks the device to keep it across
+// reboots.
+func (s *Service) SetAudioOutputConfiguration(ctx context.Context, config *AudioOutputConfiguration, forcePersistence bool) error {
+	endpoint := s.getDeviceIOEndpoint()
+
+	type audioOutputConfigOut struct {
+		Token       string `xml:"token,attr"`
+		Name        string `xml:"tt:Name"`
+		UseCount    int    `xml:"tt:UseCount"`
+		SourceToken string `xml:"tt:SourceToken"`
+		OutputLevel int    `xml:"tt:OutputLevel"`
+		SendPrimacy string `xml:"tt:SendPrimacy,omitempty"`
+	}
+
+	type SetAudioOutputConfiguration struct {
+		XMLName          xml.Name             `xml:"tmd:SetAudioOutputConfiguration"`
+		Xmlns            string               `xml:"xmlns:tmd,attr"`
+		XmlnsTT          string               `xml:"xmlns:tt,attr"`
+		Configuration    audioOutputConfigOut `xml:"tmd:Configuration"`
+		ForcePersistence bool                 `xml:"tmd:ForcePersistence"`
+	}
+
+	req := SetAudioOutputConfiguration{
+		Xmlns:   deviceIONamespace,
+		XmlnsTT: "http://www.onvif.org/ver10/schema",
+		Configuration: audioOutputConfigOut{
+			Token:       config.Token,
+			Name:        config.Name,
+			UseCount:    config.UseCount,
+			SourceToken: config.SourceToken,
+			OutputLevel: config.OutputLevel,
+			SendPrimacy: config.SendPrimacy,
+		},
+		ForcePersistence: forcePersistence,
+	}
+	if err := s.c.Call(ctx, endpoint, "", req, nil); err != nil {
+		return fmt.Errorf("SetAudioOutputConfiguration failed: %w", err)
+	}
+
+	return nil
+}
