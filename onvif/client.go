@@ -419,16 +419,20 @@ func (c *Client) Initialize(ctx context.Context) error {
 		return fmt.Errorf("failed to get capabilities: %w", err)
 	}
 
-	// Media2-only (Profile T) devices advertise no ver10 Media XAddr in
-	// GetCapabilities — probe GetServices for the ver20/media endpoint
-	// before taking the write lock (the call itself needs the read lock).
-	// A probe failure is non-fatal: Initialize tolerates partial endpoint
+	// Probe GetServices for the ver20/media endpoint before taking the
+	// write lock (the call itself needs the read lock). Media2-only
+	// (Profile T) devices have no ver10 Media XAddr in GetCapabilities,
+	// and dual-face devices advertise a DEDICATED ver20/media address —
+	// both need the GetServices entry, which is authoritative for Media2
+	// (the Media1 endpoint dispatches by action local name, so a tr2
+	// request posted there gets the Media1-shaped answer). A probe
+	// failure is non-fatal: Initialize tolerates partial endpoint
 	// knowledge, matching the capabilities handling above.
 	var media2FromServices string
 	c.mu.RLock()
 	media2Pinned := c.media2Endpoint != ""
 	c.mu.RUnlock()
-	if !media2Pinned && (capabilities.Media == nil || capabilities.Media.XAddr == "") {
+	if !media2Pinned {
 		if services, serr := c.Device().GetServices(ctx, false); serr == nil {
 			for _, svc := range services {
 				if svc.Namespace == media2.Namespace && svc.XAddr != "" {
@@ -461,13 +465,13 @@ func (c *Client) Initialize(ctx context.Context) error {
 	if capabilities.Analytics != nil && capabilities.Analytics.XAddr != "" {
 		c.analyticsEndpoint = c.fixServiceURL(capabilities.Analytics.XAddr)
 	}
-	if c.media2Endpoint == "" && c.mediaEndpoint != "" {
-		// Media2 rides the media service endpoint unless pinned explicitly.
-		c.media2Endpoint = c.mediaEndpoint
-	}
-	if c.media2Endpoint == "" && media2FromServices != "" {
-		// Media2-only device: GetServices carried the ver20/media XAddr.
+	if media2FromServices != "" {
+		// GetServices carried the ver20/media XAddr — authoritative for
+		// dual-face and Media2-only devices alike.
 		c.media2Endpoint = c.fixServiceURL(media2FromServices)
+	} else if c.media2Endpoint == "" && c.mediaEndpoint != "" {
+		// Legacy single-face device: Media2 rides the media endpoint.
+		c.media2Endpoint = c.mediaEndpoint
 	}
 
 	return nil

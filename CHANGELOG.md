@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- **Fixed: Media2 calls ride the Media1 endpoint on dual-face devices.**
+  `Initialize` only consulted GetServices for the ver20/media address
+  when the device advertised NO ver10 Media XAddr — a device serving
+  both faces (dedicated `/onvif/media2_service` in GetServices) had its
+  Media2 calls posted to the Media1 endpoint, which dispatches by
+  action local name and answers with the Media1 shape (a tr2
+  GetStreamUri came back wrapped in MediaUri, parsing as an empty URI).
+  The GetServices ver20/media entry is now always probed and takes
+  precedence over the ride-the-media-endpoint fallback.
+
 - **Client: PTZ completion (#111)** — GetConfigurationOptions /
   SetConfiguration / SendAuxiliaryCommand / GetNodes / PTZ
   GetServiceCapabilities, with xs:duration parsing/formatting shared
