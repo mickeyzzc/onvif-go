@@ -187,7 +187,11 @@ type Server struct {
 	ptz        provider.PTZProvider
 	osd        provider.OSDStore
 	relays     provider.RelayController
-	systemTime time.Time
+	// keyframeHook is fired by both SetSynchronizationPoint handlers
+	// (ver10 media and tr2 Media2) — the host's force-IDR seam (parity
+	// with onvif-rs's keyframe_hook). nil = acknowledge without acting.
+	keyframeHook func()
+	systemTime   time.Time
 
 	// advertiseFn is the effective dynamic host source (seeded from
 	// Config.AdvertiseHostProvider, replaceable at runtime); guarded by
