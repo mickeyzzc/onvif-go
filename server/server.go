@@ -74,6 +74,15 @@ func WithPTZProvider(p provider.PTZProvider) Option {
 // digital inputs inject an empty controller, keeping the family
 // answerable with honest empty sets instead of the simulator's
 // fabricated alarm I/O.
+// WithKeyframeHook installs the force-IDR seam fired by
+// SetSynchronizationPoint (both the ver10 media face and the tr2
+// Media2 face). nil (default) = acknowledge without acting.
+func WithKeyframeHook(fn func()) Option {
+	return func(s *Server) {
+		s.keyframeHook = fn
+	}
+}
+
 func WithRelayController(p provider.RelayController) Option {
 	return func(s *Server) {
 		if p != nil {
@@ -423,6 +432,9 @@ func (s *Server) registerMediaService(mux *http.ServeMux) {
 	handler.RegisterContextHandler("GetStreamUri", s.HandleGetStreamUri)
 	handler.RegisterContextHandler("GetSnapshotUri", s.HandleGetSnapshotUri)
 	handler.RegisterContextHandler("GetVideoSources", s.HandleGetVideoSources)
+	handler.RegisterContextHandler("GetVideoEncoderConfigurations", s.HandleGetVideoEncoderConfigurations)
+	handler.RegisterContextHandler("GetVideoEncoderConfigurationOptions", s.HandleGetVideoEncoderConfigurationOptions)
+	handler.RegisterContextHandler("SetSynchronizationPoint", s.HandleSetSynchronizationPoint)
 
 	// OSD minimal closed loop + the audio configuration family (valid
 	// empty sets — this virtual camera has no audio hardware).
@@ -637,6 +649,7 @@ func (s *Server) registerMedia2Service(mux *http.ServeMux) {
 	handler.RegisterContextHandler("GetProfiles", s.HandleMedia2GetProfiles)
 	handler.RegisterContextHandler("GetStreamUri", s.HandleMedia2GetStreamUri)
 	handler.RegisterContextHandler("SetSynchronizationPoint", s.HandleMedia2SetSynchronizationPoint)
+	handler.RegisterContextHandler("GetVideoEncoderConfigurations", s.HandleMedia2GetVideoEncoderConfigurations)
 
 	mux.Handle(s.config.BasePath+"/media2_service", handler)
 }

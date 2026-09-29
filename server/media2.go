@@ -148,6 +148,9 @@ func (s *Server) HandleMedia2SetSynchronizationPoint(_ *soap.RequestContext, bod
 	if err := unmarshalBody(body, &req); err != nil {
 		return nil, fmt.Errorf("invalid request: %w", err)
 	}
+	if s.keyframeHook != nil {
+		s.keyframeHook()
+	}
 
 	return struct {
 		XMLName xml.Name `xml:"http://www.onvif.org/ver20/media/wsdl SetSynchronizationPointResponse"`
