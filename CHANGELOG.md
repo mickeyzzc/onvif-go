@@ -16,8 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `WithKeyframeHook(fn)` option is fired by BOTH sync-point handlers —
   the host's force-IDR seam, parity with onvif-rs's `keyframe_hook`. The
   Media2 face grows `GetVideoEncoderConfigurations` (one
-  `tr2:Configurations` block per profile, the onvif-rs twin shape).
-  Caught live by cross-library interop against the onvif-rs server.
+  `tr2:Configurations` block per profile, the onvif-rs twin shape) and
+  `GetServiceCapabilities` (SnapshotUri from the profile snapshot
+  config, RTSPStreaming on, MaximumNumberOfProfiles = advertised
+  count). Caught live by cross-library interop against the onvif-rs
+  server.
 - **Fixed: Media2 calls ride the Media1 endpoint on dual-face devices.**
   `Initialize` only consulted GetServices for the ver20/media address
   when the device advertised NO ver10 Media XAddr — a device serving

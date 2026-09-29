@@ -111,3 +111,20 @@ func TestMedia2GetVideoEncoderConfigurations(t *testing.T) {
 		t.Fatalf("tr2 configurations = %d, want %d (one tr2:Configurations block per profile)", len(cfgs), len(config.Profiles))
 	}
 }
+
+func TestMedia2GetServiceCapabilities(t *testing.T) {
+	_, client, config := startExpansionServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	caps, err := client.Media2().GetServiceCapabilities(ctx)
+	if err != nil {
+		t.Fatalf("Media2 GetServiceCapabilities: %v", err)
+	}
+	if !caps.RTSPStreaming {
+		t.Error("RTSPStreaming = false, want true")
+	}
+	if caps.MaximumNumberOfProfiles != len(config.Profiles) {
+		t.Errorf("MaximumNumberOfProfiles = %d, want %d", caps.MaximumNumberOfProfiles, len(config.Profiles))
+	}
+}

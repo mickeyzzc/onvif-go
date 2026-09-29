@@ -156,3 +156,36 @@ func (s *Server) HandleMedia2SetSynchronizationPoint(_ *soap.RequestContext, bod
 		XMLName xml.Name `xml:"http://www.onvif.org/ver20/media/wsdl SetSynchronizationPointResponse"`
 	}{}, nil
 }
+
+type media2GetServiceCapabilitiesResponse struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver20/media/wsdl GetServiceCapabilitiesResponse"`
+	Caps    struct {
+		SnapshotUri bool `xml:"SnapshotUri,attr"`
+		Rotation    bool `xml:"Rotation,attr"`
+		OSD         bool `xml:"OSD,attr"`
+		Profile     struct {
+			MaximumNumberOfProfiles int `xml:"MaximumNumberOfProfiles,attr"`
+		} `xml:"http://www.onvif.org/ver10/schema ProfileCapabilities"`
+		Streaming struct {
+			RTSPStreaming bool `xml:"RTSPStreaming,attr"`
+		} `xml:"http://www.onvif.org/ver10/schema StreamingCapabilities"`
+	} `xml:"http://www.onvif.org/ver20/media/wsdl Capabilities"`
+}
+
+// HandleMedia2GetServiceCapabilities answers the Media2 feature flags:
+// snapshot advertised (SnapshotConfig.Enabled), RTSP streaming on, and
+// the advertised profile count — the onvif-rs twin's semantics.
+func (s *Server) HandleMedia2GetServiceCapabilities(_ *soap.RequestContext, _ []byte) (interface{}, error) {
+	resp := media2GetServiceCapabilitiesResponse{}
+	for _, p := range s.config.Profiles {
+		if p.Snapshot.Enabled {
+			resp.Caps.SnapshotUri = true
+			break
+		}
+	}
+	resp.Caps.Rotation = false
+	resp.Caps.OSD = true
+	resp.Caps.Profile.MaximumNumberOfProfiles = len(s.config.Profiles)
+	resp.Caps.Streaming.RTSPStreaming = true
+	return resp, nil
+}
