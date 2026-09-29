@@ -301,6 +301,24 @@ func (s *Server) HandleGetServices(rc *soap.RequestContext, body []byte) (interf
 		})
 	}
 
+	if s.config.SupportDeviceIO {
+		// The I/O actions are served on the device service endpoint —
+		// advertise that XAddr (what a client reaches works).
+		services = append(services, Service{
+			Namespace: "http://www.onvif.org/ver10/deviceIO/wsdl",
+			XAddr:     baseURL + "/device_service",
+			Version:   Version{Major: 2, Minor: 5}, //nolint:mnd // ONVIF version
+		})
+	}
+
+	if s.config.SupportMedia2 {
+		services = append(services, Service{
+			Namespace: "http://www.onvif.org/ver20/media/wsdl",
+			XAddr:     baseURL + "/media2_service",
+			Version:   Version{Major: 2, Minor: 5}, //nolint:mnd // ONVIF version
+		})
+	}
+
 	// GetCapabilities advertises the Events XAddr under the same flag;
 	// the two enumerations must agree (#46) — clients (including this
 	// library's Initialize) enumerate services via GetServices.

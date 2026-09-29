@@ -7,8 +7,11 @@ import (
 
 // RelayOutput represents relay output.
 type RelayOutput struct {
-	Token      string
-	Properties RelayOutputSettings
+	Token string
+	// LogicalState is the live relay state (active/inactive) — the field
+	// NVR alarm-linkage polls.
+	LogicalState RelayLogicalState
+	Properties   RelayOutputSettings
 }
 
 // RelayOutputSettings represents relay output settings.

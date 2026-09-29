@@ -15,6 +15,10 @@ var (
 	// ErrPTZNotSupported is returned when PTZ is not supported for a profile.
 	ErrPTZNotSupported = errors.New("PTZ not supported for profile")
 
+	// ErrNotFound is returned when a referenced I/O entity (relay, OSD,
+	// ...) does not exist.
+	ErrNotFound = errors.New("entity not found")
+
 	// ErrPresetNotFound is returned when a preset is not found.
 	ErrPresetNotFound = errors.New("preset not found")
 )

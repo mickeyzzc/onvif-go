@@ -162,6 +162,18 @@ type Config struct {
 	SupportPTZ     bool
 	SupportImaging bool
 	SupportEvents  bool
+
+	// SupportDeviceIO serves the alarm I/O family (relay outputs with
+	// live logical state + digital inputs) on the device service
+	// endpoint, and advertises the deviceIO namespace in GetServices —
+	// the NVR alarm-linkage test surface (issue #115).
+	SupportDeviceIO bool
+
+	// SupportMedia2 serves the minimal Media2 face (GetProfiles /
+	// GetStreamUri / SetSynchronizationPoint, tr2) on its own
+	// {BasePath}/media2_service endpoint and advertises the ver20/media
+	// namespace in GetServices — the Profile-T entry path (issue #115).
+	SupportMedia2 bool
 }
 
 // Server represents the ONVIF server: stateless SOAP handlers over
@@ -173,6 +185,8 @@ type Server struct {
 	snapshot   provider.SnapshotProvider
 	imaging    provider.ImagingProvider
 	ptz        provider.PTZProvider
+	osd        provider.OSDStore
+	relays     provider.RelayController
 	systemTime time.Time
 
 	// advertiseFn is the effective dynamic host source (seeded from

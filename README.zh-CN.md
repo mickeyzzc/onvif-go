@@ -229,7 +229,7 @@ Windows（amd64）——下载、`chmod +x`、对照 `SHA256SUMS` 校验即可�
 | `types/` | 共享数据模型 leaf |
 | `discovery/` | WS-Discovery：主动探测、被动监听、定向 HTTP 探测、后处理 |
 | `internal/soap/` | SOAP 传输 + WS-Security（digest/明文模式、Fault 检测） |
-| `server/` | 虚拟 ONVIF 相机服务器（测试用模拟器） |
+| `server/` | 虚拟相机模拟器 + 可嵌入服务端：DeviceIO（继电器/数字输入，opt-in）、Media2 最小面（opt-in）、媒体 OSD 闭环 + 音频空集族 |
 | `internal/onviftesting/` | 测试助手：mock server、抓包回放、golden 文件（内部包，不进消费方二进制） |
 | `testdata/captures/` | 真机 SOAP 抓包回归 fixture |
 | `docs/` | 引导至文档中心 |

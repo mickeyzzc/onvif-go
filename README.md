@@ -201,7 +201,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 | `types/` | shared data-model leaf |
 | `discovery/` | WS-Discovery: active probe, passive listener, directed HTTP probing, post-processing |
 | `internal/soap/` | SOAP transport + WS-Security (digest/text modes, fault detection) |
-| `server/` | Virtual ONVIF camera server (simulator for testing) |
+| `server/` | Virtual camera simulator + embeddable server: DeviceIO (relays / digital inputs, opt-in), Media2 minimal face (opt-in), media OSD loop + audio empty sets |
 | `docs/` | Redirect to the documentation hub |
 | `testdata/captures/` | Real-camera SOAP captures used as regression fixtures |
 | `cmd/` | Helper CLIs: `discover`, `onvif-quick`, `onvif-diagnostics`, `onvif-server` (+ `generate-tests`, the capture→fixture developer tool) |
