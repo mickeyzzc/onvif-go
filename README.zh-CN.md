@@ -184,8 +184,11 @@ diag, _ := client.DiagnoseAuth(ctx)
 - **Media2（ver20/media/wsdl）**——编解码无关的配置模型已具备
   （`onvif.Client.Media2()`：带内联配置的 profile、视频编码器配置与按编码
   的选项——每个编解码一条、`Encoding` 为自由名（H264/H265/AV1/…）、写入
-  原样透传、取流 URI）。Profile 增删与音频/OSD 配置族尚未实现；ver10
-  media 仍是全覆盖面。
+  原样透传、取流 URI、快照 URI、编码器实例数、组播起停、
+  `SetSynchronizationPoint`、服务能力、音频编码器与元数据配置族）。
+  `Initialize` 支持纯 Media2 设备探测：GetCapabilities 无 ver10 Media
+  XAddr 时经 GetServices 探测 ver20/media 端点并接给 `Media2()`。Profile
+  增删与 OSD 配置族尚未实现；ver10 media 仍是全覆盖面。
 - **Profile M**——事件 PullPoint 族、配置中的元数据配置、analytics 服务
   客户端（规则/模块配置 CRUD，`onvif.Client.Analytics()`，v2.1.0）均已具备；
   analytics `ConfigDescription` 的消息描述与元数据流的

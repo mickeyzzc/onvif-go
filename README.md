@@ -221,9 +221,14 @@ Deliberate scope boundaries (tracked for future capability packages):
   is in (`onvif.Client.Media2()`: profiles with inline configurations,
   video encoder configurations and per-encoding options — one entry per
   codec with free-name `Encoding` (H264/H265/AV1/…), set with verbatim
-  encoding pass-through, stream URI). Profile create/delete and the
-  audio/OSD configuration families are not implemented yet; ver10 media
-  remains the full-coverage surface.
+  encoding pass-through, stream URI, snapshot URI, encoder instance
+  counts, multicast start/stop, `SetSynchronizationPoint`, service
+  capabilities, audio encoder and metadata configuration families).
+  `Initialize` discovers Media2-only devices: when GetCapabilities
+  carries no ver10 Media XAddr, the ver20/media endpoint is probed via
+  GetServices and wired for `Media2()` calls. Profile create/delete and
+  the OSD family are not implemented yet; ver10 media remains the
+  full-coverage surface.
 - **Profile M** — the events PullPoint family, metadata configurations
   in profiles, and the analytics-service client (rule/module
   configuration CRUD, `onvif.Client.Analytics()`, v2.1.0) are in;

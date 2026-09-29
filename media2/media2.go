@@ -356,3 +356,296 @@ func (s *Service) GetStreamUri(ctx context.Context, protocol, profileToken strin
 
 	return resp.Uri, nil
 }
+
+// EncoderInstance reports how many concurrent encoder applications one
+// codec supports on a video source configuration.
+type EncoderInstance struct {
+	Encoding string
+	Number   int
+}
+
+// EncoderInstanceInfo is the GetVideoEncoderInstances answer: per-codec
+// limits plus the guaranteed total.
+type EncoderInstanceInfo struct {
+	Codecs []EncoderInstance
+	Total  int
+}
+
+// ServiceCapabilities is the Media2 capabilities answer (the flags an
+// NVR probes before using snapshot / OSD / streaming features).
+type ServiceCapabilities struct {
+	SnapshotUri bool
+	Rotation    bool
+	OSD         bool
+	// MaximumNumberOfProfiles comes from ProfileCapabilities.
+	MaximumNumberOfProfiles int
+	// RTSPStreaming comes from StreamingCapabilities.
+	RTSPStreaming bool
+}
+
+// AudioEncoderConfiguration is tt:AudioEncoder2Configuration — Media2's
+// codec-agnostic audio config (Encoding is an IANA media subtype such as
+// audio/PCMA).
+type AudioEncoderConfiguration struct {
+	Token      string
+	Name       string
+	UseCount   int
+	Encoding   string
+	Bitrate    int
+	SampleRate int
+}
+
+// MetadataPTZStatus selects which PTZ fields a metadata stream carries.
+type MetadataPTZStatus struct {
+	Status   bool
+	Position bool
+}
+
+// MetadataConfiguration is tt:MetadataConfiguration (Media2 flavor).
+type MetadataConfiguration struct {
+	Token     string
+	Name      string
+	UseCount  int
+	PTZStatus *MetadataPTZStatus
+	Analytics bool
+}
+
+// SetSynchronizationPoint requests an iframe on the profile's stream —
+// the call an NVR makes when event-triggered recording starts.
+func (s *Service) SetSynchronizationPoint(ctx context.Context, profileToken string) error {
+	type SetSynchronizationPoint struct {
+		XMLName      xml.Name `xml:"tr2:SetSynchronizationPoint"`
+		Xmlns        string   `xml:"xmlns:tr2,attr"`
+		ProfileToken string   `xml:"tr2:ProfileToken"`
+	}
+
+	req := SetSynchronizationPoint{Xmlns: Namespace, ProfileToken: profileToken}
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, nil); err != nil {
+		return fmt.Errorf("media2 SetSynchronizationPoint failed: %w", err)
+	}
+
+	return nil
+}
+
+// GetVideoEncoderInstances reports the guaranteed encoder instance counts
+// for a video source configuration.
+func (s *Service) GetVideoEncoderInstances(ctx context.Context, configurationToken string) (*EncoderInstanceInfo, error) {
+	type GetVideoEncoderInstances struct {
+		XMLName            xml.Name `xml:"tr2:GetVideoEncoderInstances"`
+		Xmlns              string   `xml:"xmlns:tr2,attr"`
+		ConfigurationToken string   `xml:"tr2:ConfigurationToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetVideoEncoderInstancesResponse"`
+		Info    struct {
+			Codec []struct {
+				Encoding string `xml:"Encoding"`
+				Number   int    `xml:"Number"`
+			} `xml:"Codec"`
+			Total int `xml:"Total"`
+		} `xml:"Info"`
+	}
+
+	req := GetVideoEncoderInstances{Xmlns: Namespace, ConfigurationToken: configurationToken}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("media2 GetVideoEncoderInstances failed: %w", err)
+	}
+
+	info := &EncoderInstanceInfo{Total: resp.Info.Total}
+	for _, c := range resp.Info.Codec {
+		info.Codecs = append(info.Codecs, EncoderInstance{Encoding: c.Encoding, Number: c.Number})
+	}
+
+	return info, nil
+}
+
+// GetSnapshotUri returns the JPEG snapshot URI for a profile — Media2's
+// flavor answers a plain Uri element (no MediaUri wrapper).
+func (s *Service) GetSnapshotUri(ctx context.Context, profileToken string) (string, error) {
+	type GetSnapshotUri struct {
+		XMLName      xml.Name `xml:"tr2:GetSnapshotUri"`
+		Xmlns        string   `xml:"xmlns:tr2,attr"`
+		ProfileToken string   `xml:"tr2:ProfileToken"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetSnapshotUriResponse"`
+		Uri     string   `xml:"Uri"`
+	}
+
+	req := GetSnapshotUri{Xmlns: Namespace, ProfileToken: profileToken}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, &resp); err != nil {
+		return "", fmt.Errorf("media2 GetSnapshotUri failed: %w", err)
+	}
+
+	return resp.Uri, nil
+}
+
+// StartMulticastStreaming starts the multicast stream of a profile.
+func (s *Service) StartMulticastStreaming(ctx context.Context, profileToken string) error {
+	return s.multicastStreaming(ctx, "StartMulticastStreaming", profileToken)
+}
+
+// StopMulticastStreaming stops the multicast stream of a profile.
+func (s *Service) StopMulticastStreaming(ctx context.Context, profileToken string) error {
+	return s.multicastStreaming(ctx, "StopMulticastStreaming", profileToken)
+}
+
+func (s *Service) multicastStreaming(ctx context.Context, action, profileToken string) error {
+	// Distinct concrete types per action: a shared struct with a
+	// name-swapped XMLName field would lose the tr2: prefix on the wire.
+	type startMulticast struct {
+		XMLName      xml.Name `xml:"tr2:StartMulticastStreaming"`
+		Xmlns        string   `xml:"xmlns:tr2,attr"`
+		ProfileToken string   `xml:"tr2:ProfileToken"`
+	}
+	type stopMulticast struct {
+		XMLName      xml.Name `xml:"tr2:StopMulticastStreaming"`
+		Xmlns        string   `xml:"xmlns:tr2,attr"`
+		ProfileToken string   `xml:"tr2:ProfileToken"`
+	}
+
+	var req any
+	switch action {
+	case "StartMulticastStreaming":
+		req = startMulticast{Xmlns: Namespace, ProfileToken: profileToken}
+	case "StopMulticastStreaming":
+		req = stopMulticast{Xmlns: Namespace, ProfileToken: profileToken}
+	default:
+		return fmt.Errorf("media2 %s failed: unknown multicast action", action)
+	}
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, nil); err != nil {
+		return fmt.Errorf("media2 %s failed: %w", action, err)
+	}
+
+	return nil
+}
+
+// GetServiceCapabilities reports the Media2 feature flags.
+func (s *Service) GetServiceCapabilities(ctx context.Context) (*ServiceCapabilities, error) {
+	type GetServiceCapabilities struct {
+		XMLName xml.Name `xml:"tr2:GetServiceCapabilities"`
+		Xmlns   string   `xml:"xmlns:tr2,attr"`
+	}
+
+	type response struct {
+		XMLName xml.Name `xml:"GetServiceCapabilitiesResponse"`
+		Caps    struct {
+			SnapshotUri bool `xml:"SnapshotUri,attr"`
+			Rotation    bool `xml:"Rotation,attr"`
+			OSD         bool `xml:"OSD,attr"`
+			Profile     struct {
+				MaximumNumberOfProfiles int `xml:"MaximumNumberOfProfiles,attr"`
+			} `xml:"ProfileCapabilities"`
+			Streaming struct {
+				RTSPStreaming bool `xml:"RTSPStreaming,attr"`
+			} `xml:"StreamingCapabilities"`
+		} `xml:"Capabilities"`
+	}
+
+	req := GetServiceCapabilities{Xmlns: Namespace}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("media2 GetServiceCapabilities failed: %w", err)
+	}
+
+	return &ServiceCapabilities{
+		SnapshotUri:             resp.Caps.SnapshotUri,
+		Rotation:                resp.Caps.Rotation,
+		OSD:                     resp.Caps.OSD,
+		MaximumNumberOfProfiles: resp.Caps.Profile.MaximumNumberOfProfiles,
+		RTSPStreaming:           resp.Caps.Streaming.RTSPStreaming,
+	}, nil
+}
+
+// GetAudioEncoderConfigurations lists audio encoder configurations; a
+// non-empty configurationToken filters to one configuration.
+func (s *Service) GetAudioEncoderConfigurations(ctx context.Context, configurationToken string) ([]*AudioEncoderConfiguration, error) {
+	type getConfiguration struct {
+		XMLName            xml.Name `xml:"tr2:GetAudioEncoderConfigurations"`
+		Xmlns              string   `xml:"xmlns:tr2,attr"`
+		ConfigurationToken string   `xml:"tr2:ConfigurationToken,omitempty"`
+	}
+
+	type response struct {
+		XMLName        xml.Name `xml:"GetAudioEncoderConfigurationsResponse"`
+		Configurations []struct {
+			Token      string `xml:"token,attr"`
+			Name       string `xml:"Name"`
+			UseCount   int    `xml:"UseCount"`
+			Encoding   string `xml:"Encoding"`
+			Bitrate    int    `xml:"Bitrate"`
+			SampleRate int    `xml:"SampleRate"`
+		} `xml:"Configurations"`
+	}
+
+	req := getConfiguration{Xmlns: Namespace, ConfigurationToken: configurationToken}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("media2 GetAudioEncoderConfigurations failed: %w", err)
+	}
+
+	out := make([]*AudioEncoderConfiguration, 0, len(resp.Configurations))
+	for i := range resp.Configurations {
+		c := resp.Configurations[i]
+		out = append(out, &AudioEncoderConfiguration{
+			Token:      c.Token,
+			Name:       c.Name,
+			UseCount:   c.UseCount,
+			Encoding:   c.Encoding,
+			Bitrate:    c.Bitrate,
+			SampleRate: c.SampleRate,
+		})
+	}
+
+	return out, nil
+}
+
+// GetMetadataConfigurations lists metadata configurations; a non-empty
+// configurationToken filters to one configuration.
+func (s *Service) GetMetadataConfigurations(ctx context.Context, configurationToken string) ([]*MetadataConfiguration, error) {
+	type getConfiguration struct {
+		XMLName            xml.Name `xml:"tr2:GetMetadataConfigurations"`
+		Xmlns              string   `xml:"xmlns:tr2,attr"`
+		ConfigurationToken string   `xml:"tr2:ConfigurationToken,omitempty"`
+	}
+
+	type response struct {
+		XMLName        xml.Name `xml:"GetMetadataConfigurationsResponse"`
+		Configurations []struct {
+			Token     string `xml:"token,attr"`
+			Name      string `xml:"Name"`
+			UseCount  int    `xml:"UseCount"`
+			PTZStatus *struct {
+				Status   bool `xml:"Status"`
+				Position bool `xml:"Position"`
+			} `xml:"PTZStatus"`
+			Analytics bool `xml:"Analytics"`
+		} `xml:"Configurations"`
+	}
+
+	req := getConfiguration{Xmlns: Namespace, ConfigurationToken: configurationToken}
+	var resp response
+	if err := s.c.Call(ctx, s.c.EndpointFor(api.ServiceMedia2), "", req, &resp); err != nil {
+		return nil, fmt.Errorf("media2 GetMetadataConfigurations failed: %w", err)
+	}
+
+	out := make([]*MetadataConfiguration, 0, len(resp.Configurations))
+	for _, c := range resp.Configurations {
+		cfg := &MetadataConfiguration{
+			Token:     c.Token,
+			Name:      c.Name,
+			UseCount:  c.UseCount,
+			Analytics: c.Analytics,
+		}
+		if c.PTZStatus != nil {
+			cfg.PTZStatus = &MetadataPTZStatus{Status: c.PTZStatus.Status, Position: c.PTZStatus.Position}
+		}
+		out = append(out, cfg)
+	}
+
+	return out, nil
+}

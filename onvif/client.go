@@ -419,6 +419,26 @@ func (c *Client) Initialize(ctx context.Context) error {
 		return fmt.Errorf("failed to get capabilities: %w", err)
 	}
 
+	// Media2-only (Profile T) devices advertise no ver10 Media XAddr in
+	// GetCapabilities — probe GetServices for the ver20/media endpoint
+	// before taking the write lock (the call itself needs the read lock).
+	// A probe failure is non-fatal: Initialize tolerates partial endpoint
+	// knowledge, matching the capabilities handling above.
+	var media2FromServices string
+	c.mu.RLock()
+	media2Pinned := c.media2Endpoint != ""
+	c.mu.RUnlock()
+	if !media2Pinned && (capabilities.Media == nil || capabilities.Media.XAddr == "") {
+		if services, serr := c.Device().GetServices(ctx, false); serr == nil {
+			for _, svc := range services {
+				if svc.Namespace == media2.Namespace && svc.XAddr != "" {
+					media2FromServices = svc.XAddr
+					break
+				}
+			}
+		}
+	}
+
 	// Extract service endpoints and fix incorrect addresses (localhost or stale
 	// advertised IPs after the camera roamed to a new address). The writes are
 	// lock-guarded so Initialize is safe to run while other goroutines call
@@ -444,6 +464,10 @@ func (c *Client) Initialize(ctx context.Context) error {
 	if c.media2Endpoint == "" && c.mediaEndpoint != "" {
 		// Media2 rides the media service endpoint unless pinned explicitly.
 		c.media2Endpoint = c.mediaEndpoint
+	}
+	if c.media2Endpoint == "" && media2FromServices != "" {
+		// Media2-only device: GetServices carried the ver20/media XAddr.
+		c.media2Endpoint = c.fixServiceURL(media2FromServices)
 	}
 
 	return nil
