@@ -16,6 +16,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   GetStreamUri came back wrapped in MediaUri, parsing as an empty URI).
   The GetServices ver20/media entry is now always probed and takes
   precedence over the ride-the-media-endpoint fallback.
+
+- **Client: PTZ completion (#111)** — GetConfigurationOptions /
+  SetConfiguration / SendAuxiliaryCommand / GetNodes / PTZ
+  GetServiceCapabilities, with xs:duration parsing/formatting shared
+  across the timeouts.
+- **Client: Media2 completion (#110)** — the Profile-T entry path:
+  GetProfiles (token/type filter), GetVideoEncoderConfigurations(+Options),
+  SetVideoEncoderConfiguration, GetStreamUri / GetSnapshotUri,
+  GetVideoEncoderInstances, SetSynchronizationPoint, Media2
+  GetServiceCapabilities, audio/metadata configuration reads.
+  `Initialize` now probes Media2 endpoints before taking the write
+  lock (RWMutex deadlock guard).
+- **Client: analytics rules write family, imaging completion, DeviceIO
+  (#112–#114)** — CreateRules/ModifyRules/DeleteRules/GetRuleOptions/
+  GetAnalyticsModuleOptions (InnerXML preserves the vendor tree);
+  imaging Stop / GetServiceCapabilities / GetPresets / SetCurrentPreset;
+  DeviceIO audio-output configuration family and GetRelayOutputs
+  parsing `LogicalState`.
+- **Server: virtual camera expansion (#115)** — `SupportDeviceIO` /
+  `SupportMedia2` config flags (GetServices-only advertisement,
+  additive): the DeviceIO action family over a RelayController /
+  DigitalInput provider, the OSD store loop on the media face, honest
+  empty audio sets, and the Media2 face (`/onvif/media2_service`) with
+  tr2 element shapes — namespace-strict contract tests pin every
+  response family, and the embedding suite covers the simulator's OSD
+  and DeviceIO stores.
+- **Server: `WithRelayController` host seam (#120)** — hosts inject
+  their own DeviceIO backend instead of the simulator's demo relays
+  (`nil` keeps the simulator default); caught during product adoption
+  — mibee-eye-go needs honest empty I/O sets, not fabricated
+  `relay_1`/`di_1`.
+
 - **Fixed: unbound namespace prefixes on sibling elements in
   explicit-prefix responses.** `withExplicitPrefixes` tracked
   declarations in one document-wide set, so a namespace shared by
