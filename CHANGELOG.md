@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.6.0] — 2026-10-24
+
+The unified-CLI package: the four tools become one binary
+(`cmd/onvif`), plus the auth-ladder fix (#140).
+
 ### Changed
 
 - **BREAKING-packaging: the four CLIs are one binary now.** `discover`,
