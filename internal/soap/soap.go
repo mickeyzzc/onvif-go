@@ -598,5 +598,5 @@ func renderSecurityHeader(b *strings.Builder, sec *Security) {
 func writeXMLText(b *strings.Builder, s string) {
 	// Error is impossible for strings.Builder writes; EscapeText's only
 	// failure mode is the underlying writer failing.
-	_ = xml.EscapeText(b, []byte(s)) //nolint:errcheck // strings.Builder writes cannot fail
+	_ = xml.EscapeText(b, []byte(s))
 }
