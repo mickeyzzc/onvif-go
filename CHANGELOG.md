@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.7.0] — 2026-10-27
+
 ### Changed
 
 - **SOAP requests now use the canonical compact wire format.** Envelope/
