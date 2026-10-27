@@ -1,0 +1,12 @@
+# Codecov is visualization and PR diff only — the authoritative 80% floor
+# stays the in-repo awk gate in ci.yml (issue #148).
+coverage:
+  status:
+    project:
+      default:
+        informational: true
+    patch:
+      default:
+        informational: true
+comment:
+  layout: "reach, diff, flags, files"

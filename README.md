@@ -1,6 +1,7 @@
 # onvif-go
 
 [![CI](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml/badge.svg)](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/mickeyzzc/onvif-go/graph/badge.svg)](https://codecov.io/gh/mickeyzzc/onvif-go)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mickeyzzc/onvif-go/v2.svg)](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mickeyzzc/onvif-go/v2)](https://goreportcard.com/report/github.com/mickeyzzc/onvif-go/v2)
 [![License](https://img.shields.io/github/license/mickeyzzc/onvif-go)](LICENSE)
@@ -12,6 +13,18 @@
 > Maintained by [@mickeyzzc](https://github.com/mickeyzzc).
 
 > [**中文**](README.zh-CN.md) — [English](README.md)
+
+## What's new
+
+One line per minor — details in the [CHANGELOG](CHANGELOG.md).
+
+- **v2.6.0** (2026-10-24) — one `onvif` CLI binary (was four tools) + auth-ladder fix for empty 200 bodies
+- **v2.5.0** (2026-10-14) — server-side basic notification interface (`wsnt:Subscribe` + pushed `Notify`)
+- **v2.4.0** (2026-10-12) — WS-BaseNotification push receiving, standard motion topics, typed time sync
+- **v2.3.0** (2026-09-29) — PTZ / Media2 / analytics / imaging / DeviceIO clients + virtual-camera expansion
+- **v2.2.0** (2026-09-20) — first CLI release with prebuilt artifacts
+- **v2.1.0** (2026-09-20) — wire-format correctness against the official ONVIF WSDL/XSD set
+- **v2.0.0** (2026-09-17) — service-facade API + zero third-party dependencies
 
 A production-hardened Go library for communicating with ONVIF-compliant IP
 cameras, NVRs and surveillance devices. Its device compatibility comes from

@@ -1,6 +1,7 @@
 # onvif-go
 
 [![CI](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml/badge.svg)](https://github.com/mickeyzzc/onvif-go/actions/workflows/ci.yml)
+[![Coverage](https://codecov.io/gh/mickeyzzc/onvif-go/graph/badge.svg)](https://codecov.io/gh/mickeyzzc/onvif-go)
 [![Go Reference](https://pkg.go.dev/badge/github.com/mickeyzzc/onvif-go/v2.svg)](https://pkg.go.dev/github.com/mickeyzzc/onvif-go/v2)
 [![Go Report Card](https://goreportcard.com/badge/github.com/mickeyzzc/onvif-go/v2)](https://goreportcard.com/report/github.com/mickeyzzc/onvif-go/v2)
 [![License](https://img.shields.io/github/license/mickeyzzc/onvif-go)](LICENSE)
@@ -11,6 +12,18 @@
 > 由 [@mickeyzzc](https://github.com/mickeyzzc) 维护。
 
 > [**English**](README.md)
+
+## 更新时间线
+
+每个 minor 一行——细节见 [CHANGELOG](CHANGELOG.md)。
+
+- **v2.6.0**（2026-10-24）——四个工具合并为单一 `onvif` CLI + 鉴权梯队空 body 修复
+- **v2.5.0**（2026-10-14）——服务端基础通知接口（`wsnt:Subscribe` + 推送 `Notify`）
+- **v2.4.0**（2026-10-12）——WS-BaseNotification 推送接收、标准移动侦测主题、类型化时钟同步
+- **v2.3.0**（2026-09-29）——PTZ / Media2 / analytics / imaging / DeviceIO 客户端 + 虚拟相机扩面
+- **v2.2.0**（2026-09-20）——CLI 首发与预编译产物
+- **v2.1.0**（2026-09-20）——对官方 ONVIF WSDL/XSD 全集的线格式正确性
+- **v2.0.0**（2026-09-17）——服务门面 API + 零第三方依赖
 
 一个经过生产锤炼的 Go 库，用于与 ONVIF 兼容的网络摄像头、NVR 和监控设备通信。
 设备兼容性来自真实部署：海康、安讯士（Axis）、大华、博世（Bosch）、Amcrest、
