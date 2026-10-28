@@ -5,6 +5,7 @@ directory is the source of truth.
 
 **English (ONVIF — Go)**
 
+- **[The no-hardware ONVIF loop: virtual camera × CLI × NVR](en-US/onvif-go-no-hardware.md)** ← start here
 - [Architecture](en-US/onvif-go-architecture.md)
 - [Authentication](en-US/onvif-go-authentication.md)
 - [CLI: onvif-diagnostics](en-US/onvif-go-cli-diagnostics.md)
@@ -23,6 +24,7 @@ directory is the source of truth.
 
 **中文**
 
+- **[无硬件 ONVIF 开发闭环：虚拟相机 × CLI × NVR 联调](zh-CN/onvif-go-no-hardware.md)** ← 从这里开始
 - [架构](zh-CN/onvif-go-architecture.md)
 - [鉴权与安全](zh-CN/onvif-go-authentication.md)
 - [CLI：onvif-diagnostics](zh-CN/onvif-go-cli-diagnostics.md)

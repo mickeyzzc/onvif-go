@@ -190,14 +190,16 @@ var docsAllowedHosts = map[string]bool{
 }
 
 // docsHostAllowed also admits the example endpoint placeholders that
-// appear in CLI usage snippets (LAN IPs, literal "host").
+// appear in CLI usage snippets (LAN IPs, loopback, literal "host").
 func docsHostAllowed(host string) bool {
 	h := strings.ToLower(host)
 	if docsAllowedHosts[h] {
 		return true
 	}
 	switch h {
-	case "host", "localhost":
+	case "host", "localhost", "127.0.0.1":
+		// 127.0.0.1 is the documented address of the bundled `onvif
+		// server` simulator — the no-hardware tutorial's loopback peer.
 		return true
 	}
 	return strings.HasPrefix(h, "192.168.")
