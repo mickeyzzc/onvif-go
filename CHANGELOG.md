@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `docs` **No-hardware ONVIF loop tutorial** (`docs/{zh-CN,en-US}/onvif-go-no-hardware.md`,
+  closes #145 together with #146①): the end-to-end path from
+  use-go/onvif's stale search traffic — virtual multi-lens camera → LAN
+  discovery → interactive checkup → the 11-operation diagnostics report →
+  an NVR onboarding close → the same operations as the Go client API.
+  Every step smoke-tested against the simulator (including the bare
+  `host:port` gotcha in `onvif quick`, now documented). Indexed first in
+  `docs/README.md` and linked from both READMEs' documentation sections.
+- `docs` **Go-landscape differentiation table** (#146①): a scannable
+  capability matrix — onvif-go v2 vs 0x524a v1.1.7 vs use-go/onvif
+  v0.0.9 — added under "Which onvif-go should I use?" in both READMEs,
+  verifiable facts only per the issue's wording guardrail.
+
 ## [v2.7.0] — 2026-10-27
 
 ### Changed

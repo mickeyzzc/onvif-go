@@ -52,6 +52,24 @@ available and maintained — both are MIT, so pick by what you need:
 The module paths differ (`…/onvif-go/v2` vs `…/onvif-go`), so both can even
 coexist in one build during a migration.
 
+Coming from [use-go/onvif](https://github.com/use-go/onvif) (or from a
+search that lands there)? It is the most-imported Go ONVIF library but has
+not released since 2022-07 (v0.0.9). The capability picture, verifiable
+facts only:
+
+| Capability | **onvif-go v2** (this repo) | 0x524a/onvif-go v1.1.7 | use-go/onvif v0.0.9 (2022-07) |
+|---|---|---|---|
+| Server side — virtual camera, embeddable server, WS-Notification interface | ✓ full | — | — |
+| Authentication ladder + clock-skew auto-correction + auth diagnostics | ✓ | digest auth | digest auth |
+| Discovery — active / passive Hello / cross-segment directed | ✓ all three | active probe | ws-discovery probe |
+| Unified CLI + prebuilt multi-platform release binaries | ✓ | — | — |
+| Media2 / Profile M (analytics) / imaging clients | ✓ | media/PTZ (v1 API) | media/PTZ/imaging/analytics |
+| Zero third-party dependencies | ✓ | — | several (gin, zerolog, etree, …) |
+
+No disparagement implied — use-go/onvif served the ecosystem for years;
+it simply stopped releasing. The [no-hardware tutorial](docs/en-US/onvif-go-no-hardware.md)
+is the fastest way in from either lineage.
+
 ## Features
 
 **Client** — every ONVIF operation lives on the service object that owns it,
@@ -314,7 +332,9 @@ hardware. Per-subcommand manuals with scenarios live in
 Topic guides live **in this repository**, bilingual:
 [`docs/README.md`](docs/README.md) is the index (`docs/en-US/` and
 `docs/zh-CN/` hold the pages — quickstart, architecture, protocol
-concepts, CLI manuals, testing). Fixes and new pages land
+concepts, CLI manuals, testing). **New here? Start with the
+[no-hardware ONVIF loop](docs/en-US/onvif-go-no-hardware.md)** — the
+virtual camera × CLI × NVR end-to-end tutorial. Fixes and new pages land
 here by PR.
 ## Development
 

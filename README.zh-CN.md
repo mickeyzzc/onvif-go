@@ -47,6 +47,23 @@
 两者模块路径不同（`…/onvif-go/v2` 与 `…/onvif-go`），迁移期间甚至可以在
 同一个构建里共存。
 
+从 [use-go/onvif](https://github.com/use-go/onvif)（或落到它的搜索结果）
+过来？它是 Go 生态被引用最多的 ONVIF 库，但自 2022-07（v0.0.9）起再无
+发布。能力对照（只陈述可核实事实）：
+
+| 能力域 | **onvif-go v2**（本仓） | 0x524a/onvif-go v1.1.7 | use-go/onvif v0.0.9（2022-07） |
+|---|---|---|---|
+| 服务端——虚拟相机、可嵌入 server、WS-Notification 接口 | ✓ 完整 | — | — |
+| 认证梯子 + 时钟偏移自动校正 + 认证诊断 | ✓ | digest 认证 | digest 认证 |
+| 发现——主动 / 被动 Hello / 跨网段定向 | ✓ 三者 | 主动探测 | ws-discovery 探测 |
+| 统一 CLI + 多平台预编译发布产物 | ✓ | — | — |
+| Media2 / Profile M（analytics）/ imaging 客户端 | ✓ | media/PTZ（v1 API） | media/PTZ/imaging/analytics |
+| 零第三方依赖 | ✓ | — | 若干（gin、zerolog、etree 等） |
+
+无贬低之意——use-go/onvif 服务生态多年，只是停止了发布。
+[无硬件教程](docs/zh-CN/onvif-go-no-hardware.md) 是从任一血脉进入的
+最快路径。
+
 ## 功能特性
 
 **客户端** —— 每个 ONVIF 操作挂在其所属的服务对象上，与 ONVIF 服务模型一一对应：
@@ -259,7 +276,8 @@ macOS（amd64/arm64）、Windows（amd64）——下载、`chmod +x`、对照
 主题手册**就在本仓库内**，双语：
 [`docs/README.md`](docs/README.md) 是索引（`docs/en-US/` 与
 `docs/zh-CN/` 存放各页——快速开始、架构、协议概念、CLI 手册、测试）。
-修订与新页以 PR 落本仓。
+**第一次来？从[无硬件 ONVIF 开发闭环](docs/zh-CN/onvif-go-no-hardware.md)
+开始**——虚拟相机 × CLI × NVR 的端到端教程。修订与新页以 PR 落本仓。
 ## 项目结构
 
 | 路径 | 用途 |
