@@ -35,7 +35,7 @@ gh release download v2.6.0 -R mickeyzzc/onvif-go -p 'onvif_linux_amd64'
 或按版本锚定从源码安装：
 
 ```bash
-go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.6.0   # discover/quick/diagnostics/server 全在一个二进制
+go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.7.0   # discover/quick/diagnostics/server 全在一个二进制
 ```
 
 或在检出目录构建（`make build` 会连开发者工具 `generate-tests`

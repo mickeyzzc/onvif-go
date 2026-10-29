@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs` **Real-device compatibility matrix** (`docs/{zh-CN,en-US}/onvif-go-compatibility.md`, closes #147): every README compatibility claim pinned to per-model evidence — firmware, verified operation surface, the auth rung that worked, quirk → handling links (code/docs/fixtures/issues), and the evidence date. Nine first-hand rows (Hikvision ×3, TP-Link, Amcrest, iDRPENG, Dahua, push-subscribe batch, fault-only firmware class) plus maintenance rules (rows land in the same PR as the integration; in-repo links only; "model TBD" rows stay as honest gaps).
+- `docs` **Version-pin truth sweep**: the What's-new timeline gained the v2.7.0 row; ~30 README/docs locations pinned @v2.2.0/@v2.6.0 → @v2.7.0; the quickstart "current line" claim updated; the docs index's retired hyphenated CLI binary names (onvif-diagnostics etc.) renamed to the v2.6.0+ subcommand form.
+
 - `docs` **No-hardware ONVIF loop tutorial** (`docs/{zh-CN,en-US}/onvif-go-no-hardware.md`,
   closes #145 together with #146①): the end-to-end path from
   use-go/onvif's stale search traffic — virtual multi-lens camera → LAN

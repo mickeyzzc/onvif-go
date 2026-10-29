@@ -38,7 +38,7 @@ gh release download v2.6.0 -R mickeyzzc/onvif-go -p 'onvif_linux_amd64'
 Or install from source at a pinned version:
 
 ```bash
-go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.6.0   # discover/quick/diagnostics/server 全在一个二进制
+go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.7.0   # discover/quick/diagnostics/server 全在一个二进制
 ```
 
 Or build from a checkout (`make build` compiles everything including

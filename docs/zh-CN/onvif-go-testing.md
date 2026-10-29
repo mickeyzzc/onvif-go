@@ -6,7 +6,7 @@ fixture 上。真机集成测试存在，但由环境变量门控，从不在 CI
 ## 安装
 
 ```bash
-go get github.com/mickeyzzc/onvif-go/v2@v2.2.0
+go get github.com/mickeyzzc/onvif-go/v2@v2.7.0
 ```
 
 ## 运行

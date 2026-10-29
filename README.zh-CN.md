@@ -17,6 +17,7 @@
 
 每个 minor 一行——细节见 [CHANGELOG](CHANGELOG.md)。
 
+- **v2.7.0**（2026-10-27）——规范紧凑 SOAP 线格式 + GetServices 优先端点解析（#150）
 - **v2.6.0**（2026-10-24）——四个工具合并为单一 `onvif` CLI + 鉴权梯队空 body 修复
 - **v2.5.0**（2026-10-14）——服务端基础通知接口（`wsnt:Subscribe` + 推送 `Notify`）
 - **v2.4.0**（2026-10-12）——WS-BaseNotification 推送接收、标准移动侦测主题、类型化时钟同步
@@ -263,7 +264,7 @@ diag, _ := client.DiagnoseAuth(ctx)
 以**每平台一个**预编译零依赖二进制发布：linux（amd64/arm64/arm）、
 macOS（amd64/arm64）、Windows（amd64）——下载、`chmod +x`、对照
 `SHA256SUMS` 校验即可；或
-`go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.2.0`。
+`go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.7.0`。
 
 哪个子命令干什么：`discover` 扫描局域网（WS-Discovery）；`quick`
 交互式体检单台相机（连接、流地址、带防护的 PTZ 演示）；`diagnostics`
