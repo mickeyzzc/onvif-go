@@ -128,3 +128,32 @@ func TestMedia2GetServiceCapabilities(t *testing.T) {
 		t.Errorf("MaximumNumberOfProfiles = %d, want %d", caps.MaximumNumberOfProfiles, len(config.Profiles))
 	}
 }
+
+// The singular token-addressed fetch is the per-profile probe `onvif
+// diagnostics` (and every NVR add-camera flow) issues right after
+// GetProfiles — before the fix this server answered a bare 500 (#153).
+func TestGetVideoEncoderConfigurationSingular(t *testing.T) {
+	_, client, config := startExpansionServer(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	want := config.Profiles[0].VideoEncoder
+	cfg, err := client.Media().GetVideoEncoderConfiguration(ctx, config.Profiles[0].Token+"_encoder")
+	if err != nil {
+		t.Fatalf("GetVideoEncoderConfiguration: %v", err)
+	}
+	if cfg.Encoding != want.Encoding {
+		t.Errorf("encoding = %q, want %q", cfg.Encoding, want.Encoding)
+	}
+	if cfg.Resolution.Width != want.Resolution.Width || cfg.Resolution.Height != want.Resolution.Height {
+		t.Errorf("resolution = %dx%d, want %dx%d", cfg.Resolution.Width, cfg.Resolution.Height,
+			want.Resolution.Width, want.Resolution.Height)
+	}
+	if cfg.RateControl == nil || cfg.RateControl.FrameRateLimit != want.Framerate {
+		t.Errorf("rate control = %+v, want frame rate %d", cfg.RateControl, want.Framerate)
+	}
+
+	if _, err := client.Media().GetVideoEncoderConfiguration(ctx, "no-such-token"); err == nil {
+		t.Error("unknown token must fault, not succeed")
+	}
+}
