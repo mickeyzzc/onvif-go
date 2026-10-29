@@ -6,10 +6,10 @@
 ## 安装
 
 ```bash
-go get github.com/mickeyzzc/onvif-go/v2@v2.2.0
+go get github.com/mickeyzzc/onvif-go/v2@v2.7.0
 ```
 
-> v2 已稳定（v2.0.0 于 2026-09-17 发布，当前线为 v2.2.0）；生产仍固定
+> v2 已稳定（v2.0.0 于 2026-09-17 发布，当前线为 v2.7.0）；生产仍固定
 > 到具体版本号。
 
 ## 最小示例

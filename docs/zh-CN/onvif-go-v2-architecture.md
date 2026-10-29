@@ -10,7 +10,7 @@ v2 是一次刻意为之的破坏性版本，两大动因：
 ## 安装
 
 ```bash
-go get github.com/mickeyzzc/onvif-go/v2@v2.2.0
+go get github.com/mickeyzzc/onvif-go/v2@v2.7.0
 ```
 
 ## 模块版本策略

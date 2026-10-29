@@ -9,7 +9,7 @@ WS-Discovery 多播探测。库自身的一致性回环测试驱动的就是同�
 ## 安装
 
 ```bash
-go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.6.0
+go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.7.0
 ```
 
 ## 用法

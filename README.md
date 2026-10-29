@@ -18,6 +18,7 @@
 
 One line per minor — details in the [CHANGELOG](CHANGELOG.md).
 
+- **v2.7.0** (2026-10-27) — canonical compact SOAP wire format + GetServices-first endpoint resolution (#150)
 - **v2.6.0** (2026-10-24) — one `onvif` CLI binary (was four tools) + auth-ladder fix for empty 200 bodies
 - **v2.5.0** (2026-10-14) — server-side basic notification interface (`wsnt:Subscribe` + pushed `Notify`)
 - **v2.4.0** (2026-10-12) — WS-BaseNotification push receiving, standard motion topics, typed time sync
@@ -316,7 +317,7 @@ zero-dependency binary per platform (linux amd64/arm64/arm, macOS
 amd64/arm64, Windows amd64) on
 [every release](https://github.com/mickeyzzc/onvif-go/releases):
 download, `chmod +x`, verify against `SHA256SUMS`. Or
-`go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.2.0`.
+`go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.7.0`.
 
 Which subcommand for which job: `discover` scans the LAN
 (WS-Discovery), `quick` interactively sanity-checks one camera

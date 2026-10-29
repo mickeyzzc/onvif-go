@@ -7,11 +7,12 @@ directory is the source of truth.
 
 - **[The no-hardware ONVIF loop: virtual camera × CLI × NVR](en-US/onvif-go-no-hardware.md)** ← start here
 - [Architecture](en-US/onvif-go-architecture.md)
+- [Real-device compatibility matrix](en-US/onvif-go-compatibility.md)
 - [Authentication](en-US/onvif-go-authentication.md)
-- [CLI: onvif-diagnostics](en-US/onvif-go-cli-diagnostics.md)
-- [CLI: discover](en-US/onvif-go-cli-discover.md)
-- [CLI: onvif-quick](en-US/onvif-go-cli-quick.md)
-- [CLI: onvif-server](en-US/onvif-go-cli-server.md)
+- [CLI: onvif diagnostics](en-US/onvif-go-cli-diagnostics.md)
+- [CLI: onvif discover](en-US/onvif-go-cli-discover.md)
+- [CLI: onvif quick](en-US/onvif-go-cli-quick.md)
+- [CLI: onvif server](en-US/onvif-go-cli-server.md)
 - [CLI Tools](en-US/onvif-go-cli.md)
 - [Concurrency Model](en-US/onvif-go-concurrency.md)
 - [Device Discovery](en-US/onvif-go-discovery.md)
@@ -26,11 +27,12 @@ directory is the source of truth.
 
 - **[无硬件 ONVIF 开发闭环：虚拟相机 × CLI × NVR 联调](zh-CN/onvif-go-no-hardware.md)** ← 从这里开始
 - [架构](zh-CN/onvif-go-architecture.md)
+- [真机兼容矩阵](zh-CN/onvif-go-compatibility.md)
 - [鉴权与安全](zh-CN/onvif-go-authentication.md)
-- [CLI：onvif-diagnostics](zh-CN/onvif-go-cli-diagnostics.md)
-- [CLI：discover](zh-CN/onvif-go-cli-discover.md)
-- [CLI：onvif-quick](zh-CN/onvif-go-cli-quick.md)
-- [CLI：onvif-server](zh-CN/onvif-go-cli-server.md)
+- [CLI：onvif diagnostics](zh-CN/onvif-go-cli-diagnostics.md)
+- [CLI：onvif discover](zh-CN/onvif-go-cli-discover.md)
+- [CLI：onvif quick](zh-CN/onvif-go-cli-quick.md)
+- [CLI：onvif server](zh-CN/onvif-go-cli-server.md)
 - [CLI 工具](zh-CN/onvif-go-cli.md)
 - [并发模型](zh-CN/onvif-go-concurrency.md)
 - [设备发现](zh-CN/onvif-go-discovery.md)

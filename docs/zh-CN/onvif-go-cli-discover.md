@@ -7,7 +7,7 @@ reference、XAddr 与 scopes——在还不知道任何凭证之前的脚本友�
 ## 安装
 
 ```bash
-go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.6.0
+go install github.com/mickeyzzc/onvif-go/v2/cmd/onvif@v2.7.0
 # 或从 release 产物直接下载预构建二进制（六平台）
 ```
 
