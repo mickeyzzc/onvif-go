@@ -16,7 +16,7 @@ gh release download v2.7.0 -R mickeyzzc/onvif-go -p 'onvif_linux_amd64.tar.gz'
 tar xzf onvif_linux_amd64.tar.gz && sha256sum -c SHA256SUMS
 
 # Or version-pinned install / run from a checkout
-go install github.com/mickeyzzc/onvif-go/cmd/onvif@v2.7.0
+go install github.com/mickeyzzc/onvif-go/cmd/onvif@v2.7.1
 go run ./cmd/onvif <subcommand>
 ```
 
