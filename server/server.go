@@ -433,6 +433,7 @@ func (s *Server) registerMediaService(mux *http.ServeMux) {
 	handler.RegisterContextHandler("GetSnapshotUri", s.HandleGetSnapshotUri)
 	handler.RegisterContextHandler("GetVideoSources", s.HandleGetVideoSources)
 	handler.RegisterContextHandler("GetVideoEncoderConfigurations", s.HandleGetVideoEncoderConfigurations)
+	handler.RegisterContextHandler("GetVideoEncoderConfiguration", s.HandleGetVideoEncoderConfiguration)
 	handler.RegisterContextHandler("GetVideoEncoderConfigurationOptions", s.HandleGetVideoEncoderConfigurationOptions)
 	handler.RegisterContextHandler("SetSynchronizationPoint", s.HandleSetSynchronizationPoint)
 
@@ -650,6 +651,7 @@ func (s *Server) registerMedia2Service(mux *http.ServeMux) {
 	handler.RegisterContextHandler("GetStreamUri", s.HandleMedia2GetStreamUri)
 	handler.RegisterContextHandler("SetSynchronizationPoint", s.HandleMedia2SetSynchronizationPoint)
 	handler.RegisterContextHandler("GetVideoEncoderConfigurations", s.HandleMedia2GetVideoEncoderConfigurations)
+	handler.RegisterContextHandler("GetVideoEncoderConfiguration", s.HandleMedia2GetVideoEncoderConfiguration)
 	handler.RegisterContextHandler("GetServiceCapabilities", s.HandleMedia2GetServiceCapabilities)
 
 	mux.Handle(s.config.BasePath+"/media2_service", handler)

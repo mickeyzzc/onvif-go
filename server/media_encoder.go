@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"fmt"
 
+	"github.com/mickeyzzc/onvif-go/v2/server/provider"
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
 )
 
@@ -187,4 +188,68 @@ func (s *Server) HandleMedia2GetVideoEncoderConfigurations(_ *soap.RequestContex
 		resp.Configurations = append(resp.Configurations, enc)
 	}
 	return resp, nil
+}
+
+type getVideoEncoderConfigurationRequest struct {
+	XMLName            xml.Name `xml:"GetVideoEncoderConfiguration"`
+	ConfigurationToken string   `xml:"ConfigurationToken"`
+}
+
+type getVideoEncoderConfigurationResponse struct {
+	XMLName       xml.Name                   `xml:"http://www.onvif.org/ver10/media/wsdl GetVideoEncoderConfigurationResponse"`
+	Configuration *VideoEncoderConfiguration `xml:"http://www.onvif.org/ver10/media/wsdl Configuration,omitempty"`
+}
+
+// HandleGetVideoEncoderConfiguration answers the singular token-addressed
+// fetch — the per-profile probe `onvif diagnostics` (and NVR add-camera
+// flows) issue right after GetProfiles; an unknown token is the standard
+// ter:NoConfig sender fault, not a bare 500.
+func (s *Server) HandleGetVideoEncoderConfiguration(_ *soap.RequestContext, body []byte) (interface{}, error) {
+	var req getVideoEncoderConfigurationRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+	for _, cfg := range s.encoderConfigurations() {
+		if cfg.Token == req.ConfigurationToken {
+			cfg := cfg
+			return getVideoEncoderConfigurationResponse{Configuration: &cfg}, nil
+		}
+	}
+	return nil, fmt.Errorf("%w: encoder configuration %q", provider.ErrNotFound, req.ConfigurationToken)
+}
+
+type media2GetVideoEncoderConfigurationRequest struct {
+	XMLName            xml.Name `xml:"GetVideoEncoderConfiguration"`
+	ConfigurationToken string   `xml:"ConfigurationToken"`
+}
+
+// HandleMedia2GetVideoEncoderConfiguration is the tr2 face of the singular
+// fetch (same token space: `<profile>_encoder`).
+func (s *Server) HandleMedia2GetVideoEncoderConfiguration(_ *soap.RequestContext, body []byte) (interface{}, error) {
+	var req media2GetVideoEncoderConfigurationRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+	for _, p := range s.config.Profiles {
+		if p.Token+"_encoder" != req.ConfigurationToken {
+			continue
+		}
+		enc := media2VideoEncoderWire{
+			Token:    p.Token + "_encoder",
+			Name:     p.Name + " Encoder",
+			UseCount: 1,
+			Encoding: p.VideoEncoder.Encoding,
+		}
+		enc.Resolution.Width = p.VideoEncoder.Resolution.Width
+		enc.Resolution.Height = p.VideoEncoder.Resolution.Height
+		enc.RateControl = &struct {
+			FrameRateLimit int `xml:"http://www.onvif.org/ver10/schema FrameRateLimit"`
+			BitrateLimit   int `xml:"http://www.onvif.org/ver10/schema BitrateLimit"`
+		}{FrameRateLimit: p.VideoEncoder.Framerate, BitrateLimit: p.VideoEncoder.Bitrate}
+		return struct {
+			XMLName       xml.Name                `xml:"http://www.onvif.org/ver20/media/wsdl GetVideoEncoderConfigurationResponse"`
+			Configuration *media2VideoEncoderWire `xml:"http://www.onvif.org/ver20/media/wsdl Configuration,omitempty"`
+		}{Configuration: &enc}, nil
+	}
+	return nil, fmt.Errorf("%w: encoder configuration %q", provider.ErrNotFound, req.ConfigurationToken)
 }
