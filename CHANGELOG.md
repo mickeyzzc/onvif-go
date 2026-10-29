@@ -7,7 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [v2.7.1] — 2026-10-29
+
+The simulator-truth patch: the bundled virtual camera answers the
+singular encoder-configuration probe its own diagnostics tool issues,
+and the docs ship the per-model real-device compatibility matrix.
+
+### Fixed
+
+- `fix(server)` **the simulator answered HTTP 500 to the singular
+  `GetVideoEncoderConfiguration`** — exactly the per-profile probe
+  `onvif diagnostics` (and every NVR add-camera flow) issues right after
+  GetProfiles; only the plural form was registered. Both faces
+  implemented (ver10 tt: + Media2 tr2:) over the `<profile>_encoder`
+  token space; unknown tokens fault with `ErrNotFound`. A live
+  diagnostics run against the simulator now reports `Total errors: 0`.
+
+### Added (docs)
+
+- **Real-device compatibility matrix**
+  (`docs/{zh-CN,en-US}/onvif-go-compatibility.md`, closes #147): every
+  README compatibility claim pinned to per-model evidence — firmware,
+  verified operation surface, working auth rung, quirk → handling links,
+  evidence date. Nine first-hand rows + maintenance rules.
+- **Version-pin truth sweep**: What's-new timeline gains the v2.7.0 row;
+  ~30 README/docs locations pinned @v2.2.0/@v2.6.0 → @v2.7.0 (this
+  release's docs carry @v2.7.1 install pins); retired hyphenated CLI
+  binary names in the docs index renamed to the subcommand form.
 
 - `docs` **Real-device compatibility matrix** (`docs/{zh-CN,en-US}/onvif-go-compatibility.md`, closes #147): every README compatibility claim pinned to per-model evidence — firmware, verified operation surface, the auth rung that worked, quirk → handling links (code/docs/fixtures/issues), and the evidence date. Nine first-hand rows (Hikvision ×3, TP-Link, Amcrest, iDRPENG, Dahua, push-subscribe batch, fault-only firmware class) plus maintenance rules (rows land in the same PR as the integration; in-repo links only; "model TBD" rows stay as honest gaps).
 - `docs` **Version-pin truth sweep**: the What's-new timeline gained the v2.7.0 row; ~30 README/docs locations pinned @v2.2.0/@v2.6.0 → @v2.7.0; the quickstart "current line" claim updated; the docs index's retired hyphenated CLI binary names (onvif-diagnostics etc.) renamed to the v2.6.0+ subcommand form.
