@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `feat(events)` **RadiometryAlarm parsing — Thermal Service, phase 1 of
+  #158**: `ParseRadiometryAlarm` / `IsRadiometryTopic` recognize the thermal
+  counterpart of the motion topics (`tns1:Thermal/RadiometryAlarm`, plus
+  RuleEngine-qualified vendor variants). The state is read from Data
+  `Active` (spec shape) with `State` accepted as vendor variance; an
+  optional numeric `Temperature` Data item (°C) is surfaced. Same
+  `(zero, false)` contract as `ParseMotionAlarm`. Consumers with a Pull-Point
+  subscription receive radiometry notifications already — this adds the
+  parser, no device support required.
+
 ## [v2.7.1] — 2026-10-29
 
 The simulator-truth patch: the bundled virtual camera answers the
