@@ -82,6 +82,12 @@ The server will start on `http://0.0.0.0:8080` with:
 - Username: `admin`
 - Password: whatever you passed (`my-secret` above)
 - 3 camera profiles with different resolutions
+
+> **Port 0 (kernel-assigned) is fully supported**: `Start` binds an
+> ephemeral port and every advertised address — service XAddrs in
+> GetCapabilities/GetServices, the snapshot URI, pull-point endpoints —
+> carries the **actual** port, never `:0`. Read it via `ListenAddr()`
+> (issue #161).
 - PTZ and Imaging services enabled
 
 ### Custom Configuration

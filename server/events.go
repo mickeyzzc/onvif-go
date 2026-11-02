@@ -369,7 +369,7 @@ func (s *Server) HandleCreatePullPointSubscription(rc *soap.RequestContext, body
 	return &CreatePullPointSubscriptionResponse{
 		SubscriptionReference: endpointReference{
 			Address: fmt.Sprintf("http://%s:%d%s/events_service/sub/%s",
-				s.advertiseHost(rc), s.config.Port, s.config.BasePath, id),
+				s.advertiseHost(rc), s.advertisedPort(), s.config.BasePath, id),
 		},
 		CurrentTime:     now.UTC().Format(time.RFC3339),
 		TerminationTime: now.Add(termination).UTC().Format(time.RFC3339),
@@ -562,7 +562,7 @@ func (s *Server) notificationMessageFor(qn queuedNotification) notificationMessa
 		Topic: eventTopic{Value: qn.topic},
 		ProducerReference: &endpointReference{
 			Address: fmt.Sprintf("http://%s:%d%s/device_service",
-				s.advertiseHost(nil), s.config.Port, s.config.BasePath),
+				s.advertiseHost(nil), s.advertisedPort(), s.config.BasePath),
 		},
 		Message: notificationPayload{Inner: qn.message},
 	}

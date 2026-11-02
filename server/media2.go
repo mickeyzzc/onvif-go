@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 
 	"github.com/mickeyzzc/onvif-go/v2/server/soap"
@@ -67,6 +68,16 @@ type media2GetStreamUriRequest struct {
 
 type media2GetStreamUriResponse struct {
 	XMLName xml.Name `xml:"http://www.onvif.org/ver20/media/wsdl GetStreamUriResponse"`
+	Uri     string   `xml:"http://www.onvif.org/ver20/media/wsdl Uri"`
+}
+
+type media2GetMetadataUriRequest struct {
+	XMLName      xml.Name `xml:"GetMetadataUri"`
+	ProfileToken string   `xml:"ProfileToken"`
+}
+
+type media2GetMetadataUriResponse struct {
+	XMLName xml.Name `xml:"http://www.onvif.org/ver20/media/wsdl GetMetadataUriResponse"`
 	Uri     string   `xml:"http://www.onvif.org/ver20/media/wsdl Uri"`
 }
 
@@ -139,6 +150,26 @@ func (s *Server) HandleMedia2GetStreamUri(rc *soap.RequestContext, body []byte) 
 	}
 
 	return media2GetStreamUriResponse{Uri: s.deriveStreamURI(rc, streamInfo)}, nil
+}
+
+// HandleMedia2GetMetadataUri handles tr2 GetMetadataUri (issue #162) —
+// the Profile-T entry path's metadata discovery half.
+func (s *Server) HandleMedia2GetMetadataUri(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	var req media2GetMetadataUriRequest
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	if s.metadata == nil {
+		return nil, errors.New("metadata stream not supported by the provider")
+	}
+
+	metadataInfo, err := s.metadata.MetadataURI(req.ProfileToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return media2GetMetadataUriResponse{Uri: s.deriveMetadataURI(rc, metadataInfo)}, nil
 }
 
 // HandleMedia2SetSynchronizationPoint acknowledges the iframe request —

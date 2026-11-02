@@ -176,7 +176,7 @@ func (s *Server) HandleGetDeviceInformation(rc *soap.RequestContext, body []byte
 func (s *Server) HandleGetCapabilities(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	host := s.advertiseHost(rc)
 
-	baseURL := fmt.Sprintf("http://%s:%d%s", host, s.config.Port, s.config.BasePath)
+	baseURL := fmt.Sprintf("http://%s:%d%s", host, s.advertisedPort(), s.config.BasePath)
 
 	capabilities := &Capabilities{
 		Device: &DeviceCapabilities{
@@ -270,7 +270,7 @@ func (s *Server) HandleGetSystemDateAndTime(rc *soap.RequestContext, body []byte
 func (s *Server) HandleGetServices(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	host := s.advertiseHost(rc)
 
-	baseURL := fmt.Sprintf("http://%s:%d%s", host, s.config.Port, s.config.BasePath)
+	baseURL := fmt.Sprintf("http://%s:%d%s", host, s.advertisedPort(), s.config.BasePath)
 
 	services := []Service{
 		{
