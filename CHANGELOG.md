@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.7.2] — 2026-11-02
+
 ### Added
 
 - `feat(events)` **RadiometryAlarm parsing — Thermal Service, phase 1 of
