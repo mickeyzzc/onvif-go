@@ -3,6 +3,8 @@ package server
 import (
 	"fmt"
 	"log/slog"
+	"net"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -182,6 +184,7 @@ type Server struct {
 	config     *Config
 	deviceInfo provider.DeviceInfoProvider
 	stream     provider.StreamURIProvider
+	metadata   provider.MetadataURIProvider
 	snapshot   provider.SnapshotProvider
 	imaging    provider.ImagingProvider
 	ptz        provider.PTZProvider
@@ -223,6 +226,27 @@ func (s *Server) ListenAddr() string {
 	defer s.listenMu.RUnlock()
 
 	return s.listenAddr
+}
+
+// advertisedPort is the port every advertisement (service XAddrs,
+// snapshot URIs, pull-point addresses) publishes: the configured port
+// when set, else — with Port 0 — the kernel-assigned port from the
+// bound listener (issue #161). Before Start has bound a listener, the
+// configured (0) value is returned, as before.
+func (s *Server) advertisedPort() int {
+	if s.config.Port != 0 {
+		return s.config.Port
+	}
+
+	if addr := s.ListenAddr(); addr != "" {
+		if _, port, err := net.SplitHostPort(addr); err == nil {
+			if p, err := strconv.Atoi(port); err == nil && p != 0 {
+				return p
+			}
+		}
+	}
+
+	return s.config.Port
 }
 
 // DefaultConfig returns a default server configuration with a multi-lens

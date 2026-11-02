@@ -33,6 +33,35 @@ type StreamURIProvider interface {
 	Stream(profileToken string) (StreamInfo, error)
 }
 
+// MetadataInfo mirrors StreamInfo for the metadata stream (issue #162):
+// the Profile-T metadata track is typically a second RTSP path on the
+// same server as the A/V stream.
+type MetadataInfo struct {
+	// RTSPPath is the path GetMetadataUri derives its URI from.
+	RTSPPath string
+
+	// RTSPPort is the RTSP listener port used when deriving the URI.
+	// 0 → the ONVIF-conventional 8554 default (same rule as StreamInfo).
+	RTSPPort int
+
+	// OverrideURI, when non-empty, is returned verbatim by GetMetadataUri
+	// (a pinned external address; the advertised host is not applied).
+	OverrideURI string
+}
+
+// MetadataURIProvider answers GetMetadataUri lookups per profile token
+// (issue #162). The SOAP discovery half only — serving RTP metadata
+// frames stays the embedded host's business (their own RTSP stack).
+type MetadataURIProvider interface {
+	MetadataURI(profileToken string) (MetadataInfo, error)
+}
+
+// MetadataURISetter is the optional write side for hosts that allow
+// pinning metadata URIs at runtime.
+type MetadataURISetter interface {
+	SetMetadataURI(profileToken, uri string) error
+}
+
 // StreamURISetter is the optional write side for hosts that allow
 // pinning stream URIs at runtime.
 type StreamURISetter interface {

@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -291,6 +292,44 @@ func (s *Server) HandleGetStreamUri(rc *soap.RequestContext, body []byte) (inter
 	}, nil
 }
 
+// GetMetadataUriResponse represents GetMetadataUri response (issue #162).
+type GetMetadataUriResponse struct {
+	XMLName  xml.Name `xml:"http://www.onvif.org/ver10/media/wsdl GetMetadataUriResponse"`
+	MediaUri MediaUri `xml:"http://www.onvif.org/ver10/media/wsdl MetadataUri"`
+}
+
+// HandleGetMetadataUri handles GetMetadataUri (issue #162): the SOAP
+// discovery half of the Profile-T metadata stream. Serving the RTP
+// frames stays the embedded host's business — the URI derives from the
+// metadata provider with the same advertised-host rules as GetStreamUri.
+func (s *Server) HandleGetMetadataUri(rc *soap.RequestContext, body []byte) (interface{}, error) {
+	var req struct {
+		ProfileToken string `xml:"ProfileToken"`
+	}
+
+	if err := unmarshalBody(body, &req); err != nil {
+		return nil, fmt.Errorf("invalid request: %w", err)
+	}
+
+	if s.metadata == nil {
+		return nil, errors.New("metadata stream not supported by the provider")
+	}
+
+	metadataInfo, err := s.metadata.MetadataURI(req.ProfileToken)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GetMetadataUriResponse{
+		MediaUri: MediaUri{
+			URI:                 s.deriveMetadataURI(rc, metadataInfo),
+			InvalidAfterConnect: false,
+			InvalidAfterReboot:  true,
+			Timeout:             "PT60S",
+		},
+	}, nil
+}
+
 // HandleGetSnapshotUri handles GetSnapshotUri request.
 func (s *Server) HandleGetSnapshotUri(rc *soap.RequestContext, body []byte) (interface{}, error) {
 	var req struct {
@@ -322,7 +361,7 @@ func (s *Server) HandleGetSnapshotUri(rc *soap.RequestContext, body []byte) (int
 	// Build the snapshot URI: SnapshotPath, with the ?profile= query
 	// unless the parameterless form is configured (#36).
 	host := s.advertiseHost(rc)
-	uri := fmt.Sprintf("http://%s:%d%s", host, s.config.Port, s.config.SnapshotPath)
+	uri := fmt.Sprintf("http://%s:%d%s", host, s.advertisedPort(), s.config.SnapshotPath)
 	if !s.config.SnapshotURIParameterless {
 		uri += "?profile=" + url.QueryEscape(req.ProfileToken)
 	}

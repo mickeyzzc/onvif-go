@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `feat(server)` **`GetMetadataUri` on both media faces + the metadata
+  URI seam** (issue #162): the simulator answers `GetMetadataUri` with a
+  deterministic per-profile path (`/metadata<N>`, the same convention as
+  `/stream<N>`) — ver10 media (a `tt:MediaUri`) and the tr2 Media2 face
+  (the Profile-T entry path, a plain `Uri`). A host swaps the source via
+  `WithMetadataURIProvider` (or pins URIs at runtime through the
+  optional `MetadataURISetter`), with the same advertised-host rules the
+  stream URIs use; `OverrideURI` wins verbatim. The SOAP discovery half
+  only — serving RTP metadata frames stays the embedded host's business
+  (their own RTSP stack), the same simulator/host split as the events
+  service. Unblocks end-to-end metadata-stream (Profile T) tests — e.g.
+  thermal temperature readings (#158 phase 3) — without any physical
+  device.
+
+### Fixed
+
+- `fix(server)` **the simulator advertised `:0` in every service XAddr
+  when `Config.Port` was 0** (issue #161): `Start` binds a
+  kernel-assigned port correctly, but GetCapabilities / GetServices /
+  the snapshot URI / pull-point addresses all published the configured
+  `:0`, so a client that resolves endpoints from capabilities (the
+  normal flow) dialed `:0` and failed. Every advertisement now uses the
+  listener's actual port once bound (`advertisedPort()`); a configured
+  non-zero port is published verbatim as before.
+
 ## [v2.7.2] — 2026-11-02
 
 ### Added

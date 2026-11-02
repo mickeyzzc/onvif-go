@@ -24,6 +24,7 @@ type Simulator struct {
 
 	mu        sync.RWMutex
 	streams   map[string]provider.StreamInfo
+	metadata  map[string]provider.MetadataInfo
 	ptz       map[string]*provider.PTZState
 	presets   map[string][]provider.Preset
 	presetSeq int
@@ -41,6 +42,7 @@ func New(profiles []provider.ProfileConfig, info provider.DeviceInfo) *Simulator
 		osd:       &osdStore{},
 		io:        newIOSimulator(),
 		streams:   make(map[string]provider.StreamInfo),
+		metadata:  make(map[string]provider.MetadataInfo),
 		ptz:       make(map[string]*provider.PTZState),
 		presets:   make(map[string][]provider.Preset),
 		imaging:   make(map[string]*provider.ImagingState),
@@ -51,6 +53,9 @@ func New(profiles []provider.ProfileConfig, info provider.DeviceInfo) *Simulator
 		profile := &profiles[i]
 		sim.streams[profile.Token] = provider.StreamInfo{
 			RTSPPath: fmt.Sprintf("/stream%d", i),
+		}
+		sim.metadata[profile.Token] = provider.MetadataInfo{
+			RTSPPath: fmt.Sprintf("/metadata%d", i),
 		}
 
 		if profile.PTZ != nil {
@@ -121,6 +126,37 @@ func (s *Simulator) SetStreamURI(profileToken, uri string) error {
 
 	info.OverrideURI = uri
 	s.streams[profileToken] = info
+
+	return nil
+}
+
+// MetadataURI implements provider.MetadataURIProvider (issue #162): the
+// deterministic per-profile metadata path, same /metadata<N> convention
+// as the /stream<N> stream paths.
+func (s *Simulator) MetadataURI(profileToken string) (provider.MetadataInfo, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	info, ok := s.metadata[profileToken]
+	if !ok {
+		return provider.MetadataInfo{}, fmt.Errorf("%w: %s", provider.ErrProfileNotFound, profileToken)
+	}
+
+	return info, nil
+}
+
+// SetMetadataURI implements provider.MetadataURISetter.
+func (s *Simulator) SetMetadataURI(profileToken, uri string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	info, ok := s.metadata[profileToken]
+	if !ok {
+		return fmt.Errorf("%w: %s", provider.ErrProfileNotFound, profileToken)
+	}
+
+	info.OverrideURI = uri
+	s.metadata[profileToken] = info
 
 	return nil
 }

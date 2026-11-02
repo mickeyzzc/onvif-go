@@ -42,6 +42,16 @@ func WithStreamURIProvider(p provider.StreamURIProvider) Option {
 	}
 }
 
+// WithMetadataURIProvider replaces the metadata-URI source (issue #162):
+// the GetMetadataUri answer per profile token. nil is ignored.
+func WithMetadataURIProvider(p provider.MetadataURIProvider) Option {
+	return func(s *Server) {
+		if p != nil {
+			s.metadata = p
+		}
+	}
+}
+
 // WithSnapshotProvider replaces the snapshot JPEG source.
 func WithSnapshotProvider(p provider.SnapshotProvider) Option {
 	return func(s *Server) {
@@ -130,6 +140,7 @@ func New(config *Config, opts ...Option) (*Server, error) {
 		config:      config,
 		deviceInfo:  sim,
 		stream:      sim,
+		metadata:    sim,
 		snapshot:    sim,
 		imaging:     sim,
 		ptz:         sim,
@@ -382,6 +393,23 @@ func (s *Server) deriveStreamURI(rc *soap.RequestContext, info provider.StreamIn
 	return fmt.Sprintf("rtsp://%s:%d%s", s.advertiseHost(rc), port, info.RTSPPath)
 }
 
+// deriveMetadataURI renders a MetadataInfo into the URI GetMetadataUri
+// returns (issue #162): a pinned override verbatim, else
+// rtsp://<advertised host>:<RTSPPort|8554><RTSPPath> — the same
+// advertised-host rules the stream URIs use.
+func (s *Server) deriveMetadataURI(rc *soap.RequestContext, info provider.MetadataInfo) string {
+	if info.OverrideURI != "" {
+		return info.OverrideURI
+	}
+
+	port := info.RTSPPort
+	if port == 0 {
+		port = defaultRTSPPort
+	}
+
+	return fmt.Sprintf("rtsp://%s:%d%s", s.advertiseHost(rc), port, info.RTSPPath)
+}
+
 // defaultSnapshotToken picks the profile served by parameterless
 // snapshot requests: the first snapshot-enabled profile, else the first
 // profile (whose own capture surfaces its not-supported error).
@@ -430,6 +458,7 @@ func (s *Server) registerMediaService(mux *http.ServeMux) {
 	// Register media service handlers
 	handler.RegisterContextHandler("GetProfiles", s.HandleGetProfiles)
 	handler.RegisterContextHandler("GetStreamUri", s.HandleGetStreamUri)
+	handler.RegisterContextHandler("GetMetadataUri", s.HandleGetMetadataUri)
 	handler.RegisterContextHandler("GetSnapshotUri", s.HandleGetSnapshotUri)
 	handler.RegisterContextHandler("GetVideoSources", s.HandleGetVideoSources)
 	handler.RegisterContextHandler("GetVideoEncoderConfigurations", s.HandleGetVideoEncoderConfigurations)
@@ -649,6 +678,7 @@ func (s *Server) registerMedia2Service(mux *http.ServeMux) {
 	handler := s.newSOAPHandler()
 	handler.RegisterContextHandler("GetProfiles", s.HandleMedia2GetProfiles)
 	handler.RegisterContextHandler("GetStreamUri", s.HandleMedia2GetStreamUri)
+	handler.RegisterContextHandler("GetMetadataUri", s.HandleMedia2GetMetadataUri)
 	handler.RegisterContextHandler("SetSynchronizationPoint", s.HandleMedia2SetSynchronizationPoint)
 	handler.RegisterContextHandler("GetVideoEncoderConfigurations", s.HandleMedia2GetVideoEncoderConfigurations)
 	handler.RegisterContextHandler("GetVideoEncoderConfiguration", s.HandleMedia2GetVideoEncoderConfiguration)

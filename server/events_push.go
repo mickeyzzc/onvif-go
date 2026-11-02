@@ -149,7 +149,7 @@ func (s *Server) HandleSubscribe(rc *soap.RequestContext, body []byte) (interfac
 	}
 
 	address := fmt.Sprintf("http://%s:%d%s/events_service/sub/%s",
-		s.advertiseHost(rc), s.config.Port, s.config.BasePath, id)
+		s.advertiseHost(rc), s.advertisedPort(), s.config.BasePath, id)
 
 	pp := &pullPoint{
 		id:          id,
