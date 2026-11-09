@@ -22,6 +22,21 @@ func TestProbeRoundTrip(t *testing.T) {
 	}
 }
 
+func TestBuildProbeCompact(t *testing.T) {
+	// Old-camera firmware silently drops indented SOAP envelopes (HTTP 200
+	// + empty body, MiBeeNvr#1125); every request envelope this library
+	// emits must be single-line compact, matching the SOAP client's
+	// canonical form.
+	probe := BuildProbe("11111111-2222-3333-4444-555555555555")
+	if strings.Contains(string(probe), "\n") {
+		t.Error("BuildProbe output contains newlines; probe envelopes must be compact")
+	}
+
+	if parsed := ParseProbe(probe); parsed == nil {
+		t.Error("compact probe no longer round-trips through ParseProbe")
+	}
+}
+
 func TestParseProbeRejectsNonProbes(t *testing.T) {
 	hello := BuildHello(Match{EndpointRef: "urn:uuid:abc", Types: "tds:Device"})
 	if ParseProbe(hello) != nil {
