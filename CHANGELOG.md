@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`soap`: faults on non-200 responses are parsed and classified (#164,
+  mirroring the Rust twin)**: a device rejecting credentials with HTTP 400
+  (or any 4xx/5xx) carrying a SOAP Fault body now surfaces as
+  `*soap.FaultError` — code/subcode/reason intact, `IsAuthFailure` aware —
+  instead of a generic `*soap.HTTPStatusError` that left the rejection
+  unclassifiable. Non-200 bodies that are not SOAP Faults keep the
+  `HTTPStatusError` shape; the 200-with-fault contract is unchanged.
+
 ### Added
 
 - `feat(server)` **`GetMetadataUri` on both media faces + the metadata

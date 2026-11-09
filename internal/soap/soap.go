@@ -293,7 +293,34 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 		c.slogger.Debug("soap response", "status", resp.StatusCode, "body_bytes", len(respBody), "action", action)
 	}
 
-	// Check HTTP status
+	// Fault detection happens for every call (including void operations
+	// whose response is nil) and REGARDLESS of the HTTP status (#164,
+	// mirroring the Rust twin): ONVIF devices frequently return SOAP Faults
+	// (including NotAuthorized) with HTTP 200, and devices rejecting
+	// credentials with HTTP 400 carry a SOAP Fault body that a generic
+	// HTTPStatusError would leave unclassifiable. A non-200 body that is
+	// NOT a SOAP Fault still surfaces as HTTPStatusError with the raw body.
+	var envelopeResp struct {
+		Body struct {
+			Content []byte `xml:",innerxml"`
+		} `xml:"Body"`
+	}
+
+	haveEnvelope := false
+	if len(respBody) > 0 {
+		if err := xml.Unmarshal(respBody, &envelopeResp); err == nil {
+			haveEnvelope = true
+			if fault := parseFault(envelopeResp.Body.Content, resp.StatusCode); fault != nil {
+				if c.slogger != nil {
+					c.slogger.Warn("soap fault", "action", action, "http_status", resp.StatusCode, "fault_code", fault.Code, "fault_reason", fault.Reason)
+				}
+				return fault
+			}
+		}
+	}
+
+	// Check HTTP status (after fault detection: a classified FaultError
+	// beats an unclassifiable status error)
 	if resp.StatusCode != http.StatusOK {
 		return &HTTPStatusError{Status: resp.StatusCode, Body: string(respBody)}
 	}
@@ -303,24 +330,10 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 		return fmt.Errorf("%w", ErrEmptyResponseBody)
 	}
 
-	// Extract the raw Body content first: fault detection must happen for
-	// every call (including void operations whose response is nil), because a
-	// 200-with-Fault must never be reported as success.
-	var envelopeResp struct {
-		Body struct {
-			Content []byte `xml:",innerxml"`
-		} `xml:"Body"`
-	}
-
-	if err := xml.Unmarshal(respBody, &envelopeResp); err != nil {
-		return fmt.Errorf("failed to unmarshal SOAP envelope: %w", err)
-	}
-
-	if fault := parseFault(envelopeResp.Body.Content, resp.StatusCode); fault != nil {
-		if c.slogger != nil {
-			c.slogger.Warn("soap fault", "action", action, "http_status", resp.StatusCode, "fault_code", fault.Code, "fault_reason", fault.Reason)
+	if !haveEnvelope {
+		if err := xml.Unmarshal(respBody, &envelopeResp); err != nil {
+			return fmt.Errorf("failed to unmarshal SOAP envelope: %w", err)
 		}
-		return fault
 	}
 
 	// Unmarshal response content if response is provided

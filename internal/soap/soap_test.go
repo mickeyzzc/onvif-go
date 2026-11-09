@@ -2,6 +2,7 @@ package soap
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -288,4 +289,80 @@ func BenchmarkCreateSecurityHeader(b *testing.B) {
 	for range b.N {
 		_ = client.createSecurityHeader()
 	}
+}
+
+// TestClientCallNon200FaultClassification pins #164: a non-200 response
+// carrying a SOAP Fault body must surface as *FaultError (classifiable,
+// auth-failure aware) instead of the generic HTTPStatusError — mirroring the
+// Rust twin's client, which parses the fault regardless of status. A non-200
+// body that is NOT a SOAP Fault keeps the HTTPStatusError shape.
+func TestClientCallNon200FaultClassification(t *testing.T) {
+	const faultBody = `<?xml version="1.0"?>
+<Envelope xmlns="http://www.w3.org/2003/05/soap-envelope">
+	<Body>
+		<Fault>
+			<Code>
+				<Value>ter:Sender</Value>
+				<Subcode>
+					<Value>ter:NotAuthorized</Value>
+				</Subcode>
+			</Code>
+			<Reason>
+				<Text xml:lang="en">Sender not Authorized</Text>
+			</Reason>
+		</Fault>
+	</Body>
+</Envelope>`
+
+	t.Run("400 with SOAP fault body", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/soap+xml")
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(faultBody))
+		}))
+		defer server.Close()
+
+		type probeRequest struct {
+			Value string `xml:"Value"`
+		}
+		client := NewClient(&http.Client{Timeout: 5 * time.Second}, "admin", "wrong")
+		err := client.Call(context.Background(), server.URL, "", &probeRequest{Value: "x"}, nil)
+
+		var fault *FaultError
+		if !errors.As(err, &fault) {
+			t.Fatalf("expected *FaultError from 400-with-fault, got %T: %v", err, err)
+		}
+		if fault.HTTPStatus != http.StatusBadRequest {
+			t.Errorf("fault HTTPStatus = %d, want 400", fault.HTTPStatus)
+		}
+		if !fault.IsAuthFailure() {
+			t.Errorf("ter:NotAuthorized fault must classify as auth failure: %+v", fault)
+		}
+		var statusErr *HTTPStatusError
+		if errors.As(err, &statusErr) {
+			t.Errorf("400-with-fault must not surface as HTTPStatusError")
+		}
+	})
+
+	t.Run("400 with non-SOAP body keeps HTTPStatusError", func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte("<html><body>Bad Request</body></html>"))
+		}))
+		defer server.Close()
+
+		type probeRequest struct {
+			Value string `xml:"Value"`
+		}
+		client := NewClient(&http.Client{Timeout: 5 * time.Second}, "admin", "password")
+		err := client.Call(context.Background(), server.URL, "", &probeRequest{Value: "x"}, nil)
+
+		var statusErr *HTTPStatusError
+		if !errors.As(err, &statusErr) {
+			t.Fatalf("expected *HTTPStatusError from non-SOAP 400, got %T: %v", err, err)
+		}
+		if statusErr.Status != http.StatusBadRequest {
+			t.Errorf("status = %d, want 400", statusErr.Status)
+		}
+	})
 }
