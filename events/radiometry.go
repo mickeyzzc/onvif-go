@@ -25,10 +25,16 @@ type RadiometryAlarm struct {
 // radiometryTopics maps each recognized radiometry topic, normalized by
 // normalizeTopic, to the Data items that may carry its boolean state, in
 // preference order: the spec shape is Active; State is accepted as vendor
-// variance (the same leniency the motion topics need in the field).
+// variance (the same leniency the motion topics need in the field). The
+// TemperatureAlarm family is the shape a real dual-spectrum camera emits
+// (Hikvision DS-2TB2617-6/QA, fw V5.5.38 — field-verified 2026-11-09): topic
+// tns1:RuleEngine/Radiometry/TemperatureAlarm, boolean Data item AlarmActive,
+// Key RadiometryModuleID; its fixed topic set declares no Temperature item.
 var radiometryTopics = map[string][]string{
-	"thermal/radiometryalarm":            {"Active", "State"},
-	"ruleengine/thermal/radiometryalarm": {"Active", "State"},
+	"thermal/radiometryalarm":                {"Active", "State"},
+	"ruleengine/thermal/radiometryalarm":     {"Active", "State"},
+	"radiometry/temperaturealarm":            {"AlarmActive"},
+	"ruleengine/radiometry/temperaturealarm": {"AlarmActive"},
 }
 
 // IsRadiometryTopic reports whether topic is a radiometry topic

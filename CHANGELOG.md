@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`events`: Radiometry/TemperatureAlarm topic family (#158 phase 1,
+  field-verified)**: `ParseRadiometryAlarm`/`IsRadiometryTopic` additionally
+  recognize `tns1:Radiometry/TemperatureAlarm` and the RuleEngine-qualified
+  form, whose boolean Data item is `AlarmActive` — the shape a real
+  dual-spectrum camera emits (Hikvision DS-2TB2617-6/QA, fw V5.5.38:
+  Source VideoSourceToken, Key RadiometryModuleID, Data AlarmActive +
+  TimeStamp, no Temperature item). Fixtures derive from the device's fixed
+  topic set.
+
 ### Fixed
 
 - **`soap`: faults on non-200 responses are parsed and classified (#164,
