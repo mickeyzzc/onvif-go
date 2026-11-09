@@ -12,6 +12,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 )
@@ -398,7 +399,56 @@ func parseFault(bodyContent []byte, httpStatus int) *FaultError {
 		fault.Reason = f.FaultString
 	}
 
+	// Lenient fallback for abbreviated shapes: some devices hoist the fault
+	// code/subcode directly under Fault without the SOAP 1.2 Code wrapper.
+	// Strict decoding sees none of those fields, the fault classifies as an
+	// empty FaultError, and a definitive NotAuthorized rejection degrades to
+	// an ambiguous error downstream (the pre-classification raw-body sniff
+	// used to catch these).
+	if fault.Code == "" && fault.Subcode == "" && fault.Reason == "" {
+		code, subcode, reason := lenientFaultFields(bodyContent)
+		fault.Code = code
+		fault.Subcode = subcode
+		fault.Reason = reason
+	}
+
 	return fault
+}
+
+// Lenient fault patterns: local-name matching with any (or no) namespace
+// prefix, for abbreviated fault envelopes that skip the SOAP 1.2
+// Code/Subcode wrapper hierarchy.
+var (
+	faultAnyValueRe   = regexp.MustCompile(`<(?:[A-Za-z_][\w.-]*:)?Value>\s*([^<]*?)\s*</(?:[A-Za-z_][\w.-]*:)?Value>`)
+	faultAnySubcodeRe = regexp.MustCompile(`(?s)<(?:[A-Za-z_][\w.-]*:)?Subcode>(.*?)</(?:[A-Za-z_][\w.-]*:)?Subcode>`)
+	faultAnyTextRe    = regexp.MustCompile(`<(?:[A-Za-z_][\w.-]*:)?Text[^>]*>\s*([^<]*?)\s*</(?:[A-Za-z_][\w.-]*:)?Text>`)
+)
+
+// lenientFaultFields recovers code/subcode/reason from an abbreviated fault
+// body: the first Value outside the Subcode block is the code, the first
+// Value inside it is the subcode, and any Text element is the reason.
+func lenientFaultFields(bodyContent []byte) (code, subcode, reason string) {
+	if loc := faultAnySubcodeRe.FindSubmatchIndex(bodyContent); loc != nil {
+		if v := faultAnyValueRe.FindSubmatch(bodyContent[loc[2]:loc[3]]); v != nil {
+			subcode = string(v[1])
+		}
+
+		if v := faultAnyValueRe.FindSubmatch(bodyContent[:loc[0]]); v != nil {
+			code = string(v[1])
+		}
+	}
+
+	if code == "" && subcode == "" {
+		if v := faultAnyValueRe.FindSubmatch(bodyContent); v != nil {
+			code = string(v[1])
+		}
+	}
+
+	if m := faultAnyTextRe.FindSubmatch(bodyContent); m != nil {
+		reason = string(m[1])
+	}
+
+	return code, subcode, reason
 }
 
 // createSecurityHeader creates a WS-Security header with a UsernameToken for

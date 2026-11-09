@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`soap`: abbreviated fault envelopes classify correctly (found via
+  MiBeeNvr's credential prober)**: devices that hoist the fault code/subcode
+  directly under `Fault` without the SOAP 1.2 `Code`/`Subcode` wrappers
+  decoded as an empty `FaultError` after fault classification landed (#166),
+  degrading a definitive `ter:NotAuthorized` rejection to an ambiguous
+  error — the pre-classification raw-body sniff used to catch these.
+  `parseFault` now falls back to local-name recovery of code/subcode/reason
+  when the strict decode sees nothing, so `IsAuthFailure` (and the
+  `ErrUnauthorized` wrap in `Client.Call`) hold for these shapes too.
+
 ## [v2.7.3] — 2026-11-09
 
 ### Added

@@ -137,3 +137,61 @@ func TestClientSetters(t *testing.T) {
 		t.Error("SetClockSkew not applied")
 	}
 }
+
+// TestParseFaultLenientShapes pins the classification of abbreviated fault
+// envelopes real devices emit: the fault code/subcode hoisted directly under
+// Fault without the SOAP 1.2 <Code>/<Subcode> wrappers. Strict-path XML
+// decoding sees none of those fields; without a lenient fallback the fault
+// classifies as an empty FaultError and a definitive credential rejection
+// turns ambiguous downstream (regression class from MiBeeNvr's credential
+// prober: HTTP 500 + s:Fault/s:Value/s:Subcode was classified correctly via
+// the legacy raw-body sniff and lost after fault classification landed).
+func TestParseFaultLenientShapes(t *testing.T) {
+	// parseFault receives the envelope Body's inner XML, so the Fault element
+	// is the root of the input.
+	body := []byte(`<s:Fault><s:Value>s:Sender</s:Value>` +
+		`<s:Subcode><s:Value>ter:NotAuthorized</s:Value></s:Subcode>` +
+		`</s:Fault>`)
+
+	fault := parseFault(body, 500)
+	if fault == nil {
+		t.Fatal("parseFault returned nil for an abbreviated fault envelope")
+	}
+
+	if fault.Code != "s:Sender" {
+		t.Errorf("Code = %q, want s:Sender", fault.Code)
+	}
+
+	if fault.Subcode != "ter:NotAuthorized" {
+		t.Errorf("Subcode = %q, want ter:NotAuthorized", fault.Subcode)
+	}
+
+	if !fault.IsAuthFailure() {
+		t.Error("IsAuthFailure = false, want true for ter:NotAuthorized")
+	}
+
+	if !IsAuthFailure(fault) {
+		t.Error("package-level IsAuthFailure = false, want true")
+	}
+}
+
+// TestParseFaultLenientReasonText: the abbreviated shape may still carry a
+// SOAP 1.2 Reason/Text outside the strict Code hierarchy.
+func TestParseFaultLenientReasonText(t *testing.T) {
+	body := []byte(`<s:Fault><s:Code><s:Value>s:Sender</s:Value></s:Code>` +
+		`<s:Reason><s:Text xml:lang="en">Sender not authorized</s:Text></s:Reason>` +
+		`</s:Fault>`)
+
+	fault := parseFault(body, 200)
+	if fault == nil {
+		t.Fatal("parseFault returned nil")
+	}
+
+	if fault.Reason == "" {
+		t.Error("Reason empty; xml:lang-attributed Text must still be captured")
+	}
+
+	if !fault.IsAuthFailure() {
+		t.Error("IsAuthFailure = false, want true via the reason phrasing")
+	}
+}
