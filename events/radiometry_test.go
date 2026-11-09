@@ -15,6 +15,9 @@ func TestIsRadiometryTopic(t *testing.T) {
 		{"tns1:RuleEngine/Thermal/RadiometryAlarm", true},
 		{"Thermal/RadiometryAlarm", true},
 		{"tns1:thermal/radiometryalarm", true},
+		{"tns1:RuleEngine/Radiometry/TemperatureAlarm", true},
+		{"tns1:Radiometry/TemperatureAlarm", true},
+		{"radiometry/temperaturealarm", true},
 		{"tns1:Thermal/Temperature", false},
 		{"tns1:VideoSource/MotionAlarm", false},
 		{"", false},
@@ -80,6 +83,35 @@ func TestParseRadiometryAlarm(t *testing.T) {
 				[]types.SimpleItem{item("Active", "true"), item("Temperature", "n/a")}),
 			want:   RadiometryAlarm{Active: true},
 			wantOK: true,
+		},
+		{
+			// Field-verified on a Hikvision DS-2TB2617-6/QA (fw V5.5.38,
+			// 2026-11-09): topic tns1:RuleEngine/Radiometry/TemperatureAlarm,
+			// Source VideoSourceToken, Key RadiometryModuleID, Data
+			// AlarmActive + TimeStamp (+ ElementItem AlarmGeoLocation) — no
+			// Temperature item, boolean named AlarmActive.
+			name: "Hikvision TemperatureAlarm shape",
+			msg: motionMsg("tns1:RuleEngine/Radiometry/TemperatureAlarm",
+				[]types.SimpleItem{item("Source", "VideoSource_2")},
+				[]types.SimpleItem{item("AlarmActive", "true"), item("TimeStamp", "2026-11-09T12:00:00Z")}),
+			want:   RadiometryAlarm{Active: true, Source: "VideoSource_2"},
+			wantOK: true,
+		},
+		{
+			name: "TemperatureAlarm unqualified variant, false state",
+			msg: motionMsg("tns1:Radiometry/TemperatureAlarm",
+				nil,
+				[]types.SimpleItem{item("AlarmActive", "false")}),
+			want:   RadiometryAlarm{},
+			wantOK: true,
+		},
+		{
+			name: "TemperatureAlarm without AlarmActive is rejected",
+			msg: motionMsg("tns1:RuleEngine/Radiometry/TemperatureAlarm",
+				nil,
+				[]types.SimpleItem{item("Active", "true")}),
+			want:   RadiometryAlarm{},
+			wantOK: false,
 		},
 		{
 			name: "non-radiometry topic is not our contract",
