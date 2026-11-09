@@ -146,22 +146,25 @@ func (p *Probe) MatchesTypes(deviceTypes []string) bool {
 }
 
 // BuildProbe builds the client probe envelope ONVIF devices answer to
-// (Types = NetworkVideoTransmitter).
+// (Types = NetworkVideoTransmitter). The envelope is compact (single line):
+// strict XML parsers in old camera firmware silently drop indented request
+// envelopes with HTTP 200 + empty body (MiBeeNvr#1125), and the compact
+// form is what mainstream gSOAP clients emit.
 func BuildProbe(messageID string) []byte {
-	return []byte(`<?xml version="1.0" encoding="UTF-8"?>
-<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing">
-<s:Header>
-<a:Action s:mustUnderstand="1">` + Namespace + `/Probe</a:Action>
-<a:MessageID>uuid:` + messageID + `</a:MessageID>
-<a:ReplyTo><a:Address>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:Address></a:ReplyTo>
-<a:To s:mustUnderstand="1">urn:schemas-xmlsoap-org:ws:2005:04:discovery</a:To>
-</s:Header>
-<s:Body>
-<Probe xmlns="` + Namespace + `">
-<d:Types xmlns:d="` + Namespace + `" xmlns:dp0="http://www.onvif.org/ver10/network/wsdl">dp0:NetworkVideoTransmitter</d:Types>
-</Probe>
-</s:Body>
-</s:Envelope>`)
+	return []byte(`<?xml version="1.0" encoding="UTF-8"?>` +
+		`<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope" xmlns:a="http://schemas.xmlsoap.org/ws/2004/08/addressing">` +
+		`<s:Header>` +
+		`<a:Action s:mustUnderstand="1">` + Namespace + `/Probe</a:Action>` +
+		`<a:MessageID>uuid:` + messageID + `</a:MessageID>` +
+		`<a:ReplyTo><a:Address>http://schemas.xmlsoap.org/ws/2004/08/addressing/role/anonymous</a:Address></a:ReplyTo>` +
+		`<a:To s:mustUnderstand="1">urn:schemas-xmlsoap-org:ws:2005:04:discovery</a:To>` +
+		`</s:Header>` +
+		`<s:Body>` +
+		`<Probe xmlns="` + Namespace + `">` +
+		`<d:Types xmlns:d="` + Namespace + `" xmlns:dp0="http://www.onvif.org/ver10/network/wsdl">dp0:NetworkVideoTransmitter</d:Types>` +
+		`</Probe>` +
+		`</s:Body>` +
+		`</s:Envelope>`)
 }
 
 // BuildProbeMatches builds the device-side answer to a Probe; relatesTo

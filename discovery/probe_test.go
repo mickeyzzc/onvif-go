@@ -99,6 +99,59 @@ func TestProbeEndpointFallsBackToGetDeviceInformation(t *testing.T) {
 	}
 }
 
+// isCanonicalGDIRequest reports whether body is the canonical compact
+// GetDeviceInformation request form: single line (no inter-element
+// whitespace) with the operation namespace declared on s:Body.
+func isCanonicalGDIRequest(body string) bool {
+	return strings.Contains(body,
+		`<s:Body xmlns:tds="http://www.onvif.org/ver10/device/wsdl"><tds:GetDeviceInformation/>`) &&
+		!strings.Contains(body, "\n")
+}
+
+func TestProbeEndpointGDICompactEnvelope(t *testing.T) {
+	// Old-camera firmware (thttpd-era SOAP stacks, e.g. the iDRPENG PSH_H in
+	// MiBeeNvr#1125) silently drops indented envelopes and envelopes that
+	// declare the operation namespace on the operation element: HTTP 200 with
+	// an empty body, no SOAP Fault. The probe must emit the same canonical
+	// compact form the SOAP client produces (soap.renderEnvelope), otherwise
+	// such devices look "unsupported" while the add-camera path works.
+	var sawGDI string
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		s := string(body)
+		if httpProbeEnvelope(s) {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+
+			return
+		}
+
+		sawGDI = s
+		if !isCanonicalGDIRequest(s) {
+			// Emulate the strict old firmware: 200 + empty body.
+			return
+		}
+
+		w.Write([]byte(gdiBody))
+	}))
+	t.Cleanup(server.Close)
+
+	host, port := hostPort(t, server.URL)
+
+	dev := ProbeEndpoint(context.Background(), host, port, 2*time.Second)
+	if dev == nil {
+		t.Fatal("ProbeEndpoint() = nil, want device via GDI fallback against a strict old-firmware parser")
+	}
+
+	if !isCanonicalGDIRequest(sawGDI) {
+		t.Errorf("GDI request not in canonical compact form:\n%s", sawGDI)
+	}
+
+	if dev.Info == nil || dev.Info.Manufacturer != "ProbeCam" {
+		t.Errorf("Info = %+v, want ProbeCam", dev.Info)
+	}
+}
+
 func TestProbeEndpointGDIRequiresAuth(t *testing.T) {
 	// 401 on everything: authenticated devices are "not found" for probing.
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {

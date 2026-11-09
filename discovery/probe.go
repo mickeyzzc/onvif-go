@@ -94,12 +94,17 @@ func probeViaWSDiscovery(ctx context.Context, client *http.Client, url string) (
 
 // getDeviceInformationRequest is the most widely accepted unauthenticated
 // ONVIF probe: minimal devices that reject WS-Discovery still answer it.
-const getDeviceInformationRequest = `<?xml version="1.0" encoding="UTF-8"?>
-<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">
-<s:Body>
-<tds:GetDeviceInformation xmlns:tds="http://www.onvif.org/ver10/device/wsdl"/>
-</s:Body>
-</s:Envelope>`
+//
+// It uses the canonical compact wire form the SOAP client emits
+// (internal/soap renderEnvelope): single line, no inter-element whitespace,
+// operation namespace declared on s:Body instead of the operation element.
+// Strict XML parsers in old camera firmware answer the indented form with
+// HTTP 200 and an empty body (no SOAP Fault), which makes a perfectly
+// supported device look unprovable (MiBeeNvr#1125).
+const getDeviceInformationRequest = `<s:Envelope xmlns:s="http://www.w3.org/2003/05/soap-envelope">` +
+	`<s:Body xmlns:tds="http://www.onvif.org/ver10/device/wsdl">` +
+	`<tds:GetDeviceInformation/>` +
+	`</s:Body></s:Envelope>`
 
 // fetchDeviceInfo sends an unauthenticated GetDeviceInformation to url.
 func fetchDeviceInfo(ctx context.Context, client *http.Client, url string) (*DeviceInfo, error) {

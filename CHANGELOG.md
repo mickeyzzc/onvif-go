@@ -20,6 +20,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`discovery`/`wsdiscovery`: probe envelopes now use the canonical compact
+  wire form (MiBeeNvr#1125)**: the HTTP-probe `GetDeviceInformation` request
+  and `BuildProbe` emitted indented multi-line XML with the operation
+  namespace declared on the operation element — the pre-canonicalization
+  shape the SOAP client dropped in #1074-era rework. Strict XML parsers in
+  old camera firmware (thttpd-era stacks, e.g. iDRPENG PSH_H V2.2.1144)
+  answer that shape with HTTP 200 and an empty body (no SOAP Fault), so
+  `ProbeEndpoint` returned nil for devices the client talks to fine, making
+  the probe feature report supported cameras as incompatible. Both request
+  envelopes are now single-line compact with `xmlns:tds` hoisted onto
+  `s:Body`, byte-compatible with the SOAP client's `renderEnvelope` output;
+  `BuildProbeMatches`/`BuildHello` (device-side answers) are unchanged.
+
 - **`soap`: faults on non-200 responses are parsed and classified (#164,
   mirroring the Rust twin)**: a device rejecting credentials with HTTP 400
   (or any 4xx/5xx) carrying a SOAP Fault body now surfaces as
