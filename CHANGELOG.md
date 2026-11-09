@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.7.4] — 2026-11-09
+
 ### Fixed
 
 - **`soap`: abbreviated fault envelopes classify correctly (found via
