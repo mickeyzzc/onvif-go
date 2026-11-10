@@ -42,7 +42,7 @@ func (d *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 		if err2 != nil {
 			return nil, fmt.Errorf("digest transport: read request body: %w", err2)
 		}
-		req.Body.Close()
+		_ = req.Body.Close()
 		bodyBytes = b
 		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
 	}
