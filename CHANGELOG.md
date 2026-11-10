@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.7.6] - 2026-11-11
+
+### Fixed
+
+- **`internal/httpdigest`: the digest retry carries the request body
+  (#175)**: the 401-challenge round trip consumed the body; the
+  authenticated retry reused the drained reader and failed client-side
+  (ContentLength=N with Body length 0) - every SOAP POST died at the
+  handshake on the digest path. Found live in the MiBeeNvr #1120 E2E.
+
 ## [v2.7.5] — 2026-11-11
 
 ### Added
