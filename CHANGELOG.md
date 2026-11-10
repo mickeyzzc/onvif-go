@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v2.7.5] — 2026-11-11
+
+### Added
+
+- **`onvif.AuthHTTPDigest` mode + `soap.AuthModeHTTPDigest`: transport-level
+  RFC 7616 digest on the SOAP call path (#174)**: Hikvision SHA-256-capable
+  firmware demands HTTP-level digest — WS-Security tokens, HTTP Basic and
+  MD5 answers all rejected — but the auth ladder had no digest rung (the
+  httpdigest transport only served the file-download path). The new mode
+  wraps the call transport with the RFC 7616 digest client (SHA-256-aware)
+  and sends no SOAP security header; select it explicitly via
+  WithAuthMode/WithAuthFallback.
+
 ### Fixed
 
 - **`internal/httpdigest`: RFC 7616 SHA-256 digest support (found during the
