@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -412,5 +413,46 @@ func TestPickChallenge(t *testing.T) {
 	}
 	if got := pickChallenge([]string{md5Line}); got != md5Line {
 		t.Errorf("pickChallenge lost the only line")
+	}
+}
+
+// TestDigestRetryCarriesBody (retry-body regression): the 401 challenge
+// round trip consumes the request body; the authenticated retry must carry
+// the same bytes again, or the transport fails with a ContentLength/Body
+// mismatch (surfaced live by a SOAP GetNetworkInterfaces call whose body is
+// a few hundred bytes — the retry never reached the wire).
+func TestDigestRetryCarriesBody(t *testing.T) {
+	var retryBody string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == "" {
+			w.Header().Set("WWW-Authenticate", `Digest qop="auth", realm="r", nonce="n1"`)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		b, _ := io.ReadAll(r.Body)
+		retryBody = string(b)
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+
+	tr := &Transport{
+		Transport: server.Client().Transport.(*http.Transport),
+		Username:  "u",
+		Password:  "p",
+	}
+	client := &http.Client{Transport: tr}
+
+	body := strings.Repeat("<x/>", 64) // 256 bytes, well over any single-read edge
+	resp, err := client.Post(server.URL+"/onvif/device_service", "application/soap+xml", strings.NewReader(body))
+	if err != nil {
+		t.Fatalf("request: %v", err)
+	}
+	resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d", resp.StatusCode)
+	}
+	if retryBody != body {
+		t.Errorf("retry body mismatch: got %d bytes, want %d", len(retryBody), len(body))
 	}
 }
