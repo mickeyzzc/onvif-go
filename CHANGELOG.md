@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`internal/httpdigest`: RFC 7616 SHA-256 digest support (found during the
+  MiBeeNvr #1120 zero-touch E2E)**: the transport hashed every challenge with
+  MD5, but Hikvision SHA-256-capable firmware issues two WWW-Authenticate
+  challenges (MD5 + algorithm="SHA-256") and rejects the MD5 answer
+  outright — ONVIF calls authenticated 401 against cameras the SOAP
+  client's own docs list as compatible. The transport now picks the
+  strongest challenge, hashes with the challenged algorithm, and echoes
+  the algorithm per RFC 7616 §3.5; plain MD5 challenges behave exactly as
+  before.
+
 ## [v2.7.4] — 2026-11-09
 
 ### Fixed
