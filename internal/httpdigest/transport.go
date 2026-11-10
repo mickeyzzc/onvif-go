@@ -4,11 +4,13 @@
 package httpdigest
 
 import (
+	"bytes"
 	"crypto/md5" //nolint:gosec // MD5 required for ONVIF digest auth
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,6 +32,21 @@ type Transport struct {
 
 // RoundTrip implements http.RoundTripper with digest auth support.
 func (d *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
+	// Buffer the body once: the first attempt consumes it, and the retry
+	// after the 401 challenge must carry the same bytes again (a drained
+	// body with a nonzero ContentLength fails the transport with
+	// "ContentLength=N with Body length 0").
+	var bodyBytes []byte
+	if req.Body != nil {
+		b, err2 := io.ReadAll(req.Body)
+		if err2 != nil {
+			return nil, fmt.Errorf("digest transport: read request body: %w", err2)
+		}
+		req.Body.Close()
+		bodyBytes = b
+		req.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+	}
+
 	// First request without auth to get the challenge
 	resp, err := d.Transport.RoundTrip(req)
 	if err != nil {
@@ -47,9 +64,13 @@ func (d *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
 			// Parse digest challenge and create auth header
 			authHeaderValue := d.createDigestAuthHeader(req, authHeader)
 
-			// Create new request with auth header
+			// Create new request with auth header and a FRESH body
 			newReq := req.Clone(req.Context())
 			newReq.Header.Set("Authorization", authHeaderValue)
+			if bodyBytes != nil {
+				newReq.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+				newReq.ContentLength = int64(len(bodyBytes))
+			}
 
 			// Retry with auth
 			resp, err = d.Transport.RoundTrip(newReq)
