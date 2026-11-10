@@ -15,6 +15,7 @@ import (
 	"github.com/mickeyzzc/onvif-go/v2/deviceio"
 	"github.com/mickeyzzc/onvif-go/v2/events"
 	"github.com/mickeyzzc/onvif-go/v2/imaging"
+	"github.com/mickeyzzc/onvif-go/v2/internal/httpdigest"
 	"github.com/mickeyzzc/onvif-go/v2/internal/soap"
 	"github.com/mickeyzzc/onvif-go/v2/media"
 	"github.com/mickeyzzc/onvif-go/v2/media2"
@@ -59,12 +60,20 @@ const (
 	// AuthNone sends no authentication at all. Minimal embedded devices
 	// (e.g. ESP32 firmwares) may reject every auth-bearing request.
 	AuthNone AuthMode = "none"
+
+	// AuthHTTPDigest authenticates with HTTP Digest (RFC 7616) at the
+	// transport level and sends no WS-Security header. Hikvision
+	// SHA-256-capable firmware demands exactly this shape: it challenges
+	// with algorithm="SHA-256" and rejects WS-Security tokens, HTTP Basic,
+	// and MD5 digest answers alike. The transport hashes with the
+	// challenged algorithm, so both MD5 and SHA-256 devices are served.
+	AuthHTTPDigest AuthMode = "http-digest"
 )
 
 // validate reports whether the mode is one of the known AuthMode values.
 func (m AuthMode) validate() error {
 	switch m {
-	case AuthDigest, AuthPasswordText, AuthHTTPBasic, AuthNone:
+	case AuthDigest, AuthPasswordText, AuthHTTPBasic, AuthNone, AuthHTTPDigest:
 		return nil
 	default:
 		return fmt.Errorf("%w: unknown auth mode %q", ErrInvalidParameter, string(m))
@@ -80,6 +89,8 @@ func (m AuthMode) soapMode() soap.AuthMode {
 		return soap.AuthModeHTTPBasic
 	case AuthNone:
 		return soap.AuthModeNone
+	case AuthHTTPDigest:
+		return soap.AuthModeHTTPDigest
 	default:
 		return soap.AuthModeDigest
 	}
@@ -638,6 +649,21 @@ func (c *Client) callWithMode(ctx context.Context, endpoint, action string, requ
 	c.mu.RUnlock()
 
 	sc := soap.NewClient(httpClient, username, password)
+	if mode == AuthHTTPDigest {
+		// Transport-level RFC 7616 digest: wrap the base transport so the
+		// 401-challenge handshake happens under this client only. The base
+		// transport carries the connection pool; the digest layer adds the
+		// challenge/response round trip.
+		tr, _ := httpClient.Transport.(*http.Transport)
+		sc = soap.NewClient(&http.Client{
+			Transport: &httpdigest.Transport{
+				Transport: tr,
+				Username:  username,
+				Password:  password,
+			},
+			Timeout: httpClient.Timeout,
+		}, username, password)
+	}
 	sc.SetClockSkew(skew)
 	sc.SetAuthMode(mode.soapMode())
 

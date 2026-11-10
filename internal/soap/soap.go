@@ -34,6 +34,12 @@ const (
 	// AuthModeNone sends no authentication at all. Minimal embedded devices
 	// (e.g. ESP32 firmwares) may reject every auth-bearing request.
 	AuthModeNone
+	// AuthModeHTTPDigest sends no WS-Security header and authenticates with
+	// HTTP Digest (RFC 7616) at the transport level — the http.Client this
+	// client was built with must carry an httpdigest.Transport. Newer
+	// Hikvision firmware demands this shape (algorithm="SHA-256" challenges,
+	// MD5 answers rejected outright).
+	AuthModeHTTPDigest
 )
 
 // Password type URIs from the WS-Security UsernameToken profile.
@@ -197,6 +203,8 @@ func authModeName(m AuthMode) string {
 		return "password-text"
 	case AuthModeNone:
 		return "none"
+	case AuthModeHTTPDigest:
+		return "http-digest"
 	default:
 		return "unknown"
 	}
@@ -224,7 +232,8 @@ func (c *Client) Call(ctx context.Context, endpoint, action string, request, res
 	}
 
 	// Add the WS-Security header for the header-based modes when credentials
-	// are present (HTTP Basic and None need no SOAP header).
+	// are present (HTTP Basic, HTTP Digest and None need no SOAP header —
+	// their authentication lives at the transport level).
 	if c.username != "" && c.password != "" &&
 		(c.authMode == AuthModeDigest || c.authMode == AuthModePasswordText) {
 		envelope.Header = &Header{
