@@ -2,7 +2,11 @@ package onvif
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/xml"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -1148,4 +1152,121 @@ func TestDownloadFileContextCancellation(t *testing.T) {
 	if !strings.Contains(err.Error(), "context deadline exceeded") && !strings.Contains(err.Error(), "context canceled") {
 		t.Errorf("Expected context error, got: %v", err)
 	}
+}
+
+// TestAuthHTTPDigestTransportLevel (onvif layer): a server that rejects
+// WS-Security tokens, HTTP Basic and MD5 answers — Hikvision SHA-256
+// firmware's exact posture — must be served by the AuthHTTPDigest mode
+// via the transport-level RFC 7616 handshake, with no WS-Security header
+// in the envelope.
+func TestAuthHTTPDigestTransportLevel(t *testing.T) {
+	const (
+		user  = "mibee"
+		pass  = "secret"
+		nonce = "digest-nonce-1"
+		realm = "IP Camera"
+	)
+
+	var sawAuthHeader string
+	var sawBody string
+	var sawWSSE bool
+	var sawBasic bool
+	firstCall := true
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+		if strings.Contains(string(body), "UsernameToken") {
+			sawWSSE = true
+		}
+		if strings.HasPrefix(r.Header.Get("Authorization"), "Basic ") {
+			sawBasic = true
+		}
+		auth := r.Header.Get("Authorization")
+		if !strings.HasPrefix(auth, "Digest ") {
+			if firstCall {
+				firstCall = false
+				w.Header().Set("WWW-Authenticate",
+					`Digest qop="auth", realm="`+realm+`", nonce="`+nonce+`", algorithm="SHA-256"`)
+				w.WriteHeader(http.StatusUnauthorized)
+				return
+			}
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		// Verify the SHA-256 response hash end to end.
+		nc := extractTestParam(auth, "nc")
+		cnonce := extractTestParam(auth, "cnonce")
+		response := extractTestParam(auth, "response")
+		uri := extractTestParam(auth, "uri")
+		ha1 := testSHA256(user + ":" + realm + ":" + pass)
+		ha2 := testSHA256("POST:" + uri)
+		want := testSHA256(ha1 + ":" + nonce + ":" + nc + ":" + cnonce + ":auth:" + ha2)
+		if response != want {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		sawAuthHeader = auth
+		sawBody = string(body)
+		w.Write([]byte(`<?xml version="1.0"?><Envelope xmlns="http://www.w3.org/2003/05/soap-envelope"><Body><GetDeviceInformationResponse xmlns="http://www.onvif.org/ver10/device/wsdl"><Manufacturer>Cam</Manufacturer></GetDeviceInformationResponse></Body></Envelope>`))
+	}))
+	t.Cleanup(server.Close)
+
+	client, err := NewClient(server.URL, WithCredentials(user, pass), WithAuthMode(AuthHTTPDigest))
+	if err != nil {
+		t.Fatalf("client: %v", err)
+	}
+
+	var resp struct {
+		Manufacturer string `xml:"Manufacturer"`
+	}
+	if err := client.Call(context.Background(), server.URL, "", &struct {
+		XMLName xml.Name `xml:"GetDeviceInformation"`
+	}{}, &resp); err != nil {
+		t.Fatalf("Call with AuthHTTPDigest: %v", err)
+	}
+	if resp.Manufacturer != "Cam" {
+		t.Errorf("Manufacturer = %q", resp.Manufacturer)
+	}
+	if sawWSSE {
+		t.Error("WS-Security header must not be sent in http-digest mode")
+	}
+	if sawBasic {
+		t.Error("Basic auth must not be sent in http-digest mode")
+	}
+	if !strings.Contains(sawAuthHeader, `algorithm=SHA-256`) {
+		t.Errorf("digest answer must echo the algorithm: %s", sawAuthHeader)
+	}
+	if !strings.Contains(sawBody, "GetDeviceInformation") {
+		t.Error("the envelope body went missing")
+	}
+}
+
+// extractTestParam reads a digest parameter (quoted or bare) from an
+// Authorization header (test helper for the http-digest verification above).
+func extractTestParam(header, param string) string {
+	idx := strings.Index(header, param+`="`)
+	if idx != -1 {
+		rest := header[idx+len(param)+2:]
+		end := strings.Index(rest, `"`)
+		if end == -1 {
+			return ""
+		}
+		return rest[:end]
+	}
+	idx = strings.Index(header, param+"=")
+	if idx == -1 {
+		return ""
+	}
+	rest := header[idx+len(param)+1:]
+	end := strings.IndexAny(rest, ", ")
+	if end == -1 {
+		end = len(rest)
+	}
+	return strings.Trim(strings.TrimSpace(rest[:end]), `"`)
+}
+
+func testSHA256(s string) string {
+	h := sha256.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
 }
