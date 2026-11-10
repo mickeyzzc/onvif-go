@@ -127,7 +127,7 @@ func (d *Transport) createDigestAuthHeader(req *http.Request, authHeader string)
 	// RFC 7616 §3.5: the client MUST echo the algorithm it used when the
 	// challenge specified one (servers key their nonce on it).
 	if algorithm != "" {
-		authHeaderValue += fmt.Sprintf(`, algorithm=%s`, algorithm)
+		authHeaderValue += ", algorithm=" + algorithm
 	}
 
 	if qop == "auth" {
