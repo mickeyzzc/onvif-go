@@ -102,3 +102,14 @@ if errors.Is(err, onvif.ErrEventsNotSupported) {
 ——服务端不再「收下过滤条件然后静默无视」。`GetEventProperties`
 应答规范完整形态（主题命名空间位置、两个强制主题表达式方言、规范
 认可的空消息内容方言）；消息内容过滤未实现亦不宣告。
+
+## 消费者地址上限（服务端侧）
+
+`Subscribe` 的消费者引用（`ConsumerReference/Address`）上限为
+**2048 字节**（`server.maxConsumerURLBytes`）：超过它的通知 POST
+无法穿过常见中间层（代理与设备栈普遍把请求 URI 限制在 2-8 KB），
+而在没有上限时这一失败是静默的——通知一直丢，直到投递失败预算
+自动退订会话。超长地址会在 `Subscribe` 时被以 `Invalid
+ConsumerReference` 发送方 Fault 拒绝（错误信息写明上限），订阅者
+当场获知，而不是事后排查通知缺失。真实监听路径只有几十字节；
+2 KiB 留了一个数量级的余量。
