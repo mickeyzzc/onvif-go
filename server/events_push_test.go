@@ -189,6 +189,13 @@ func TestSubscribeValidationFaults(t *testing.T) {
 		t.Fatalf("https consumer: status=%d body:\n%s", status, resp)
 	}
 
+	// Over-long consumer address: rejected with the cap named (#165) —
+	// silently-undeliverable listeners must fault at Subscribe time.
+	status, resp, _ = subscribe(t, mux, "http://consumer/notify?pad="+strings.Repeat("x", 2100), "PT10M")
+	if status == http.StatusOK || !strings.Contains(resp, "2048") {
+		t.Fatalf("long consumer: status=%d body:\n%s", status, resp)
+	}
+
 	// Unparsable termination.
 	status, resp, _ = subscribe(t, mux, "http://127.0.0.1:1/notify", "not-a-duration")
 	if status == http.StatusOK || !strings.Contains(resp, "Invalid TerminationTime") {

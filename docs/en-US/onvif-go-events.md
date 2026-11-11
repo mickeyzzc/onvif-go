@@ -114,3 +114,16 @@ answers the spec-complete form (topic namespace location, the two
 mandatory topic-expression dialects, the spec-blessed empty
 message-content dialect); message-content filtering is not applied and
 not advertised.
+
+## Consumer address limits (server side)
+
+A `Subscribe` consumer reference (`ConsumerReference/Address`) is capped
+at **2048 bytes** (`server.maxConsumerURLBytes`): beyond that no common
+intermediary can route the notification POST (proxies and device stacks
+cap request URIs at 2-8 KB), and without the cap the failure was silent —
+notifications drop until the delivery-failure budget auto-unsubscribes
+the session. An over-long address is rejected at `Subscribe` time with
+an `Invalid ConsumerReference` sender fault that names the cap, so the
+subscriber learns immediately instead of debugging missing
+notifications. Real listener paths run a few dozen bytes; 2 KiB leaves
+an order of magnitude of headroom.

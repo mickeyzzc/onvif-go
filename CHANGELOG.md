@@ -11,6 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`server`: consumer-address length validated at Subscribe time (#165)**:
+  a `ConsumerReference/Address` beyond 2048 bytes is rejected with an
+  `Invalid ConsumerReference` sender fault naming the cap — beyond ~2 KB no
+  common intermediary can route the notification POST (proxies and device
+  stacks cap request URIs at 2-8 KB), and the pre-cap failure was silent:
+  notifications dropped until the delivery-failure budget auto-unsubscribed
+  the session. Real listener paths run a few dozen bytes. Documented in the
+  events guide (en + zh).
+
+### Fixed
+
 - **`internal/httpdigest`: the digest retry carries the request body
   (#175)**: the 401-challenge round trip consumed the body; the
   authenticated retry reused the drained reader and failed client-side

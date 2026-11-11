@@ -274,7 +274,20 @@ func (s *Server) removePushSubscription(id string) {
 // parsePushTarget accepts plain http consumer URLs. HTTPS consumers are
 // refused: the server carries no TLS client, and silently accepting an
 // address it can never deliver to would strand the subscription.
+// maxConsumerURLBytes caps the accepted consumer address length (#165): a
+// listener URL beyond this can never deliver through common intermediaries
+// (proxies and device stacks commonly cap request URIs at 2-8 KB), and the
+// failure mode without the cap was silent — notifications drop until the
+// failure budget auto-unsubscribes. Rejecting at Subscribe time gives the
+// subscriber an immediate, attributable SenderFault instead. Real listener
+// paths are a few dozen bytes; 2 KiB leaves an order of magnitude of room.
+const maxConsumerURLBytes = 2048
+
 func parsePushTarget(raw string) (*pushTarget, error) {
+	if len(raw) > maxConsumerURLBytes {
+		return nil, fmt.Errorf("consumer address exceeds %d bytes (got %d) — no intermediary can route it, notifications would silently drop",
+			maxConsumerURLBytes, len(raw))
+	}
 	u, err := url.Parse(raw)
 	if err != nil {
 		return nil, fmt.Errorf("unparseable consumer address: %w", err)
